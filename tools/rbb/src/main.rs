@@ -1,8 +1,6 @@
 //! Student CLI for the Rust by Building course.
-//!
-//! Minimal-viable surface: status / open / test / next.
-//! `watch` is a thin wrapper around `test` on a timer for now — full
-//! filesystem-watcher support is a later polish step.
+
+mod tui;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
@@ -32,6 +30,8 @@ enum Cmd {
     Watch { lesson: String },
     /// Jump to the next lesson you haven't finished.
     Next,
+    /// Interactive dashboard (full-screen, keyboard-driven).
+    Tui,
 }
 
 fn main() -> Result<()> {
@@ -57,6 +57,7 @@ fn main() -> Result<()> {
         }
         Cmd::Watch { lesson } => cmd_watch(&root, &lesson),
         Cmd::Next             => cmd_next(&root),
+        Cmd::Tui              => tui::run(&root),
     }
 }
 

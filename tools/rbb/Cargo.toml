@@ -15,3 +15,5 @@ clap = { workspace = true }
 owo-colors = { workspace = true }
 notify = { workspace = true }
 notify-debouncer-mini = { workspace = true }
+ratatui = { workspace = true }
+crossterm = { workspace = true }
