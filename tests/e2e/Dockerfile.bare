@@ -1,0 +1,42 @@
+# Unprovisioned image for scenario 14. Simulates a fresh server:
+# just a Linux box with git + the course checkout present. setup.sh
+# runs from inside the scenario and is expected to do the rest.
+#
+# We start from rust:1-bookworm so we don't reinstall rustup in every
+# scenario run (see commit message & docs/admins.md for the caveat).
+#
+# Build: docker build -t rbb-e2e-bare -f tests/e2e/Dockerfile.bare .
+
+FROM rust:1-bookworm
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -q \
+    && apt-get install -y -q --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Put the course checkout where setup.sh expects the admin to have
+# cloned it. No prebuilt binaries, no /srv/rbb — that's what the
+# scenario proves setup.sh creates.
+WORKDIR /opt/rust-by-building
+COPY Cargo.toml Cargo.lock ./
+COPY .cargo ./.cargo
+COPY vendor ./vendor
+COPY tools ./tools
+COPY lessons ./lessons
+COPY capstones ./capstones
+COPY book ./book
+COPY docs ./docs
+COPY server ./server
+COPY tests ./tests
+COPY README.md ./
+
+# setup.sh pushes from the admin's checkout into the bare repo it
+# creates. That needs a real git history, so make /opt/rust-by-building
+# a git repo with a single seed commit.
+RUN git init --quiet --initial-branch=main \
+    && git -c user.email=admin@test -c user.name=admin add -A \
+    && git -c user.email=admin@test -c user.name=admin commit --quiet -m "seed"
+
+# Scenario scripts are mounted at /e2e, same layout as the main image.
+COPY tests/e2e/scenarios /e2e/scenarios
+COPY tests/e2e/lib.sh    /e2e/lib.sh

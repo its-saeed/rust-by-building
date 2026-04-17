@@ -111,12 +111,23 @@ mkdir -p "$SRV/docs" "$SRV/vendor"
 cp -r "$REPO_SRC/vendor/." "$SRV/vendor/"
 
 if [[ ! -d "$SRV/rust-by-building.git" ]]; then
-    git init --quiet --bare "$SRV/rust-by-building.git"
+    git init --quiet --bare --initial-branch=main "$SRV/rust-by-building.git"
 fi
+
+# Git's safe.directory check rejects a repo whose owner UID differs
+# from the caller's. On the course server the admin's checkout and the
+# bare repo are often touched by different accounts (student clones,
+# root pushes, admin publishes). Whitelist them system-wide so nobody
+# has to remember the incantation.
+git config --system --add safe.directory "$REPO_SRC"
+git config --system --add safe.directory "$SRV/rust-by-building.git"
+
 # Seed the bare repo from the admin's checkout if it's a git repo.
+# Let errors surface — a silent failure leaves the bare repo empty,
+# which breaks every student clone downstream.
 if [[ -d "$REPO_SRC/.git" ]]; then
     git --git-dir="$REPO_SRC/.git" --work-tree="$REPO_SRC" \
-        push --quiet "$SRV/rust-by-building.git" +HEAD:refs/heads/main 2>/dev/null || true
+        push --quiet "$SRV/rust-by-building.git" +HEAD:refs/heads/main
 fi
 
 echo "[5/6] enable sshd"
