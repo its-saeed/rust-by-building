@@ -1,11 +1,9 @@
-# On the student server, admins populate /srv/rbb/vendor/ with `cargo vendor`
-# and flip this config to use vendored sources offline. See docs/admins.md.
-#
-# [source.crates-io]
-# replace-with = "vendored-sources"
-#
-# [source.vendored-sources]
-# directory = "/srv/rbb/vendor"
+# Use vendored crates so the whole course builds offline. Run
+# `cargo vendor` at the workspace root after editing any Cargo.toml,
+# then commit both the change and the refreshed `vendor/` tree.
 
-# During authoring (admin's own machine, with internet), leave this file as
-# comments. The vendored setup only applies on the student server.
+[source.crates-io]
+replace-with = "vendored-sources"
+
+[source.vendored-sources]
+directory = "vendor"

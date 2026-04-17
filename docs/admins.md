@@ -77,15 +77,30 @@ This just reads `/home/*/.rbb/progress.json` — admins have filesystem read on 
 
 ## Vendored dependencies
 
-When you add a new crate to a lesson's `Cargo.toml`, rerun the vendor:
+All crates used by the workspace are checked into `vendor/` at the repo root, and `.cargo/config.toml` tells cargo to use them instead of crates.io. Students build with zero network access.
+
+When you add or bump a dependency:
 
 ```sh
-rbb-admin vendor sync
-# Runs `cargo vendor --locked` against the workspace, copies to /srv/rbb/vendor/
-# so student offline builds pick up the new crate.
+# 1. Edit the relevant Cargo.toml
+# 2. Re-vendor (this is the one step that needs internet — on YOUR machine):
+cargo vendor
+# 3. Commit both the Cargo.toml change AND the updated vendor/ tree
+git add Cargo.toml Cargo.lock vendor
+git commit -m "bump: <what changed>"
+# 4. Publish to the server's bare repo:
+rbb-admin publish
 ```
 
-This is the one step that requires the *admin's* machine to have internet. Students never need it.
+To verify the whole course still builds offline after vendoring:
+
+```sh
+cargo build --frozen --workspace
+# or, even stricter:
+cargo build --offline --workspace
+```
+
+If either fails, the vendor tree is out of sync with `Cargo.lock`.
 
 ## Ports
 

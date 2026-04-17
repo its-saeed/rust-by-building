@@ -7,19 +7,19 @@ FROM rust:1-bookworm AS builder
 WORKDIR /src
 COPY Cargo.toml Cargo.lock ./
 COPY .cargo ./.cargo
+COPY vendor ./vendor
 COPY tools ./tools
 COPY lessons ./lessons
 COPY capstones ./capstones
 COPY book ./book
 COPY docs ./docs
 
-# Build everything: CLIs + prebuild lesson/capstone test binaries so
-# `rbb test` inside a fresh container never touches the network. `cargo
-# fetch --locked` first so the registry index lives under $CARGO_HOME
-# (baked into the runtime image).
-RUN cargo fetch --locked
-RUN cargo build --release -p rbb -p rbb-admin
-RUN cargo test --workspace --no-run
+# Build everything offline from the checked-in vendor tree. `--frozen`
+# fails if Cargo.lock doesn't match, or if any dep isn't vendored.
+# Pre-building test binaries means `rbb test` inside a fresh container
+# never needs to compile (or fetch) anything.
+RUN cargo build --frozen --release -p rbb -p rbb-admin
+RUN cargo test  --frozen --workspace --no-run
 
 FROM rust:1-bookworm AS runtime
 

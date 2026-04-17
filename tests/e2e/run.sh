@@ -48,7 +48,13 @@ for scenario in "${scenarios[@]}"; do
     name=$(basename "$scenario" .sh)
     printf '\n%s[run]%s %s\n' "$BOLD" "$RST" "$name"
 
-    if docker run --rm "$IMAGE" bash "/e2e/scenarios/$(basename "$scenario")"; then
+    # Scenarios whose name hints at offline run without a network.
+    docker_args=(run --rm)
+    if [[ "$name" == *offline* ]]; then
+        docker_args+=(--network=none)
+    fi
+
+    if docker "${docker_args[@]}" "$IMAGE" bash "/e2e/scenarios/$(basename "$scenario")"; then
         results+=("$GREEN✓$RST  $name")
     else
         results+=("$RED✗$RST  $name")
