@@ -94,10 +94,11 @@ fn cmd_test(root: &PathBuf, lesson: &str) -> Result<()> {
     if status.success() {
         mark_project_passing(id)?;
         println!("{}", "all tests passed".green());
+        Ok(())
     } else {
         println!("{}", "tests failed".red());
+        std::process::exit(1);
     }
-    Ok(())
 }
 
 fn cmd_watch(root: &PathBuf, lesson: &str) -> Result<()> {
