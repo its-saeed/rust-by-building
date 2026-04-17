@@ -54,6 +54,23 @@ enum UserCmd {
         #[arg(long, default_value = "/srv/rbb/rust-by-building.git")]
         from: PathBuf,
     },
+    /// Provision many students at once. Reads usernames (one per
+    /// line, blank lines and `#` comments ignored) from the list file,
+    /// generates a random password for each, creates the user, and
+    /// emits `username:password` pairs to --credentials or stdout.
+    Bulk {
+        /// Path to a file with one username per line.
+        list: PathBuf,
+        /// Source for each student's checkout (see `user add --from`).
+        #[arg(long, default_value = "/srv/rbb/rust-by-building.git")]
+        from: PathBuf,
+        /// Write credentials here (mode 600). Defaults to stdout.
+        #[arg(long)]
+        credentials: Option<PathBuf>,
+        /// Length of generated passwords. Minimum 8.
+        #[arg(long, default_value_t = 14)]
+        password_length: usize,
+    },
     /// Remove a user. By default also removes the home directory;
     /// pass --keep-home to preserve their work.
     Remove {
@@ -98,6 +115,8 @@ fn main() -> Result<()> {
 fn handle_user(c: UserCmd) -> Result<()> {
     match c {
         UserCmd::Add { name, from }             => user_add(&name, &from),
+        UserCmd::Bulk { list, from, credentials, password_length } =>
+            user_bulk(&list, &from, credentials.as_deref(), password_length),
         UserCmd::Remove { name, keep_home }     => user_remove(&name, keep_home),
         UserCmd::List                           => user_list(),
     }
@@ -132,9 +151,9 @@ fn uid_of(name: &str) -> Result<u32> {
     Ok(s.trim().parse()?)
 }
 
-fn user_add(name: &str, from: &Path) -> Result<()> {
-    require_root()?;
-
+/// The raw provisioning step — no prints, so callers (user_add, user_bulk)
+/// can format their own output.
+fn provision_user(name: &str, from: &Path) -> Result<ProvisionResult> {
     // 1. create the Linux user.
     sh("useradd", &["-m", "-s", "/bin/bash", name])?;
 
@@ -149,8 +168,6 @@ fn user_add(name: &str, from: &Path) -> Result<()> {
             &dest.display().to_string()])?;
     } else if from.exists() {
         sh("cp", &["-r", &from.display().to_string(), &dest.display().to_string()])?;
-        // A freshly copied workspace target/ is owned by the admin and
-        // contains stale fingerprints. Clear it; the student rebuilds.
         let _ = std::fs::remove_dir_all(dest.join("target"));
     } else {
         anyhow::bail!("source path does not exist: {from:?}");
@@ -169,11 +186,108 @@ fn user_add(name: &str, from: &Path) -> Result<()> {
     // 4. fix ownership on everything we just created.
     sh("chown", &["-R", &format!("{name}:{name}"), &home.display().to_string()])?;
 
-    // Keep this line color-free so shell tests can grep it reliably.
+    Ok(ProvisionResult { home, checkout: dest, port_base })
+}
+
+struct ProvisionResult {
+    home: PathBuf,
+    checkout: PathBuf,
+    port_base: u32,
+}
+
+fn user_add(name: &str, from: &Path) -> Result<()> {
+    require_root()?;
+    let r = provision_user(name, from)?;
     println!("created user {name}");
-    println!("  home:        {}", home.display());
-    println!("  checkout:    {}", dest.display());
-    println!("  port range:  {}-{}", port_base, port_base + 99);
+    println!("  home:        {}", r.home.display());
+    println!("  checkout:    {}", r.checkout.display());
+    println!("  port range:  {}-{}", r.port_base, r.port_base + 99);
+    Ok(())
+}
+
+fn random_password(len: usize) -> Result<String> {
+    use std::io::Read;
+    let len = len.max(8);
+    // Base62 — avoids shell-meaningful chars and ambiguous pairs (l/1/I/O/0).
+    const ALPHABET: &[u8] =
+        b"abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let mut rand = vec![0u8; len];
+    std::fs::File::open("/dev/urandom")?.read_exact(&mut rand)?;
+    Ok(rand.iter()
+        .map(|b| ALPHABET[(*b as usize) % ALPHABET.len()] as char)
+        .collect())
+}
+
+fn set_password(name: &str, password: &str) -> Result<()> {
+    use std::io::Write;
+    use std::process::Stdio;
+
+    let mut child = Command::new("chpasswd")
+        .stdin(Stdio::piped())
+        .spawn()
+        .context("spawning chpasswd")?;
+    let mut stdin = child.stdin.take().context("no chpasswd stdin")?;
+    writeln!(stdin, "{name}:{password}")?;
+    drop(stdin);
+
+    let status = child.wait()?;
+    if !status.success() {
+        anyhow::bail!("chpasswd exited with {status}");
+    }
+    Ok(())
+}
+
+fn read_student_list(path: &Path) -> Result<Vec<String>> {
+    let text = std::fs::read_to_string(path)
+        .with_context(|| format!("reading {path:?}"))?;
+    Ok(text.lines()
+        .map(|l| l.trim())
+        .filter(|l| !l.is_empty() && !l.starts_with('#'))
+        .map(|s| s.to_string())
+        .collect())
+}
+
+fn user_bulk(list: &Path, from: &Path, creds_path: Option<&Path>, pwlen: usize) -> Result<()> {
+    require_root()?;
+    let names = read_student_list(list)?;
+    if names.is_empty() {
+        anyhow::bail!("student list {list:?} is empty");
+    }
+
+    let mut creds = Vec::with_capacity(names.len());
+    let mut failed: Vec<(String, String)> = Vec::new();
+
+    for name in &names {
+        match (|| -> Result<String> {
+            provision_user(name, from)?;
+            let pw = random_password(pwlen)?;
+            set_password(name, &pw)?;
+            Ok(pw)
+        })() {
+            Ok(pw)  => creds.push(format!("{name}:{pw}")),
+            Err(e)  => failed.push((name.clone(), format!("{e:#}"))),
+        }
+    }
+
+    let rendered = creds.join("\n") + "\n";
+    match creds_path {
+        Some(p) => {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::write(p, &rendered)?;
+            std::fs::set_permissions(p, std::fs::Permissions::from_mode(0o600))?;
+            println!("wrote {} credentials to {} (mode 600)", creds.len(), p.display());
+        }
+        None => {
+            print!("{rendered}");
+        }
+    }
+
+    for (name, err) in &failed {
+        eprintln!("FAILED {name}: {err}");
+    }
+    if !failed.is_empty() {
+        anyhow::bail!("{} of {} users failed; see stderr", failed.len(), names.len());
+    }
     Ok(())
 }
 
