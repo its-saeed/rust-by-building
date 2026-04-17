@@ -40,6 +40,27 @@ enum Cmd {
         #[arg(long)]
         json: bool,
     },
+
+    /// Run `rbb-admin check`, then push the workspace to the server's
+    /// bare repo. A safety net so new lessons are validated before
+    /// students can pull them.
+    Publish {
+        /// Git remote name or absolute path to the bare repo.
+        #[arg(long, default_value = "/srv/rbb/rust-by-building.git")]
+        remote: String,
+        /// Branch to push. Students pull from this.
+        #[arg(long, default_value = "main")]
+        branch: String,
+        /// Skip the preflight `check`. Useful when iterating on the
+        /// harness itself; don't use for actual content pushes.
+        #[arg(long)]
+        skip_check: bool,
+    },
+
+    /// Re-vendor every dependency into `vendor/`. Run this after
+    /// editing any Cargo.toml. Requires network.
+    #[command(name = "vendor-sync")]
+    VendorSync,
 }
 
 #[derive(Subcommand)]
@@ -108,6 +129,16 @@ fn main() -> Result<()> {
             let root = find_repo_root(&std::env::current_dir()?)
                 .context("run `rbb-admin check` from inside your rust-by-building checkout")?;
             cmd_check(&root)
+        }
+        Cmd::Publish { remote, branch, skip_check } => {
+            let root = find_repo_root(&std::env::current_dir()?)
+                .context("run `rbb-admin publish` from inside your rust-by-building checkout")?;
+            cmd_publish(&root, &remote, &branch, skip_check)
+        }
+        Cmd::VendorSync => {
+            let root = find_repo_root(&std::env::current_dir()?)
+                .context("run `rbb-admin vendor-sync` from inside your rust-by-building checkout")?;
+            cmd_vendor_sync(&root)
         }
     }
 }
@@ -372,12 +403,75 @@ path = "src/lib.rs"
         std::fs::write(&book, format!("# Lesson {id:02} — {slug}\n\nTODO.\n"))?;
     }
 
+    // Wire the new chapter into SUMMARY.md.
+    let summary = root.join("book/src/SUMMARY.md");
+    let summary_updated = if summary.exists() {
+        update_summary(&summary, id, slug)?
+    } else {
+        false
+    };
+
     println!("{} lesson {:02}-{}", "scaffolded".green(), id, slug);
     println!("  {}", dir.display());
     println!("  {}", book.display());
-    println!();
-    println!("don't forget to add it to book/src/SUMMARY.md");
+    if summary_updated {
+        println!("  {} (updated)", summary.display());
+    } else if summary.exists() {
+        println!("  {} (already up to date)", summary.display());
+    }
     Ok(())
+}
+
+/// Insert or update the SUMMARY.md entry for lesson `id`. Returns true
+/// if anything changed on disk. Idempotent.
+fn update_summary(summary: &Path, id: u32, slug: &str) -> Result<bool> {
+    let original = std::fs::read_to_string(summary)
+        .with_context(|| format!("reading {summary:?}"))?;
+    let title = slug_to_title(slug);
+    let want_line = format!("- [{title}](./{:02}-{slug}.md)", id);
+
+    // 1. If a line already points at ./NN-<something>.md, replace it.
+    let prefix = format!("./{:02}-", id);
+    let mut found = false;
+    let mut changed = false;
+    let mut lines: Vec<String> = original.lines().map(String::from).collect();
+    for line in &mut lines {
+        if line.contains(&prefix) && line.contains(".md") {
+            found = true;
+            if line.trim() != want_line.trim() {
+                let leading = line.chars().take_while(|c| c.is_whitespace()).collect::<String>();
+                *line = format!("{leading}{want_line}");
+                changed = true;
+            }
+            break;
+        }
+    }
+
+    // 2. No NN slot? Append under the final top-level heading.
+    if !found {
+        // Insert before the first Appendix heading, or append at end.
+        let insert_at = lines.iter().position(|l| l.trim_start().starts_with("# Appendix"))
+            .unwrap_or(lines.len());
+        lines.insert(insert_at, want_line);
+        if insert_at < lines.len() - 1 { lines.insert(insert_at + 1, String::new()); }
+        changed = true;
+    }
+
+    if changed {
+        let mut out = lines.join("\n");
+        if original.ends_with('\n') && !out.ends_with('\n') { out.push('\n'); }
+        std::fs::write(summary, out)?;
+    }
+    Ok(changed)
+}
+
+fn slug_to_title(slug: &str) -> String {
+    let replaced = slug.replace('-', " ").replace('_', " ");
+    let mut chars = replaced.chars();
+    match chars.next() {
+        Some(c) => c.to_uppercase().chain(chars).collect(),
+        None    => String::new(),
+    }
 }
 
 fn scaffold_exercise(root: &Path, id: u32, name: &str) -> Result<()> {
@@ -503,6 +597,45 @@ fn collect_rows(filter: Option<&str>) -> Result<Vec<UserRow>> {
     }
     rows.sort_by(|a, b| a.name.cmp(&b.name));
     Ok(rows)
+}
+
+fn cmd_publish(root: &Path, remote: &str, branch: &str, skip_check: bool) -> Result<()> {
+    if !skip_check {
+        println!("{}", "[1/2] preflight: rbb-admin check".bold());
+        cmd_check(root)?;
+    } else {
+        println!("{}", "[1/2] preflight: skipped (--skip-check)".yellow());
+    }
+
+    println!("\n{}", format!("[2/2] pushing to {remote} ({branch})").bold());
+    let status = Command::new("git")
+        .current_dir(root)
+        .args(["push", remote, &format!("HEAD:refs/heads/{branch}")])
+        .status()
+        .context("spawning git push")?;
+    if !status.success() {
+        anyhow::bail!("git push failed with {status}");
+    }
+    println!("\n{}", "published".green().bold());
+    Ok(())
+}
+
+fn cmd_vendor_sync(root: &Path) -> Result<()> {
+    println!("{}", "running `cargo vendor` — this needs network".bold());
+    let status = Command::new("cargo")
+        .current_dir(root)
+        .arg("vendor")
+        .status()
+        .context("spawning cargo vendor")?;
+    if !status.success() {
+        anyhow::bail!("cargo vendor failed with {status}");
+    }
+    println!();
+    println!("vendor/ is now up to date. Next steps:");
+    println!("  git add Cargo.toml Cargo.lock vendor");
+    println!("  git commit -m \"bump deps\"");
+    println!("  rbb-admin publish");
+    Ok(())
 }
 
 fn cmd_progress(filter: Option<&str>, as_json: bool) -> Result<()> {

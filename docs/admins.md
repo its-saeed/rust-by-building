@@ -143,7 +143,7 @@ rbb-admin lesson add-exercise 07 question-mark
 
 Write the chapter in `book/src/07-error-handling.md`. Model it on `book/src/03-functions.md`: explain a concept, point at exercises and project, keep it short.
 
-**You still edit `book/src/SUMMARY.md` by hand** to list the new lesson in the table of contents.
+`lesson new` also wires the chapter into `book/src/SUMMARY.md` automatically — it replaces any pre-listed entry for that lesson number, or appends a new one if none exists.
 
 ### Validate before publishing
 
@@ -151,15 +151,20 @@ Write the chapter in `book/src/07-error-handling.md`. Model it on `book/src/03-f
 rbb-admin check
 ```
 
-Builds every package in the workspace and runs every project's test suite. Fails fast if any lesson's stubs are still `todo!()` or if a new lesson broke something. This is the gate before pushing.
+Builds every package in the workspace and runs every project's test suite. Fails fast if any lesson's stubs are still `todo!()` or if a new lesson broke something.
 
 ### Publish
 
 ```sh
-cd /opt/rust-by-building
-git add -A && git commit -m "add lesson 07"
-git push /srv/rbb/rust-by-building.git main
+# From the admin checkout (commits must already be made):
+rbb-admin publish
+# [1/2] preflight: rbb-admin check
+#   ...
+# [2/2] pushing to /srv/rbb/rust-by-building.git (main)
+# published
 ```
+
+`publish` runs `check` as a preflight, then `git push` to the bare repo. `--skip-check` bypasses the preflight when you're iterating on the harness; never use it for content pushes. `--remote <path-or-name>` overrides the default (`/srv/rbb/rust-by-building.git`).
 
 Students pick up changes with `git pull` in their checkout. If they're running `rbb watch`, tests rerun automatically.
 
@@ -168,21 +173,16 @@ Students pick up changes with `git pull` in their checkout. If they're running `
 This is the one step that requires internet access on the admin's machine (or, in principle, a private crates mirror).
 
 ```sh
-# 1. Edit the Cargo.toml that needs the change
-# 2. Regenerate Cargo.lock:
-cargo update -p <crate>
-# 3. Re-vendor everything — this pulls from crates.io and fills vendor/:
-cargo vendor
-# 4. Commit both the Cargo.toml change AND the refreshed vendor/ tree:
+# 1. Edit the Cargo.toml that needs the change.
+# 2. Re-vendor — runs cargo vendor and tells you what to commit next:
+rbb-admin vendor-sync
+# 3. Commit + publish:
 git add Cargo.toml Cargo.lock vendor
 git commit -m "bump: <what changed>"
-# 5. Verify the whole course still builds offline:
-cargo build --offline --workspace
-# 6. Publish to the bare repo (students pick up via git pull):
-git push /srv/rbb/rust-by-building.git main
+rbb-admin publish
 ```
 
-If `cargo build --offline` fails after a vendor, the vendor tree is out of sync with `Cargo.lock` — re-run `cargo vendor`.
+If `cargo build --offline` fails after a vendor-sync, the vendor tree is out of sync with `Cargo.lock` — re-run `rbb-admin vendor-sync`.
 
 ## Ports
 
