@@ -1,0 +1,9 @@
+[package]
+name = "capstone-guessing-game"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "guess"
+path = "src/main.rs"

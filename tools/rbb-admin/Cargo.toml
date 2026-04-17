@@ -1,0 +1,17 @@
+[package]
+name = "rbb-admin"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "rbb-admin"
+path = "src/main.rs"
+
+[dependencies]
+rbb-core = { path = "../rbb-core" }
+anyhow = { workspace = true }
+clap = { workspace = true }
+owo-colors = { workspace = true }
+walkdir = { workspace = true }
+serde_json = { workspace = true }

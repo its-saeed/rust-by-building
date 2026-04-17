@@ -1,0 +1,15 @@
+[package]
+name = "rbb"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "rbb"
+path = "src/main.rs"
+
+[dependencies]
+rbb-core = { path = "../rbb-core" }
+anyhow = { workspace = true }
+clap = { workspace = true }
+owo-colors = { workspace = true }

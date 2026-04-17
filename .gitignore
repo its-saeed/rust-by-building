@@ -1,0 +1,11 @@
+target/
+Cargo.lock.bak
+.DS_Store
+
+# Student-local progress file (never committed)
+.rbb/
+
+# Editor
+.idea/
+.vscode/
+*.swp

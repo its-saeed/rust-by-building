@@ -1,0 +1,11 @@
+# On the student server, admins populate /srv/rbb/vendor/ with `cargo vendor`
+# and flip this config to use vendored sources offline. See docs/admins.md.
+#
+# [source.crates-io]
+# replace-with = "vendored-sources"
+#
+# [source.vendored-sources]
+# directory = "/srv/rbb/vendor"
+
+# During authoring (admin's own machine, with internet), leave this file as
+# comments. The vendored setup only applies on the student server.
