@@ -39,8 +39,24 @@ enum Cmd {
 
 #[derive(Subcommand)]
 enum UserCmd {
-    Add { name: String },
-    Remove { name: String },
+    /// Create a Linux user, clone the course repo into their home,
+    /// assign a port range, and set file ownership.
+    Add {
+        name: String,
+        /// Where to seed the student's checkout from. Defaults to the
+        /// server's bare repo. For single-host testing, point this at
+        /// the admin's own workspace checkout.
+        #[arg(long, default_value = "/srv/rbb/rust-by-building.git")]
+        from: PathBuf,
+    },
+    /// Remove a user. By default also removes the home directory;
+    /// pass --keep-home to preserve their work.
+    Remove {
+        name: String,
+        #[arg(long)]
+        keep_home: bool,
+    },
+    /// Print all users who have a ~/rust-by-building checkout.
     List,
 }
 
@@ -54,23 +70,135 @@ enum LessonCmd {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    let root = find_repo_root(&std::env::current_dir()?)
-        .context("run rbb-admin from inside your rust-by-building checkout")?;
 
+    // User provisioning and progress reading are workspace-free — the
+    // admin runs them on the server, not from a checkout. Only lesson
+    // scaffolding and `check` need to know the workspace root.
     match cli.cmd {
-        Cmd::User(c)     => handle_user(c),
-        Cmd::Lesson(c)   => handle_lesson(&root, c),
-        Cmd::Check       => cmd_check(&root),
+        Cmd::User(c)           => handle_user(c),
         Cmd::Progress { user } => cmd_progress(user.as_deref()),
+        Cmd::Lesson(c) => {
+            let root = find_repo_root(&std::env::current_dir()?)
+                .context("run `rbb-admin lesson` from inside your rust-by-building checkout")?;
+            handle_lesson(&root, c)
+        }
+        Cmd::Check => {
+            let root = find_repo_root(&std::env::current_dir()?)
+                .context("run `rbb-admin check` from inside your rust-by-building checkout")?;
+            cmd_check(&root)
+        }
     }
 }
 
 fn handle_user(c: UserCmd) -> Result<()> {
     match c {
-        UserCmd::Add { name }    => { println!("TODO: useradd / clone / config for {name}"); Ok(()) }
-        UserCmd::Remove { name } => { println!("TODO: userdel for {name}"); Ok(()) }
-        UserCmd::List            => { println!("TODO: list /home/*"); Ok(()) }
+        UserCmd::Add { name, from }             => user_add(&name, &from),
+        UserCmd::Remove { name, keep_home }     => user_remove(&name, keep_home),
+        UserCmd::List                           => user_list(),
     }
+}
+
+fn require_root() -> Result<()> {
+    // Cheap preflight so we fail with a clear message rather than
+    // letting useradd emit a cryptic one.
+    let uid = Command::new("id").arg("-u").output()?.stdout;
+    let uid = String::from_utf8_lossy(&uid);
+    if uid.trim() != "0" {
+        anyhow::bail!("this command needs root — run under sudo");
+    }
+    Ok(())
+}
+
+fn sh(cmd: &str, args: &[&str]) -> Result<()> {
+    let status = Command::new(cmd).args(args).status()
+        .with_context(|| format!("spawning {cmd} {args:?}"))?;
+    if !status.success() {
+        anyhow::bail!("{cmd} {args:?} exited with {status}");
+    }
+    Ok(())
+}
+
+fn uid_of(name: &str) -> Result<u32> {
+    let out = Command::new("id").arg("-u").arg(name).output()?;
+    if !out.status.success() {
+        anyhow::bail!("id -u {name} failed");
+    }
+    let s = String::from_utf8_lossy(&out.stdout);
+    Ok(s.trim().parse()?)
+}
+
+fn user_add(name: &str, from: &Path) -> Result<()> {
+    require_root()?;
+
+    // 1. create the Linux user.
+    sh("useradd", &["-m", "-s", "/bin/bash", name])?;
+
+    let home = PathBuf::from("/home").join(name);
+    let dest = home.join("rust-by-building");
+
+    // 2. seed their checkout. Bare repo → git clone; plain dir → copy
+    //    (useful for single-host testing where no bare repo exists).
+    if from.join("HEAD").exists() {
+        sh("git", &["clone", "--quiet",
+            &from.display().to_string(),
+            &dest.display().to_string()])?;
+    } else if from.exists() {
+        sh("cp", &["-r", &from.display().to_string(), &dest.display().to_string()])?;
+        // A freshly copied workspace target/ is owned by the admin and
+        // contains stale fingerprints. Clear it; the student rebuilds.
+        let _ = std::fs::remove_dir_all(dest.join("target"));
+    } else {
+        anyhow::bail!("source path does not exist: {from:?}");
+    }
+
+    // 3. assign a deterministic port range so two students don't collide.
+    let uid = uid_of(name)?;
+    let port_base = 10_000 + (uid.saturating_sub(1000)) * 100;
+    let rbb_dir = home.join(".rbb");
+    std::fs::create_dir_all(&rbb_dir)?;
+    std::fs::write(
+        rbb_dir.join("env"),
+        format!("RBB_PORT_BASE={port_base}\nRBB_PORT_END={}\n", port_base + 99),
+    )?;
+
+    // 4. fix ownership on everything we just created.
+    sh("chown", &["-R", &format!("{name}:{name}"), &home.display().to_string()])?;
+
+    // Keep this line color-free so shell tests can grep it reliably.
+    println!("created user {name}");
+    println!("  home:        {}", home.display());
+    println!("  checkout:    {}", dest.display());
+    println!("  port range:  {}-{}", port_base, port_base + 99);
+    Ok(())
+}
+
+fn user_remove(name: &str, keep_home: bool) -> Result<()> {
+    require_root()?;
+    if keep_home {
+        sh("userdel", &[name])?;
+        println!("removed user {name} (home preserved)");
+    } else {
+        sh("userdel", &["-r", name])?;
+        println!("removed user {name}");
+    }
+    Ok(())
+}
+
+fn user_list() -> Result<()> {
+    let home_root = PathBuf::from("/home");
+    if !home_root.exists() {
+        return Ok(());
+    }
+    let mut names: Vec<String> = std::fs::read_dir(&home_root)?
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().join("rust-by-building").exists())
+        .filter_map(|e| e.file_name().to_str().map(|s| s.to_string()))
+        .collect();
+    names.sort();
+    for name in names {
+        println!("{name}");
+    }
+    Ok(())
 }
 
 fn handle_lesson(root: &Path, c: LessonCmd) -> Result<()> {
