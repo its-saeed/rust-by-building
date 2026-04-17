@@ -7,7 +7,7 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use owo_colors::OwoColorize;
-use rbb_core::{discover_lessons, find_lesson, find_repo_root, LessonId, LessonStatus};
+use rbb_core::{discover_lessons, exercises, find_lesson, find_repo_root, LessonId, LessonStatus};
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -24,9 +24,11 @@ enum Cmd {
     Status,
     /// Print a lesson's README to stdout.
     Open { lesson: String },
+    /// Compile + run every exercise in a lesson, report pass/fail per file.
+    Check { lesson: String },
     /// Run tests for a lesson's project.
     Test { lesson: String },
-    /// Rerun tests every time something changes (simple poll for now).
+    /// Rerun tests every time something changes.
     Watch { lesson: String },
     /// Jump to the next lesson you haven't finished.
     Next,
@@ -38,8 +40,13 @@ fn main() -> Result<()> {
         .context("run rbb from inside your rust-by-building checkout")?;
 
     match cli.cmd {
-        Cmd::Status       => cmd_status(&root),
+        Cmd::Status           => cmd_status(&root),
         Cmd::Open { lesson }  => cmd_open(&root, &lesson),
+        Cmd::Check { lesson } => {
+            let all_ok = cmd_check(&root, &lesson)?;
+            if !all_ok { std::process::exit(1); }
+            Ok(())
+        }
         Cmd::Test { lesson }  => {
             // Propagate test failure as a non-zero exit code so shell
             // pipelines and CI actually notice. `cmd_test` itself does
@@ -49,7 +56,7 @@ fn main() -> Result<()> {
             Ok(())
         }
         Cmd::Watch { lesson } => cmd_watch(&root, &lesson),
-        Cmd::Next         => cmd_next(&root),
+        Cmd::Next             => cmd_next(&root),
     }
 }
 
@@ -59,20 +66,71 @@ fn cmd_status(root: &PathBuf) -> Result<()> {
     let lessons = discover_lessons(root)?;
     let progress = rbb_core::progress::load()?;
 
-    println!("{:>3}  {:<24} {}", "id", "lesson", "status");
+    println!("{:>3}  {:<20} {:>7}  {:<5}  {}", "id", "lesson", "ex", "proj", "status");
     for l in lessons {
-        let status = progress.lessons.get(&l.id)
-            .map(|lp| lp.status)
-            .unwrap_or_default();
+        let lp = progress.lessons.get(&l.id);
+        let total_ex = exercises::discover(&l.path).map(|v| v.len() as u32).unwrap_or(0);
+        let passed_ex = lp.map(|p| p.exercises_passed()).unwrap_or(0);
+        let proj = lp.map(|p| p.project_passing).unwrap_or(false);
+        let status = lp.map(|p| p.status).unwrap_or_default();
 
-        let status_str = match status {
+        let ex_col = format!("{}/{}", passed_ex, total_ex);
+        let proj_col = if proj { "✓".green().to_string() } else { "-".dimmed().to_string() };
+        let status_col = match status {
             LessonStatus::NotStarted => "not started".dimmed().to_string(),
             LessonStatus::InProgress => "in progress".yellow().to_string(),
             LessonStatus::Done       => "done".green().to_string(),
         };
-        println!("{:>3}  {:<24} {}", l.id, l.slug, status_str);
+        println!("{:>3}  {:<20} {:>7}  {:<5}  {}", l.id, l.slug, ex_col, proj_col, status_col);
     }
     Ok(())
+}
+
+/// Compile + run every exercise in the lesson. Persists per-exercise
+/// outcome to the student's progress file. Returns whether all passed.
+fn cmd_check(root: &PathBuf, lesson: &str) -> Result<bool> {
+    let id = parse_id(lesson)?;
+    let l = find_lesson(root, id)?;
+    let ex_list = exercises::discover(&l.path)?;
+
+    if ex_list.is_empty() {
+        println!("no exercises in lesson {id}");
+        return Ok(true);
+    }
+
+    let mut progress = rbb_core::progress::load()?;
+    let lp = progress.lessons.entry(id).or_default();
+    let mut all_ok = true;
+
+    for ex in &ex_list {
+        let (result, log) = exercises::run(ex)?;
+        let (mark, color) = match result {
+            exercises::ExerciseResult::Passed        => ("✓", "green"),
+            exercises::ExerciseResult::CompileFailed => ("✗ compile", "red"),
+            exercises::ExerciseResult::TestFailed    => ("✗ tests",   "red"),
+        };
+        let line = format!("  [{mark}] ex{}_{}", ex.index, ex.slug);
+        match color {
+            "green" => println!("{}", line.green()),
+            _       => { println!("{}", line.red()); all_ok = false; }
+        }
+        if !matches!(result, exercises::ExerciseResult::Passed) && !log.is_empty() {
+            for l in log.lines().take(10) {
+                println!("      {}", l.dimmed());
+            }
+        }
+        lp.exercises.insert(ex.index, result);
+    }
+
+    if lp.status == LessonStatus::NotStarted {
+        lp.status = LessonStatus::InProgress;
+    }
+    let passing = lp.exercises_passed();
+    progress.last_active = Some(now_rfc3339());
+    rbb_core::progress::save(&progress)?;
+
+    println!("\n{} of {} exercises passing", passing, ex_list.len());
+    Ok(all_ok)
 }
 
 fn cmd_open(root: &PathBuf, lesson: &str) -> Result<()> {

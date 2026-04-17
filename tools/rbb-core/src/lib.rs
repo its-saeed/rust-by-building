@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
+pub mod exercises;
 pub mod progress;
 
 /// A lesson directory on disk, like `lessons/03-functions/`.
