@@ -377,6 +377,7 @@ dependencies = [
  "clap",
  "owo-colors",
  "rbb-core",
+ "serde",
  "serde_json",
  "walkdir",
 ]

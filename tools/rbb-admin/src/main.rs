@@ -34,7 +34,12 @@ enum Cmd {
     Check,
 
     /// Read progress out of every student's home dir.
-    Progress { user: Option<String> },
+    Progress {
+        user: Option<String>,
+        /// Emit machine-readable JSON instead of the human table.
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -75,8 +80,8 @@ fn main() -> Result<()> {
     // admin runs them on the server, not from a checkout. Only lesson
     // scaffolding and `check` need to know the workspace root.
     match cli.cmd {
-        Cmd::User(c)           => handle_user(c),
-        Cmd::Progress { user } => cmd_progress(user.as_deref()),
+        Cmd::User(c)                 => handle_user(c),
+        Cmd::Progress { user, json } => cmd_progress(user.as_deref(), json),
         Cmd::Lesson(c) => {
             let root = find_repo_root(&std::env::current_dir()?)
                 .context("run `rbb-admin lesson` from inside your rust-by-building checkout")?;
@@ -311,9 +316,25 @@ fn cmd_check(root: &Path) -> Result<()> {
     Ok(())
 }
 
-fn cmd_progress(filter: Option<&str>) -> Result<()> {
-    // Read /home/*/.rbb/progress.json. On dev machines (where /home
-    // doesn't have students) we fall back to just the current user.
+#[derive(serde::Serialize)]
+struct UserRow {
+    name: String,
+    lessons_done: usize,
+    lessons_in_progress: usize,
+    lessons_total: usize,
+    last_active: Option<String>,
+    /// Per-lesson snapshot keyed by lesson id as string ("03").
+    lessons: std::collections::BTreeMap<String, LessonRow>,
+}
+
+#[derive(serde::Serialize)]
+struct LessonRow {
+    status: String,
+    project_passing: bool,
+    exercises_passed: u32,
+}
+
+fn collect_rows(filter: Option<&str>) -> Result<Vec<UserRow>> {
     let home_root = PathBuf::from("/home");
     let homes: Vec<PathBuf> = if home_root.exists() {
         std::fs::read_dir(&home_root)?
@@ -325,8 +346,12 @@ fn cmd_progress(filter: Option<&str>) -> Result<()> {
         vec![PathBuf::from(std::env::var("HOME")?)]
     };
 
+    let mut rows = Vec::new();
     for home in homes {
-        let user = home.file_name().and_then(|s| s.to_str()).unwrap_or("?");
+        let user = match home.file_name().and_then(|s| s.to_str()) {
+            Some(u) => u.to_string(),
+            None => continue,
+        };
         if let Some(f) = filter {
             if user != f { continue; }
         }
@@ -337,12 +362,49 @@ fn cmd_progress(filter: Option<&str>) -> Result<()> {
         let text = std::fs::read_to_string(&progress_file)?;
         let p: rbb_core::progress::Progress = serde_json::from_str(&text).unwrap_or_default();
 
-        let done = p.lessons.values().filter(|lp| lp.status == rbb_core::LessonStatus::Done).count();
-        let total = p.lessons.len().max(1);
+        let mut lessons = std::collections::BTreeMap::new();
+        let mut done = 0usize;
+        let mut in_progress = 0usize;
+        for (id, lp) in &p.lessons {
+            match lp.status {
+                rbb_core::LessonStatus::Done       => done += 1,
+                rbb_core::LessonStatus::InProgress => in_progress += 1,
+                _ => {}
+            }
+            lessons.insert(id.to_string(), LessonRow {
+                status: format!("{:?}", lp.status),
+                project_passing: lp.project_passing,
+                exercises_passed: lp.exercises_passed(),
+            });
+        }
+
+        rows.push(UserRow {
+            name: user,
+            lessons_done: done,
+            lessons_in_progress: in_progress,
+            lessons_total: p.lessons.len(),
+            last_active: p.last_active,
+            lessons,
+        });
+    }
+    rows.sort_by(|a, b| a.name.cmp(&b.name));
+    Ok(rows)
+}
+
+fn cmd_progress(filter: Option<&str>, as_json: bool) -> Result<()> {
+    let rows = collect_rows(filter)?;
+
+    if as_json {
+        println!("{}", serde_json::to_string_pretty(&rows)?);
+        return Ok(());
+    }
+
+    for row in &rows {
+        let total = row.lessons_total.max(1);
         println!("{:<16} {}/{}  last active {}",
-            user.cyan(),
-            done, total,
-            p.last_active.as_deref().unwrap_or("-"));
+            row.name.cyan(),
+            row.lessons_done, total,
+            row.last_active.as_deref().unwrap_or("-"));
     }
     Ok(())
 }
