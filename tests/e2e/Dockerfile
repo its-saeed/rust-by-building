@@ -13,9 +13,13 @@ COPY capstones ./capstones
 COPY book ./book
 COPY docs ./docs
 
-# Build the CLIs. We build --workspace so the lesson/capstone members
-# also get their dependency graph resolved and tests stay runnable.
+# Build everything: CLIs + prebuild lesson/capstone test binaries so
+# `rbb test` inside a fresh container never touches the network. `cargo
+# fetch --locked` first so the registry index lives under $CARGO_HOME
+# (baked into the runtime image).
+RUN cargo fetch --locked
 RUN cargo build --release -p rbb -p rbb-admin
+RUN cargo test --workspace --no-run
 
 FROM rust:1-bookworm AS runtime
 

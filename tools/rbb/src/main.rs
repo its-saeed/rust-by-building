@@ -40,7 +40,14 @@ fn main() -> Result<()> {
     match cli.cmd {
         Cmd::Status       => cmd_status(&root),
         Cmd::Open { lesson }  => cmd_open(&root, &lesson),
-        Cmd::Test { lesson }  => cmd_test(&root, &lesson),
+        Cmd::Test { lesson }  => {
+            // Propagate test failure as a non-zero exit code so shell
+            // pipelines and CI actually notice. `cmd_test` itself does
+            // NOT exit — watch mode also calls it and must survive.
+            let passed = cmd_test(&root, &lesson)?;
+            if !passed { std::process::exit(1); }
+            Ok(())
+        }
         Cmd::Watch { lesson } => cmd_watch(&root, &lesson),
         Cmd::Next         => cmd_next(&root),
     }
@@ -78,7 +85,9 @@ fn cmd_open(root: &PathBuf, lesson: &str) -> Result<()> {
     Ok(())
 }
 
-fn cmd_test(root: &PathBuf, lesson: &str) -> Result<()> {
+/// Runs the lesson's project tests. Returns whether they passed.
+/// Does NOT exit the process — the caller decides how to react.
+fn cmd_test(root: &PathBuf, lesson: &str) -> Result<bool> {
     let id = parse_id(lesson)?;
     let l = find_lesson(root, id)?;
     let project = l.path.join("project").join("Cargo.toml");
@@ -94,21 +103,42 @@ fn cmd_test(root: &PathBuf, lesson: &str) -> Result<()> {
     if status.success() {
         mark_project_passing(id)?;
         println!("{}", "all tests passed".green());
-        Ok(())
+        Ok(true)
     } else {
         println!("{}", "tests failed".red());
-        std::process::exit(1);
+        Ok(false)
     }
 }
 
 fn cmd_watch(root: &PathBuf, lesson: &str) -> Result<()> {
-    // Simplest possible version: poll every 2s. Replace with `notify`
-    // once we're past the scaffolding phase.
-    println!("watching lesson {lesson} — Ctrl-C to stop");
-    loop {
+    use notify_debouncer_mini::{new_debouncer, notify::RecursiveMode};
+    use std::sync::mpsc::channel;
+    use std::time::Duration;
+
+    let id = parse_id(lesson)?;
+    let l = find_lesson(root, id)?;
+
+    println!("watching {} — Ctrl-C to stop", l.path.display().cyan());
+
+    // Initial run so the student sees state without having to touch a file.
+    let _ = cmd_test(root, lesson);
+
+    let (tx, rx) = channel();
+    let mut debouncer = new_debouncer(Duration::from_millis(300), move |res| {
+        // Forward anything (Ok or Err) — cmd_test itself reports compile
+        // status, so a spurious wake is cheap.
+        let _ = tx.send(res);
+    })?;
+
+    debouncer.watcher().watch(&l.path, RecursiveMode::Recursive)?;
+
+    for _ in rx {
+        // Clear screen between runs so feedback replaces itself. ANSI
+        // CSI H + J: cursor to 0,0 and erase below.
+        print!("\x1b[H\x1b[2J");
         let _ = cmd_test(root, lesson);
-        std::thread::sleep(std::time::Duration::from_secs(2));
     }
+    Ok(())
 }
 
 fn cmd_next(root: &PathBuf) -> Result<()> {

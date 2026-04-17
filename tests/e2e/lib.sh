@@ -120,3 +120,25 @@ as_alice() {
         cd ~/rust-by-building && $*
     "
 }
+
+# Poll a file (or command output) for a substring, up to `timeout` seconds.
+# Usage:
+#   wait_for_substring <file> <needle> <timeout_secs> <message>
+wait_for_substring() {
+    local file="$1" needle="$2" timeout="$3" msg="${4:-wait for substring}"
+    local waited=0
+    while (( waited < timeout )); do
+        if [[ -f "$file" ]] && grep -qF "$needle" "$file" 2>/dev/null; then
+            pass "$msg (after ${waited}s)"
+            return 0
+        fi
+        sleep 1
+        waited=$((waited + 1))
+    done
+    fail "$msg (timed out after ${timeout}s)"
+    if [[ -f "$file" ]]; then
+        printf '  %scurrent file contents%s:\n' "$DIM" "$RST"
+        sed 's/^/    /' "$file" | tail -30
+    fi
+    return 1
+}
