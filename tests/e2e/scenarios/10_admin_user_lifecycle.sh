@@ -9,7 +9,16 @@ source /e2e/lib.sh
 capture rbb-admin user add bob --from /opt/rbb
 assert_exit_zero "$CAP_CODE" "user add exits 0"
 assert_contains "$CAP_OUT" "created user bob" "prints created line"
-assert_contains "$CAP_OUT" "port range" "prints port range"
+assert_contains "$CAP_OUT" "port range"       "prints port range"
+assert_contains "$CAP_OUT" "password"         "prints generated password"
+
+# Password hash must be set in /etc/shadow.
+hashed=$(grep "^bob:" /etc/shadow | cut -d: -f2)
+if [[ -n "$hashed" && "$hashed" != "!" && "$hashed" != "*" && "$hashed" != "!!" ]]; then
+    pass "bob has password hash in /etc/shadow"
+else
+    fail "bob has no password hash (got '$hashed')"
+fi
 
 # User exists at the OS level.
 assert_file_exists /home/bob "home dir created"

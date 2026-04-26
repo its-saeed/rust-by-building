@@ -5,7 +5,7 @@
 FROM rust:1-bookworm AS builder
 
 WORKDIR /src
-COPY Cargo.toml Cargo.lock ./
+COPY Cargo.toml Cargo.lock .gitignore ./
 COPY .cargo ./.cargo
 COPY vendor ./vendor
 COPY tools ./tools
@@ -13,6 +13,7 @@ COPY lessons ./lessons
 COPY capstones ./capstones
 COPY book ./book
 COPY docs ./docs
+COPY server ./server
 
 # Build everything offline from the checked-in vendor tree. `--frozen`
 # fails if Cargo.lock doesn't match, or if any dep isn't vendored.

@@ -137,6 +137,11 @@ git config --system --add safe.directory "$SRV/student.git"
 if [[ -d "$REPO_SRC/.git" ]]; then
     git --git-dir="$REPO_SRC/.git" --work-tree="$REPO_SRC" \
         push --quiet "$SRV/rust-by-building.git" +HEAD:refs/heads/main
+    # Seed student.git with filtered content so students get a clean
+    # checkout (lessons + docs, no tool source) on first provision.
+    (cd "$REPO_SRC" && rbb-admin publish --skip-check \
+        --remote "$SRV/rust-by-building.git" \
+        --student-repo "$SRV/student.git") >/dev/null
 fi
 
 echo "[5/6] enable sshd"
@@ -151,7 +156,7 @@ if [[ -n "$STUDENTS_FILE" && -f "$STUDENTS_FILE" ]]; then
     echo
     echo "Provisioning students from $STUDENTS_FILE..."
     rbb-admin user bulk "$STUDENTS_FILE" \
-        --from "$SRV/rust-by-building.git" \
+        --from "$SRV/student.git" \
         --credentials "$creds"
     echo "Credentials written to $creds (mode 600)."
 fi

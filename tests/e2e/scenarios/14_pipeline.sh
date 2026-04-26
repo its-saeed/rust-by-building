@@ -32,10 +32,11 @@ assert_contains "$setup_log" "Rust by Building server is ready" "setup prints re
 
 # --- 2. the post-setup layout ------------------------------------------
 
-assert_file_exists /usr/local/bin/rbb        "rbb installed"
-assert_file_exists /usr/local/bin/rbb-admin  "rbb-admin installed"
-assert_file_exists /srv/rbb/rust-by-building.git/HEAD "bare repo created"
-assert_file_exists /srv/rbb/vendor           "shared vendor tree seeded"
+assert_file_exists /usr/local/bin/rbb                  "rbb installed"
+assert_file_exists /usr/local/bin/rbb-admin             "rbb-admin installed"
+assert_file_exists /srv/rbb/rust-by-building.git/HEAD  "admin bare repo created"
+assert_file_exists /srv/rbb/student.git/HEAD            "student bare repo created"
+assert_file_exists /srv/rbb/vendor                      "shared vendor tree seeded"
 
 # --- 3. students were provisioned --------------------------------------
 
@@ -80,14 +81,18 @@ assert_contains  "$CAP_OUT" "functions" "alice sees lesson 03"
 
 # --- 5. content update propagation -------------------------------------
 
-# Admin adds a new lesson in /opt (their working checkout).
+# Admin adds a new lesson and publishes via rbb-admin (no raw git).
 cd /opt/rust-by-building
+git config user.email admin@test
+git config user.name  admin
 rbb-admin lesson new 99 pipeline-test >/dev/null
-git -c user.email=admin@test -c user.name=admin add -A
-git -c user.email=admin@test -c user.name=admin commit --quiet -m "add lesson 99"
-git push --quiet /srv/rbb/rust-by-building.git main
+capture rbb-admin publish --skip-check -m "add lesson 99" \
+    --remote /srv/rbb/rust-by-building.git \
+    --student-repo /srv/rbb/student.git
+assert_exit_zero "$CAP_CODE" "publish -m exits 0"
+assert_contains  "$CAP_OUT" "published"      "publish banner shown"
 
-# Alice pulls and sees the new lesson.
+# Alice pulls from student.git and sees the new lesson.
 capture su -l alice -c "
     export PATH=/usr/local/cargo/bin:/usr/local/bin:\$PATH
     export CARGO_HOME=/usr/local/cargo
