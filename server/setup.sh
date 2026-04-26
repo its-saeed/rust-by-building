@@ -89,13 +89,15 @@ if ! command -v rustup >/dev/null; then
     ln -sf /usr/local/cargo/bin/rustc  /usr/local/bin/rustc
     ln -sf /usr/local/cargo/bin/cargo  /usr/local/bin/cargo
     ln -sf /usr/local/cargo/bin/rustup /usr/local/bin/rustup
-    # Make the env available to new shells.
-    cat > /etc/profile.d/rbb-cargo.sh <<'EOF'
+fi
+# Always write the profile.d snippet so every user (including students
+# provisioned later) gets cargo in PATH regardless of whether rustup was
+# pre-installed (e.g. in a Docker base image) or freshly downloaded here.
+cat > /etc/profile.d/rbb-cargo.sh <<'EOF'
 export CARGO_HOME=/usr/local/cargo
 export RUSTUP_HOME=/usr/local/rustup
 export PATH=/usr/local/cargo/bin:$PATH
 EOF
-fi
 
 echo "[3/6] build + install rbb / rbb-admin"
 pushd "$REPO_SRC" >/dev/null

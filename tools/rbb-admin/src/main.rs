@@ -229,10 +229,13 @@ struct ProvisionResult {
 fn user_add(name: &str, from: &Path) -> Result<()> {
     require_root()?;
     let r = provision_user(name, from)?;
+    let pw = random_password(14)?;
+    set_password(name, &pw)?;
     println!("created user {name}");
     println!("  home:        {}", r.home.display());
     println!("  checkout:    {}", r.checkout.display());
     println!("  port range:  {}-{}", r.port_base, r.port_base + 99);
+    println!("  password:    {pw}");
     Ok(())
 }
 
