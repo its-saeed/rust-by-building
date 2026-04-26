@@ -41,13 +41,15 @@ enum Cmd {
         json: bool,
     },
 
-    /// Run `rbb-admin check`, then push the workspace to the server's
-    /// bare repo. A safety net so new lessons are validated before
-    /// students can pull them.
+    /// Run `rbb-admin check`, push the full workspace to the admin bare
+    /// repo, then export filtered student content to the student repo.
     Publish {
-        /// Git remote name or absolute path to the bare repo.
+        /// Git remote or path for the admin's full repo.
         #[arg(long, default_value = "/srv/rbb/rust-by-building.git")]
         remote: String,
+        /// Git remote or path for the student-facing repo (lessons + docs only).
+        #[arg(long, default_value = "/srv/rbb/student.git")]
+        student_repo: String,
         /// Branch to push. Students pull from this.
         #[arg(long, default_value = "main")]
         branch: String,
@@ -65,14 +67,13 @@ enum Cmd {
 
 #[derive(Subcommand)]
 enum UserCmd {
-    /// Create a Linux user, clone the course repo into their home,
+    /// Create a Linux user, clone the student repo into their home,
     /// assign a port range, and set file ownership.
     Add {
         name: String,
         /// Where to seed the student's checkout from. Defaults to the
-        /// server's bare repo. For single-host testing, point this at
-        /// the admin's own workspace checkout.
-        #[arg(long, default_value = "/srv/rbb/rust-by-building.git")]
+        /// student-facing bare repo (filtered, no tool source).
+        #[arg(long, default_value = "/srv/rbb/student.git")]
         from: PathBuf,
     },
     /// Provision many students at once. Reads usernames (one per
@@ -83,7 +84,7 @@ enum UserCmd {
         /// Path to a file with one username per line.
         list: PathBuf,
         /// Source for each student's checkout (see `user add --from`).
-        #[arg(long, default_value = "/srv/rbb/rust-by-building.git")]
+        #[arg(long, default_value = "/srv/rbb/student.git")]
         from: PathBuf,
         /// Write credentials here (mode 600). Defaults to stdout.
         #[arg(long)]
@@ -130,10 +131,10 @@ fn main() -> Result<()> {
                 .context("run `rbb-admin check` from inside your rust-by-building checkout")?;
             cmd_check(&root)
         }
-        Cmd::Publish { remote, branch, skip_check } => {
+        Cmd::Publish { remote, student_repo, branch, skip_check } => {
             let root = find_repo_root(&std::env::current_dir()?)
                 .context("run `rbb-admin publish` from inside your rust-by-building checkout")?;
-            cmd_publish(&root, &remote, &branch, skip_check)
+            cmd_publish(&root, &remote, &student_repo, &branch, skip_check)
         }
         Cmd::VendorSync => {
             let root = find_repo_root(&std::env::current_dir()?)
@@ -602,23 +603,95 @@ fn collect_rows(filter: Option<&str>) -> Result<Vec<UserRow>> {
     Ok(rows)
 }
 
-fn cmd_publish(root: &Path, remote: &str, branch: &str, skip_check: bool) -> Result<()> {
-    if !skip_check {
-        println!("{}", "[1/2] preflight: rbb-admin check".bold());
-        cmd_check(root)?;
-    } else {
-        println!("{}", "[1/2] preflight: skipped (--skip-check)".yellow());
+fn sh_in(dir: &Path, cmd: &str, args: &[&str]) -> Result<()> {
+    let status = Command::new(cmd).current_dir(dir).args(args).status()
+        .with_context(|| format!("spawning {cmd} {args:?}"))?;
+    if !status.success() {
+        anyhow::bail!("{cmd} {args:?} exited with {status}");
+    }
+    Ok(())
+}
+
+fn export_student_repo(root: &Path, student_remote: &str, branch: &str) -> Result<()> {
+    let tmp = std::env::temp_dir().join(format!("rbb-student-{}", std::process::id()));
+    if tmp.exists() {
+        std::fs::remove_dir_all(&tmp)?;
     }
 
-    println!("\n{}", format!("[2/2] pushing to {remote} ({branch})").bold());
+    // Clone existing student repo. An empty bare repo gives an empty
+    // worktree — that's fine, we'll add content and push.
+    let cloned = Command::new("git")
+        .args(["clone", "--quiet", student_remote, tmp.to_str().context("temp path")?])
+        .status().context("git clone student repo")?.success();
+
+    if !cloned {
+        std::fs::create_dir_all(&tmp)?;
+        sh_in(&tmp, "git", &["init", "--quiet", "--initial-branch", branch])?;
+        sh_in(&tmp, "git", &["remote", "add", "origin", student_remote])?;
+    }
+
+    // Wipe everything except .git so deleted files don't linger.
+    for entry in std::fs::read_dir(&tmp)? {
+        let entry = entry?;
+        if entry.file_name() == ".git" { continue; }
+        let p = entry.path();
+        if p.is_dir() { std::fs::remove_dir_all(&p)?; } else { std::fs::remove_file(&p)?; }
+    }
+
+    // Copy student-facing content.
+    for dir in &["lessons", "capstones", "book", "docs", "vendor", ".cargo"] {
+        let src = root.join(dir);
+        if src.exists() {
+            sh("cp", &["-r", src.to_str().context("src path")?,
+                       tmp.join(dir).to_str().context("dst path")?])?;
+        }
+    }
+    std::fs::copy(root.join("Cargo.lock"), tmp.join("Cargo.lock"))
+        .context("copying Cargo.lock")?;
+    std::fs::copy(root.join("server/student-Cargo.toml"), tmp.join("Cargo.toml"))
+        .context("copying server/student-Cargo.toml — does it exist?")?;
+
+    sh_in(&tmp, "git", &["-c", "user.email=admin@rbb", "-c", "user.name=rbb-admin",
+                          "add", "--all"])?;
+
+    let dirty = Command::new("git").current_dir(&tmp)
+        .args(["status", "--porcelain"]).output()?;
+    if dirty.stdout.is_empty() {
+        println!("  student repo already up to date");
+        std::fs::remove_dir_all(&tmp)?;
+        return Ok(());
+    }
+
+    sh_in(&tmp, "git", &["-c", "user.email=admin@rbb", "-c", "user.name=rbb-admin",
+                          "commit", "--quiet", "-m", "publish"])?;
+    sh_in(&tmp, "git", &["push", "--quiet", "origin",
+                          &format!("HEAD:refs/heads/{branch}")])?;
+
+    std::fs::remove_dir_all(&tmp)?;
+    Ok(())
+}
+
+fn cmd_publish(root: &Path, remote: &str, student_repo: &str, branch: &str, skip_check: bool) -> Result<()> {
+    if !skip_check {
+        println!("{}", "[1/3] preflight: rbb-admin check".bold());
+        cmd_check(root)?;
+    } else {
+        println!("{}", "[1/3] preflight: skipped (--skip-check)".yellow());
+    }
+
+    println!("\n{}", format!("[2/3] pushing admin repo to {remote}").bold());
     let status = Command::new("git")
         .current_dir(root)
         .args(["push", remote, &format!("HEAD:refs/heads/{branch}")])
         .status()
         .context("spawning git push")?;
     if !status.success() {
-        anyhow::bail!("git push failed with {status}");
+        anyhow::bail!("git push to admin repo failed with {status}");
     }
+
+    println!("\n{}", format!("[3/3] exporting student content to {student_repo}").bold());
+    export_student_repo(root, student_repo, branch)?;
+
     println!("\n{}", "published".green().bold());
     Ok(())
 }

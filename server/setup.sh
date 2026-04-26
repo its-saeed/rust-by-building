@@ -116,6 +116,12 @@ if [[ ! -d "$SRV/rust-by-building.git" ]]; then
     git init --quiet --bare --initial-branch=main "$SRV/rust-by-building.git"
 fi
 
+# student.git is the filtered repo students clone — no tool source,
+# no test infrastructure. rbb-admin publish populates it.
+if [[ ! -d "$SRV/student.git" ]]; then
+    git init --quiet --bare --initial-branch=main "$SRV/student.git"
+fi
+
 # Git's safe.directory check rejects a repo whose owner UID differs
 # from the caller's. On the course server the admin's checkout and the
 # bare repo are often touched by different accounts (student clones,
@@ -123,8 +129,9 @@ fi
 # has to remember the incantation.
 git config --system --add safe.directory "$REPO_SRC"
 git config --system --add safe.directory "$SRV/rust-by-building.git"
+git config --system --add safe.directory "$SRV/student.git"
 
-# Seed the bare repo from the admin's checkout if it's a git repo.
+# Seed the admin bare repo from the admin's checkout if it's a git repo.
 # Let errors surface — a silent failure leaves the bare repo empty,
 # which breaks every student clone downstream.
 if [[ -d "$REPO_SRC/.git" ]]; then
@@ -155,7 +162,8 @@ cat <<EOF
 
 ✓ Rust by Building server is ready.
 
-Repo (bare):   $SRV/rust-by-building.git
+Admin repo:    $SRV/rust-by-building.git  (full source, admin only)
+Student repo:  $SRV/student.git           (lessons + docs, what students clone)
 Admin CLI:     /usr/local/bin/rbb-admin
 Student CLI:   /usr/local/bin/rbb
 
