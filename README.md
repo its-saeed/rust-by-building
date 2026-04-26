@@ -40,7 +40,15 @@ rbb-admin user bulk students.txt --credentials creds.txt
 
 `creds.txt` is a mode-600 file with `username:password` pairs — hand each row to the corresponding student however you normally share credentials.
 
-See **[`docs/admins.md`](./docs/admins.md)** for writing new lessons, pushing updates, observing progress, and rotating the student list.
+To publish new or updated lessons to students:
+
+```sh
+rbb-admin publish -m "add lesson 05: closures"
+```
+
+One command: validates, commits, pushes the admin repo, and exports filtered content (no tool source) to the student-facing repo. Students `git pull` to get it.
+
+See **[`docs/admins.md`](./docs/admins.md)** for writing new lessons, adding crates, observing progress, and rotating the student list.
 
 ## Student TL;DR
 

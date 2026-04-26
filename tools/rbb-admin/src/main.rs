@@ -41,9 +41,13 @@ enum Cmd {
         json: bool,
     },
 
-    /// Run `rbb-admin check`, push the full workspace to the admin bare
-    /// repo, then export filtered student content to the student repo.
+    /// Check, optionally commit, push the admin repo, and export to the
+    /// student repo — one command for the whole publish loop.
     Publish {
+        /// Stage all changes and commit with this message before pushing.
+        /// Omit if you prefer to manage git commits yourself.
+        #[arg(short, long)]
+        message: Option<String>,
         /// Git remote or path for the admin's full repo.
         #[arg(long, default_value = "/srv/rbb/rust-by-building.git")]
         remote: String,
@@ -131,10 +135,10 @@ fn main() -> Result<()> {
                 .context("run `rbb-admin check` from inside your rust-by-building checkout")?;
             cmd_check(&root)
         }
-        Cmd::Publish { remote, student_repo, branch, skip_check } => {
+        Cmd::Publish { message, remote, student_repo, branch, skip_check } => {
             let root = find_repo_root(&std::env::current_dir()?)
                 .context("run `rbb-admin publish` from inside your rust-by-building checkout")?;
-            cmd_publish(&root, &remote, &student_repo, &branch, skip_check)
+            cmd_publish(&root, message.as_deref(), &remote, &student_repo, &branch, skip_check)
         }
         Cmd::VendorSync => {
             let root = find_repo_root(&std::env::current_dir()?)
@@ -671,15 +675,31 @@ fn export_student_repo(root: &Path, student_remote: &str, branch: &str) -> Resul
     Ok(())
 }
 
-fn cmd_publish(root: &Path, remote: &str, student_repo: &str, branch: &str, skip_check: bool) -> Result<()> {
+fn cmd_publish(root: &Path, message: Option<&str>, remote: &str, student_repo: &str, branch: &str, skip_check: bool) -> Result<()> {
+    let steps = if message.is_some() { 4 } else { 3 };
+    let mut step = 0usize;
+    let mut next = move || { step += 1; step };
+
     if !skip_check {
-        println!("{}", "[1/3] preflight: rbb-admin check".bold());
+        println!("{}", format!("[{}/{}] preflight: rbb-admin check", next(), steps).bold());
         cmd_check(root)?;
     } else {
-        println!("{}", "[1/3] preflight: skipped (--skip-check)".yellow());
+        println!("{}", format!("[{}/{}] preflight: skipped (--skip-check)", next(), steps).yellow());
     }
 
-    println!("\n{}", format!("[2/3] pushing admin repo to {remote}").bold());
+    if let Some(msg) = message {
+        println!("\n{}", format!("[{}/{}] committing changes", next(), steps).bold());
+        sh("git", &["-C", root.to_str().context("root path")?, "add", "-A"])?;
+        let dirty = Command::new("git").current_dir(root)
+            .args(["status", "--porcelain"]).output()?;
+        if dirty.stdout.is_empty() {
+            println!("  nothing to commit, working tree clean");
+        } else {
+            sh("git", &["-C", root.to_str().context("root path")?, "commit", "-m", msg])?;
+        }
+    }
+
+    println!("\n{}", format!("[{}/{}] pushing admin repo to {remote}", next(), steps).bold());
     let status = Command::new("git")
         .current_dir(root)
         .args(["push", remote, &format!("HEAD:refs/heads/{branch}")])
@@ -689,7 +709,7 @@ fn cmd_publish(root: &Path, remote: &str, student_repo: &str, branch: &str, skip
         anyhow::bail!("git push to admin repo failed with {status}");
     }
 
-    println!("\n{}", format!("[3/3] exporting student content to {student_repo}").bold());
+    println!("\n{}", format!("[{}/{}] exporting student content to {student_repo}", next(), steps).bold());
     export_student_repo(root, student_repo, branch)?;
 
     println!("\n{}", "published".green().bold());

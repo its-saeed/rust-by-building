@@ -24,7 +24,8 @@ What the script does, in order:
 - apt-installs `build-essential`, `git`, `curl`, `openssh-server`, and (optionally) `helix`
 - installs `rustup` into `/usr/local/cargo` system-wide
 - builds + installs `rbb` and `rbb-admin` into `/usr/local/bin/`
-- sets up `/srv/rbb/` with a bare git repo + shared vendor tree
+- sets up `/srv/rbb/` with two bare repos + shared vendor tree
+- writes `/etc/profile.d/rbb-cargo.sh` so all users get Rust in PATH
 - enables and starts `sshd`
 - (optional) provisions the student list
 
@@ -40,9 +41,10 @@ rbb-admin user add alice
 #   home:        /home/alice
 #   checkout:    /home/alice/rust-by-building
 #   port range:  10100-10199
+#   password:    xK7mPqR3nJvZ
 ```
 
-`user add` does NOT set a password. Set one with `passwd alice`, or use bulk mode below (which generates one).
+Give alice her username, password, and the server address. That's everything she needs to SSH in.
 
 ### In a batch
 
@@ -145,42 +147,42 @@ Write the chapter in `book/src/07-error-handling.md`. Model it on `book/src/03-f
 
 `lesson new` also wires the chapter into `book/src/SUMMARY.md` automatically — it replaces any pre-listed entry for that lesson number, or appends a new one if none exists.
 
-### Validate before publishing
-
-```sh
-rbb-admin check
-```
-
-Builds every package in the workspace and runs every project's test suite. Fails fast if any lesson's stubs are still `todo!()` or if a new lesson broke something.
-
 ### Publish
 
 ```sh
-# From the admin checkout (commits must already be made):
-rbb-admin publish
-# [1/2] preflight: rbb-admin check
-#   ...
-# [2/2] pushing to /srv/rbb/rust-by-building.git (main)
+rbb-admin publish -m "add lesson 07: error handling"
+# [1/4] preflight: rbb-admin check
+# [2/4] committing changes
+# [3/4] pushing admin repo to /srv/rbb/rust-by-building.git
+# [4/4] exporting student content to /srv/rbb/student.git
 # published
 ```
 
-`publish` runs `check` as a preflight, then `git push` to the bare repo. `--skip-check` bypasses the preflight when you're iterating on the harness; never use it for content pushes. `--remote <path-or-name>` overrides the default (`/srv/rbb/rust-by-building.git`).
+`publish -m` does the full loop in one command: validates, stages all changes, commits, pushes the admin repo, and exports filtered content (lessons, book, docs, vendor — no tool source) to the student-facing repo. Students pick up changes with `git pull`.
 
-Students pick up changes with `git pull` in their checkout. If they're running `rbb watch`, tests rerun automatically.
+If you prefer to manage commits yourself, omit `-m` and `publish` will push whatever HEAD already is:
+
+```sh
+git add lessons/07-error-handling book/src/07-error-handling.md
+git commit -m "add lesson 07: error handling"
+rbb-admin publish
+```
+
+`--skip-check` bypasses the preflight for harness iteration; never use it for content. `--remote` and `--student-repo` override the default paths.
 
 ## Adding or bumping dependencies
 
 This is the one step that requires internet access on the admin's machine (or, in principle, a private crates mirror).
 
 ```sh
-# 1. Edit the Cargo.toml that needs the change.
-# 2. Re-vendor — runs cargo vendor and tells you what to commit next:
+# 1. Edit Cargo.toml and server/student-Cargo.toml to add the dependency.
+# 2. Re-vendor (needs network — run on your Mac, not the server):
 rbb-admin vendor-sync
-# 3. Commit + publish:
-git add Cargo.toml Cargo.lock vendor
-git commit -m "bump: <what changed>"
-rbb-admin publish
+# 3. Publish with a commit message:
+rbb-admin publish -m "add regex crate"
 ```
+
+`vendor-sync` stays separate from `publish` because it needs network and can take a while — you still review what was vendored before it goes to students.
 
 If `cargo build --offline` fails after a vendor-sync, the vendor tree is out of sync with `Cargo.lock` — re-run `rbb-admin vendor-sync`.
 
@@ -201,14 +203,15 @@ Formula: `10000 + (uid - 1000) * 100`, 100 ports per student. Enough headroom fo
 ```
 /opt/rust-by-building/                  your source-of-truth checkout (for admin work)
 /srv/rbb/
-    rust-by-building.git                bare repo students pull from
+    rust-by-building.git                admin bare repo (full source, pushed by publish)
+    student.git                         student bare repo (lessons + docs only, no tool source)
     vendor/                             shared vendored crates (setup.sh copies from /opt)
     docs/                               rendered book + stdlib docs (optional HTTP serve)
 /usr/local/bin/
     rbb                                 student CLI
     rbb-admin                           admin CLI
 /home/<student>/
-    rust-by-building/                   their clone
+    rust-by-building/                   their clone (from student.git)
     .rbb/
         progress.json                   their state
         env                             their port range
