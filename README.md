@@ -51,6 +51,8 @@ One command: validates, commits, pushes the admin repo, and exports filtered con
 See **[`docs/admins.md`](./docs/admins.md)** for writing new lessons, adding crates, observing progress, and rotating the student list.
 
 ## Student TL;DR
+## Student TL;DR
+## Student TL;DR
 
 Your admin gave you a username, password, and a server address. Log in:
 
@@ -87,7 +89,6 @@ See **[`docs/students.md`](./docs/students.md)** for the longer story.
 ```
 book/          lesson chapters (rendered with mdbook, served locally)
 lessons/       per-lesson exercises + projects with boilerplate + tests
-capstones/     phase-end larger projects
 tools/         rust workspace:
                  rbb         student CLI
                  rbb-admin   admin CLI
