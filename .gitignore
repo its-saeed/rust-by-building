@@ -2,6 +2,9 @@ target/
 Cargo.lock.bak
 .DS_Store
 
+# mdBook build output
+book/book/
+
 # Student-local progress file (never committed)
 .rbb/
 

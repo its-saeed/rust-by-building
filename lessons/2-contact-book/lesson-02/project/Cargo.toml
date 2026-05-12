@@ -1,0 +1,9 @@
+[package]
+name = "contact-02"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "contact-02"
+path = "src/main.rs"

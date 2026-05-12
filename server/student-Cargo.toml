@@ -2,6 +2,8 @@
 resolver = "2"
 members = [
     "lessons/*/project",
+    "lessons/1-caesar-cipher/lesson-*/project",
+    "lessons/2-contact-book/lesson-*/project",
     "capstones/*",
 ]
 

@@ -1,0 +1,9 @@
+[package]
+name = "caesar-05"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "caesar-05"
+path = "src/main.rs"
