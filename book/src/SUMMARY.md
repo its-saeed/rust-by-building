@@ -47,6 +47,12 @@
 # Project 5 — Many Bodies
 
 - [Overview](./many-bodies/overview.md)
+- [Lesson 1 — The World](./many-bodies/01-the-world.md)
+- [Lesson 2 — World::step()](./many-bodies/02-step.md)
+- [Lesson 3 — Boundaries](./many-bodies/03-boundaries.md)
+- [Lesson 4 — Gravity](./many-bodies/04-gravity.md)
+- [Lesson 5 — Spawning](./many-bodies/05-spawning.md)
+- [Lesson 6 — Polish](./many-bodies/06-polish.md)
 
 # Project 6 — Balls Collide
 
