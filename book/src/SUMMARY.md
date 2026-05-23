@@ -34,6 +34,32 @@
 - [Lesson 6 — User Input & Command Loop](./cipher-cracker/06-user-input.md)
 - [Final Exercise](./cipher-cracker/07-final.md)
 
+# Project 4 — A Ball Moves
+
+- [Overview](./ball-moves/overview.md)
+- [Lesson 1 — Hello macroquad](./ball-moves/01-hello-macroquad.md)
+- [Lesson 2 — Vec2](./ball-moves/02-vec2.md)
+- [Lesson 3 — Operator Overloading](./ball-moves/03-operator-overloading.md)
+- [Lesson 4 — The Body](./ball-moves/04-body.md)
+- [Lesson 5 — Integration](./ball-moves/05-integration.md)
+- [Lesson 6 — Wall Bouncing](./ball-moves/06-wall-bouncing.md)
+
+# Project 5 — Many Bodies
+
+- [Overview](./many-bodies/overview.md)
+
+# Project 6 — Balls Collide
+
+- [Overview](./collisions/overview.md)
+
+# Project 7 — Stable World
+
+- [Overview](./stable-world/overview.md)
+
+# Project 8 — Boxes
+
+- [Overview](./boxes/overview.md)
+
 # Appendix
 
 - [Reading stdlib docs offline](./appendix-offline-docs.md)

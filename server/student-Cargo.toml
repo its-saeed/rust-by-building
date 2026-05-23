@@ -5,6 +5,11 @@ members = [
     "lessons/1-caesar-cipher/lesson-*/project",
     "lessons/2-contact-book/lesson-*/project",
     "lessons/3-cipher-cracker/lesson-*/project",
+    "lessons/4-ball-moves/lesson-*/project",
+    "lessons/5-many-bodies/lesson-*/project",
+    "lessons/6-collisions/lesson-*/project",
+    "lessons/7-stable-world/lesson-*/project",
+    "lessons/8-boxes/lesson-*/project",
     "capstones/*",
 ]
 
@@ -25,3 +30,4 @@ notify = "6"
 notify-debouncer-mini = "0.4"
 ratatui = "0.29"
 crossterm = "0.28"
+macroquad = "0.4"

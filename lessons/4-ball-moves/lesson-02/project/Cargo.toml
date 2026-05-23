@@ -1,0 +1,12 @@
+[package]
+name = "ball-02"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[dependencies]
+macroquad = { workspace = true }
+
+[[bin]]
+name = "ball-02"
+path = "src/main.rs"
