@@ -1,0 +1,9 @@
+[package]
+name = "cipher-02"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "cipher-02"
+path = "src/main.rs"

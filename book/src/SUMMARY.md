@@ -23,6 +23,17 @@
 - [Lesson 5 — User Input](./contact-book/05-user-input.md)
 - [Final Exercise](./contact-book/06-final.md)
 
+# Project 3 — Cipher Cracker
+
+- [Overview](./cipher-cracker/overview.md)
+- [Lesson 1 — HashMap](./cipher-cracker/01-hashmap.md)
+- [Lesson 2 — Traits](./cipher-cracker/02-traits.md)
+- [Lesson 3 — Iterators](./cipher-cracker/03-iterators.md)
+- [Lesson 4 — Enums](./cipher-cracker/04-enums.md)
+- [Lesson 5 — Frequency Analysis](./cipher-cracker/05-frequency-analysis.md)
+- [Lesson 6 — User Input & Command Loop](./cipher-cracker/06-user-input.md)
+- [Final Exercise](./cipher-cracker/07-final.md)
+
 # Appendix
 
 - [Reading stdlib docs offline](./appendix-offline-docs.md)
