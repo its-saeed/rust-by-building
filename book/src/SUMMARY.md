@@ -60,6 +60,13 @@
 # Project 6 — Balls Collide
 
 - [Overview](./collisions/overview.md)
+- [Lesson 1 — Overlap Detection](./collisions/01-overlap.md)
+- [Lesson 2 — The Collision Type](./collisions/02-collision-type.md)
+- [Lesson 3 — Separating Bodies](./collisions/03-separation.md)
+- [Collision Physics](./collisions/collision-physics.md)
+- [Lesson 4 — Velocity Response](./collisions/04-velocity-response.md)
+- [Lesson 5 — Mass](./collisions/05-mass.md)
+- [Lesson 6 — Wiring It Up](./collisions/06-wiring.md)
 
 # Project 7 — Stable World
 

@@ -1,0 +1,10 @@
+[package]
+name = "coll-05"
+edition.workspace = true
+
+[dependencies]
+macroquad = { workspace = true }
+
+[[bin]]
+name = "coll-05"
+path = "src/main.rs"
