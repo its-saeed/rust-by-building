@@ -116,8 +116,8 @@ Common adapters:
 
 | Adapter | What it does |
 |---------|-------------|
-| `.map(|x| ...)` | Transform each item into something else |
-| `.filter(|x| ...)` | Keep only items where the closure returns `true` |
+| `.map(\|x\| ...)` | Transform each item into something else |
+| `.filter(\|x\| ...)` | Keep only items where the closure returns `true` |
 | `.take(n)` | Stop after `n` items |
 | `.skip(n)` | Skip the first `n` items |
 | `.enumerate()` | Pair each item with its index: `(0, item), (1, item), ...` |
