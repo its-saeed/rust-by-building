@@ -20,7 +20,29 @@ position = position + velocity * dt
 
 `dt` is **delta time** — the duration of the previous frame in seconds. On a 60 Hz display, `dt` is about `0.016` (one-sixtieth of a second).
 
-This is called **Euler integration** — the simplest way to simulate continuous motion as discrete steps.
+This is called **Euler integration**.
+
+---
+
+## What Euler integration actually does
+
+In the real world, a ball under gravity follows a smooth curve — its velocity changes continuously at every instant. A computer can't compute infinite instants. Instead, it samples the world at discrete moments:
+
+```
+time:    t=0          t=0.016       t=0.032       t=0.048
+         │             │             │             │
+         ●─────────────●─────────────●─────────────●
+         │  straight    │  straight   │  straight   │
+         │  line step   │  line step  │  line step  │
+```
+
+At each step, Euler integration makes a single assumption: **velocity is constant for the duration of this step**. Multiply that velocity by `dt`, add it to position, done.
+
+When velocity truly is constant (no forces), the approximation is exact — the ball moves in a straight line and we compute it perfectly. When velocity is changing (gravity is pulling the ball faster each moment), we're using the velocity from the *start* of the step, ignoring the change that happens *during* it. That introduces a small error.
+
+Smaller `dt` → shorter steps → less error per step. At 60 FPS the steps are small enough that the path looks correct to the eye.
+
+The name comes from Leonhard Euler, the 18th-century mathematician who formalized the method. It's the simplest numerical integrator there is — one addition, one multiplication per axis, per frame. More accurate methods exist (Verlet, Runge-Kutta), but they're more complex and unnecessary for a game at this scale.
 
 ---
 
