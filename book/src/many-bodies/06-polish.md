@@ -37,6 +37,31 @@ impl Body {
 
 ---
 
+## Understanding RGBA colors
+
+Computer colors are built from four numbers:
+
+- **R** (red) — how much red light, from `0.0` (none) to `1.0` (full)
+- **G** (green) — how much green light
+- **B** (blue) — how much blue light
+- **A** (alpha) — opacity, from `0.0` (invisible) to `1.0` (fully opaque)
+
+Mixing the three light channels gives you any colour:
+
+| R | G | B | Result |
+|---|---|---|--------|
+| 1.0 | 0.0 | 0.0 | Bright red |
+| 0.0 | 0.8 | 0.2 | Green |
+| 0.0 | 0.4 | 1.0 | Blue |
+| 1.0 | 1.0 | 0.0 | Yellow |
+| 1.0 | 1.0 | 1.0 | White |
+| 0.0 | 0.0 | 0.0 | Black |
+| 0.5 | 0.5 | 0.5 | Mid grey |
+
+macroquad's `Color::new(r, g, b, a)` takes four `f32` values in this `0.0–1.0` range. The built-in constants like `WHITE`, `RED`, and `BLUE` are just pre-defined `Color` values using the same system.
+
+---
+
 ## Random colors
 
 macroquad includes a random number generator. Generate a bright, saturated color by keeping the components above 0.4:

@@ -37,6 +37,7 @@
 # Project 4 — A Ball Moves
 
 - [Overview](./ball-moves/overview.md)
+- [Physics Primer](./ball-moves/physics-primer.md)
 - [Lesson 1 — Hello macroquad](./ball-moves/01-hello-macroquad.md)
 - [Lesson 2 — Vec2](./ball-moves/02-vec2.md)
 - [Lesson 3 — Operator Overloading](./ball-moves/03-operator-overloading.md)
@@ -47,7 +48,9 @@
 # Project 5 — Many Bodies
 
 - [Overview](./many-bodies/overview.md)
+- [Ownership in Plain English](./many-bodies/ownership.md)
 - [Lesson 1 — The World](./many-bodies/01-the-world.md)
+- [Iterators](./many-bodies/iterators.md)
 - [Lesson 2 — World::step()](./many-bodies/02-step.md)
 - [Lesson 3 — Boundaries](./many-bodies/03-boundaries.md)
 - [Lesson 4 — Gravity](./many-bodies/04-gravity.md)

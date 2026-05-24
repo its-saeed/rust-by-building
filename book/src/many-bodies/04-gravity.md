@@ -52,7 +52,23 @@ The order matters: accumulate forces first, then advance position with the alrea
 
 ## What you'll see
 
-Balls now fall toward the floor and bounce back up. Because velocity accumulates, balls that bounce off the top edge have less upward velocity each time and eventually settle near the floor — exactly as you'd expect.
+Balls now fall toward the floor and bounce back up. Because velocity accumulates, balls fall faster each frame — they accelerate, just like real gravity.
+
+---
+
+## Why do balls eventually stop bouncing?
+
+You might notice that after many bounces, balls settle near the floor and stop — even though we flip velocity perfectly and add no friction. This seems wrong. Here's what's actually happening.
+
+Our bounce reverses velocity exactly: `velocity.y = -velocity.y`. In theory, a ball should bounce to the same height forever. But two things work against this:
+
+**1. Euler integration is an approximation.** We advance position in discrete steps. The formula `position += velocity * dt` isn't exact — it slightly overestimates or underestimates the true position depending on how velocity is changing. These tiny errors accumulate over many frames. In our case, gravity is always pulling down, and Euler integration is biased slightly toward energy loss rather than gain.
+
+**2. Floating-point numbers aren't exact.** `f32` represents numbers in binary, and most decimal fractions (like `0.016`) can't be represented exactly. Each arithmetic operation introduces a rounding error at the last decimal place. After thousands of frames and millions of operations, these micro-errors add up.
+
+The result: each bounce loses a tiny amount of energy, and eventually the losses outpace the ball's ability to escape gravity.
+
+This isn't a bug — it's a known limitation of simple Euler integration with fixed timesteps. In Project 7 (Stable World) we'll introduce **restitution** — a bounce coefficient that gives us explicit control over energy loss per bounce. For now, the settling behaviour is expected and even looks physically plausible.
 
 ---
 
