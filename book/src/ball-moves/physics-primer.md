@@ -19,6 +19,60 @@ If the frames are small enough — 60 per second is typical — the motion looks
 
 ---
 
+## Frames, FPS, and the game loop
+
+**FPS** stands for **frames per second** — how many complete simulation cycles run each second.
+
+- At 60 fps → the loop runs 60 times per second → each frame lasts ~0.016 seconds
+- At 30 fps → the loop runs 30 times per second → each frame lasts ~0.033 seconds
+- At 120 fps → the loop runs 120 times per second → each frame lasts ~0.008 seconds
+
+**Why 60?** Most monitors physically refresh their display 60 times per second (60 Hz). Running the loop faster than the display refreshes produces frames that are never shown. Running it slower makes motion look choppy — individual steps become visible. 60 fps matches the most common display hardware and is widely used as the baseline target.
+
+**Why motion looks smooth at 60 fps:** The human eye processes roughly 24–60 distinct images per second before they blur together into continuous motion. Film runs at 24 fps and looks smooth. Games at 60 fps feel noticeably fluid. Below ~20 fps, the steps are clearly visible.
+
+**How the game loop actually works:**
+
+```
+┌─────────────────────────────────┐
+│  1. measure how long last       │
+│     frame took  (dt)            │
+│                                 │
+│  2. read input                  │
+│     (keyboard, mouse)           │
+│                                 │
+│  3. update the world            │
+│     (physics, game logic)       │
+│                                 │
+│  4. draw everything             │
+│                                 │
+│  5. hand control to the OS      │
+│     → it displays the frame     │
+│     → calls you back next tick  │
+│                                 │
+│  6. repeat                      │
+└─────────────────────────────────┘
+```
+
+In macroquad, step 5 is `next_frame().await`. You write steps 3 and 4. Step 1 is `get_frame_time()`. Steps 2 and 6 are handled automatically.
+
+**dt — delta time:** The duration of one frame is called `dt` (delta time — "delta" is the math symbol for "change"). Instead of hardcoding `dt = 0.016`, we measure the actual duration of the previous frame:
+
+```rust
+let dt = get_frame_time();  // returns something like 0.0163 or 0.0171
+```
+
+Not every frame takes exactly the same time. A computationally heavy frame takes longer; a simple one finishes faster. By multiplying all physics calculations by the actual `dt`, physics runs at the same real-world speed regardless of frame rate.
+
+Concrete example: a ball with velocity 200 px/s.
+
+- Frame took 0.016 s → moves `200 × 0.016 = 3.2 pixels`
+- Frame took 0.033 s → moves `200 × 0.033 = 6.6 pixels`
+
+More time passed, more distance covered — exactly right. The ball's speed in pixels per *second* stays constant even if the number of frames per second varies.
+
+---
+
 ## Position
 
 **Position** is where an object is in space. In our 2D engine, it's a point described by two numbers:
@@ -146,7 +200,7 @@ These are the only two operations our engine needs for basic motion. The `Vec2` 
 
 Here's the full simulation loop in plain English:
 
-1. **Measure dt** — how long did the last frame take? (typically ~0.016 s at 60 fps)
+1. **Measure dt** — how long did the last frame take? (`get_frame_time()` returns this in seconds)
 2. **Apply gravity** — add downward acceleration to each body's velocity
 3. **Integrate** — advance each body's position by its velocity × dt
 4. **Detect collisions** — check if any bodies overlap
