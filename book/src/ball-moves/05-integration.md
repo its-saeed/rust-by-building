@@ -76,7 +76,73 @@ impl Body {
 - `self.velocity * dt` calls `Mul<f32>` → scales the velocity vector
 - `+ self.position` calls `Add` → advances the position
 
-Because `Vec2` is `Copy`, both reads of `self.position` and `self.velocity` are copies — no borrow conflict.
+---
+
+## Why `Vec2` must be `Copy`
+
+Look at this line closely:
+
+```rust
+self.position = self.position + self.velocity * dt;
+```
+
+The right-hand side reads `self.position` and `self.velocity`. The left-hand side writes to `self.position`. In a language with move semantics, reading a value out of a struct **moves** it — the struct would be left partially initialized, which Rust won't allow.
+
+This is the moment `#[derive(Clone, Copy)]` from lesson 2 pays off. Let's unpack what those two words actually do.
+
+### `Clone` — explicit duplication
+
+`Clone` adds a `.clone()` method that produces an independent copy of the value:
+
+```rust
+let a = Vec2::new(1.0, 2.0);
+let b = a.clone();   // b is a fresh copy; a is untouched
+```
+
+Cloning is always **explicit** — Rust never clones behind your back. This matters for expensive types like `Vec<T>` or `String`, where cloning allocates new heap memory. For those types, you want to see every clone in the source.
+
+`#[derive(Clone)]` generates the implementation automatically: it clones each field. For `Vec2`, that means copying two `f32` values — essentially free.
+
+### `Copy` — implicit duplication
+
+`Copy` changes the default behaviour of field access, assignment, and function calls. Without it, using a value moves it. With it, using a value silently copies the bytes and leaves the original intact.
+
+| | Without `Copy` | With `Copy` |
+|---|---|---|
+| `let b = a;` | moves `a` — `a` is gone | copies `a` — both valid |
+| passing to a fn | moves the value | copies it — original still works |
+| reading a struct field | moves out — struct left partial | copies — struct untouched |
+
+That last row is what matters in `update`. When Rust evaluates `self.velocity * dt`, it needs the value of `self.velocity`. With `Copy`, it silently duplicates the two floats. `self` remains fully intact, and the write to `self.position` at the end works fine.
+
+Without `Copy`, the compiler would reject this:
+
+```
+error[E0507]: cannot move out of `self.velocity` which is behind a mutable reference
+```
+
+### Why both?
+
+`Copy` is a subtrait of `Clone` — it extends it. Rust requires that any `Copy` type also implements `Clone`. If you try to derive only `Copy`:
+
+```
+error: the trait `Clone` is not implemented for `Vec2`
+```
+
+So the two always appear together.
+
+### When to add `Copy`
+
+The question is: is this type small, free of heap allocations, and cheap to duplicate?
+
+| Type | `Copy`? | Why |
+|------|---------|-----|
+| `f32`, `i32`, `bool` | yes | primitive, bitwise copy is always correct |
+| `Vec2` (two `f32`s) | yes | small, no heap, copying is instant |
+| `Body` | no | will grow; one clear owner is the right model |
+| `String`, `Vec<T>` | no | own heap memory — a bitwise copy would double-free |
+
+`Vec2` qualifies on all counts. Every physics expression — `position + velocity * dt` — passes `Vec2` values around freely. With `Copy`, the math reads naturally. Without it, you'd need `.clone()` everywhere to avoid moving fields out of structs.
 
 ---
 
