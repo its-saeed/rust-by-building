@@ -1,75 +1,6 @@
 # Physics Primer
 
-Before writing any engine code, it helps to understand the physics concepts it models. This page covers everything you need — no prior physics knowledge assumed.
-
----
-
-## What is a simulation?
-
-The real world is continuous. A ball in flight moves smoothly through every point in space. Computers can't represent "every point" — they work in discrete steps.
-
-A physics simulation pretends time moves in tiny chunks. Each chunk is called a **frame** (or a **time step**). Every frame, we:
-
-1. Apply forces (like gravity) to change velocity
-2. Move objects based on their velocity
-3. Check for and resolve collisions
-4. Draw the result
-
-If the frames are small enough — 60 per second is typical — the motion looks smooth to a human eye, even though it's actually jumping forward in tiny hops.
-
----
-
-## Frames, FPS, and the game loop
-
-**FPS** stands for **frames per second** — how many complete simulation cycles run each second.
-
-- At 60 fps → the loop runs 60 times per second → each frame lasts ~0.016 seconds
-- At 30 fps → the loop runs 30 times per second → each frame lasts ~0.033 seconds
-- At 120 fps → the loop runs 120 times per second → each frame lasts ~0.008 seconds
-
-**Why 60?** Most monitors physically refresh their display 60 times per second (60 Hz). Running the loop faster than the display refreshes produces frames that are never shown. Running it slower makes motion look choppy — individual steps become visible. 60 fps matches the most common display hardware and is widely used as the baseline target.
-
-**Why motion looks smooth at 60 fps:** The human eye processes roughly 24–60 distinct images per second before they blur together into continuous motion. Film runs at 24 fps and looks smooth. Games at 60 fps feel noticeably fluid. Below ~20 fps, the steps are clearly visible.
-
-**How the game loop actually works:**
-
-```
-┌─────────────────────────────────┐
-│  1. measure how long last       │
-│     frame took  (dt)            │
-│                                 │
-│  2. read input                  │
-│     (keyboard, mouse)           │
-│                                 │
-│  3. update the world            │
-│     (physics, game logic)       │
-│                                 │
-│  4. draw everything             │
-│                                 │
-│  5. hand control to the OS      │
-│     → it displays the frame     │
-│     → calls you back next tick  │
-│                                 │
-│  6. repeat                      │
-└─────────────────────────────────┘
-```
-
-In macroquad, step 5 is `next_frame().await`. You write steps 3 and 4. Step 1 is `get_frame_time()`. Steps 2 and 6 are handled automatically.
-
-**dt — delta time:** The duration of one frame is called `dt` (delta time — "delta" is the math symbol for "change"). Instead of hardcoding `dt = 0.016`, we measure the actual duration of the previous frame:
-
-```rust
-let dt = get_frame_time();  // returns something like 0.0163 or 0.0171
-```
-
-Not every frame takes exactly the same time. A computationally heavy frame takes longer; a simple one finishes faster. By multiplying all physics calculations by the actual `dt`, physics runs at the same real-world speed regardless of frame rate.
-
-Concrete example: a ball with velocity 200 px/s.
-
-- Frame took 0.016 s → moves `200 × 0.016 = 3.2 pixels`
-- Frame took 0.033 s → moves `200 × 0.033 = 6.6 pixels`
-
-More time passed, more distance covered — exactly right. The ball's speed in pixels per *second* stays constant even if the number of frames per second varies.
+This page covers the physics concepts our engine is built on — position, velocity, acceleration, and vectors. No prior knowledge needed.
 
 ---
 
@@ -114,7 +45,7 @@ A ball with velocity `(200, 0)` moves 200 pixels to the right per second and sta
 position_next = position_now + velocity × time_elapsed
 ```
 
-If you move at 200 pixels/second for 0.016 seconds (one frame at 60 fps), you travel `200 × 0.016 = 3.2 pixels`. That's exactly one step in our simulation.
+If you move at 200 pixels/second for 0.016 seconds, you travel `200 × 0.016 = 3.2 pixels`. That's one time step in our simulation.
 
 ---
 
@@ -124,7 +55,7 @@ If you move at 200 pixels/second for 0.016 seconds (one frame at 60 fps), you tr
 
 Back to the car: the speedometer reading is velocity. Pressing the accelerator pedal changes that reading — that's acceleration. Hard braking is negative acceleration.
 
-Gravity is a constant downward acceleration. It doesn't move objects directly — it steadily increases their downward velocity. That's why a falling ball speeds up: each frame gravity adds a bit more downward velocity, so the next frame it falls a bit further.
+Gravity is a constant downward acceleration. It doesn't move objects directly — it steadily increases their downward velocity. That's why a falling ball speeds up: each step gravity adds a bit more downward velocity, so the next step it falls a bit further.
 
 ```
 velocity_next = velocity_now + acceleration × time_elapsed
@@ -142,14 +73,14 @@ The three values form a chain. Each one is the rate of change of the next:
 acceleration  ──changes──►  velocity  ──changes──►  position
 ```
 
-Each frame, we apply both steps in order:
+Each time step, we apply both steps in order:
 
 ```
 velocity += acceleration * dt    ← forces change velocity
-position += velocity    * dt    ← velocity changes position
+position += velocity    * dt     ← velocity changes position
 ```
 
-This two-step process is called **Euler integration** — the simplest way to simulate continuous physics in discrete steps. It's not perfect (small errors accumulate over many frames), but it's good enough for a game and easy to understand.
+This two-step process is called **Euler integration** — the simplest way to simulate continuous physics in discrete steps. It's not perfect (small errors accumulate over time), but it's good enough for a game and easy to understand.
 
 ---
 
@@ -161,7 +92,7 @@ A **vector** has both a **magnitude** (size) and a **direction**.
 
 Speed is a scalar: "100 km/h." Velocity is a vector: "100 km/h heading north." The direction is part of the value.
 
-In 2D, we represent vectors as a pair `(x, y)`. The two components together encode both the direction and the magnitude:
+In 2D, we represent vectors as a pair `(x, y)`. The two components together encode both direction and magnitude:
 
 | Vector | Meaning |
 |--------|---------|
@@ -182,7 +113,7 @@ Vectors add component by component:
 (3, 2) + (1, 4) = (4, 6)
 ```
 
-Physically: if you're moving at `(3, 2)` and a force pushes you with `(1, 4)`, the combined result is `(4, 6)`.
+Physically: if you're moving at `(3, 2)` and a force pushes you by `(1, 4)`, the result is `(4, 6)`.
 
 Multiplying a vector by a scalar scales its magnitude:
 
@@ -196,18 +127,17 @@ These are the only two operations our engine needs for basic motion. The `Vec2` 
 
 ---
 
-## What the engine actually does
+## What the engine does
 
-Here's the full simulation loop in plain English:
+Here's the full simulation loop in physics terms:
 
-1. **Measure dt** — how long did the last frame take? (`get_frame_time()` returns this in seconds)
-2. **Apply gravity** — add downward acceleration to each body's velocity
-3. **Integrate** — advance each body's position by its velocity × dt
-4. **Detect collisions** — check if any bodies overlap
-5. **Resolve collisions** — adjust velocities so bodies bounce correctly
-6. **Enforce boundaries** — keep bodies inside the screen
-7. **Draw** — render each body at its current position
+1. **Apply forces** — gravity adds downward acceleration to each body's velocity
+2. **Integrate** — advance each body's position by its velocity × dt
+3. **Detect collisions** — check if any bodies overlap
+4. **Resolve collisions** — adjust velocities so bodies bounce correctly
+5. **Enforce boundaries** — keep bodies inside the screen
+6. **Draw** — render each body at its current position
 
-Projects 4 and 5 cover steps 1–3, 6, and 7. Projects 6 and 7 add steps 4 and 5.
+Projects 4 and 5 cover steps 1, 2, 5, and 6. Projects 6 and 7 add steps 3 and 4.
 
-You now have the physics foundation. On to lesson 1.
+The game loop mechanics — what `dt` is, what a frame is, how FPS works — are explained in lesson 1, alongside the code that implements them.

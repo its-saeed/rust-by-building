@@ -6,6 +6,42 @@
 
 ---
 
+## What is a simulation?
+
+The real world changes continuously — a ball in flight doesn't pause between moments. A computer can't do that. It can only calculate, display, wait, then calculate again.
+
+So we approximate: update the world many times per second, display each update, repeat. If the updates are fast enough, the eye sees smooth motion. This is a simulation.
+
+Each iteration of that loop is called a **frame**. A frame is one complete cycle:
+
+```
+read input → update the world → draw the result
+```
+
+After drawing, you hand the frame to the display and immediately start the next one.
+
+---
+
+## Frames, FPS, and dt
+
+**FPS** (frames per second) is how many frames the program completes each second. 60 FPS — the standard target for games — means 60 updates and 60 draws per second.
+
+**Why 60?** Human vision perceives motion above roughly 24 frames per second. 60 is the native refresh rate of most displays, so syncing to it avoids visual tearing. At 60 FPS, each frame lasts about **16 milliseconds**.
+
+**dt** (delta time, written `dt` in code) is the time elapsed since the last frame, in seconds. At steady 60 FPS, `dt ≈ 0.016`. Faster hardware gives a smaller `dt`; a slow frame gives a larger one.
+
+Why does dt matter? If you move a ball 5 pixels per frame, it moves faster on a 120 FPS machine than on a 30 FPS machine. If you multiply by `dt` instead — moving `300 * dt` pixels per frame — the ball travels 300 pixels per second on every machine. The speed becomes **frame-rate independent**.
+
+macroquad gives you dt with one call:
+
+```rust
+let dt = get_frame_time();  // seconds since last frame, e.g. 0.016
+```
+
+You'll use this in lesson 3, when the ball starts moving.
+
+---
+
 ## Adding a dependency
 
 Open `lessons/4-ball-moves/lesson-01/project/Cargo.toml`. You'll see:
@@ -27,10 +63,11 @@ Every game — and every physics engine — runs the same fundamental structure:
 
 ```
 loop:
-  1. clear the screen
-  2. update the world
-  3. draw the world
-  4. wait for the next frame
+  1. measure dt   ← how long did the last frame take?
+  2. clear the screen
+  3. update the world (using dt)
+  4. draw the world
+  5. present the frame and wait for the next one
 ```
 
 In macroquad, that looks like this:
@@ -41,14 +78,19 @@ use macroquad::prelude::*;
 #[macroquad::main("A Ball Moves")]
 async fn main() {
     loop {
+        let dt = get_frame_time();   // seconds since last frame
+
         clear_background(BLACK);
 
-        // update and draw here
+        // update world state using dt
+        // draw world state
 
         next_frame().await;
     }
 }
 ```
+
+Step 1 (lesson 1) uses none of this — the ball just sits still. Step 3 introduces movement; that's when `dt` first matters.
 
 Let's take it apart.
 
