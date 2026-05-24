@@ -15,10 +15,22 @@ So we approximate: update the world many times per second, display each update, 
 Each iteration of that loop is called a **frame**. A frame is one complete cycle:
 
 ```
-read input → update the world → draw the result
+        ┌─────────────────────────────────────────┐
+        │                                         │
+        ▼                                         │
+  read input                                      │
+        │                                         │
+        ▼                                         │
+  update the world   (physics, movement, logic)   │
+        │                                         │
+        ▼                                         │
+  draw the result    (clear screen, draw objects) │
+        │                                         │
+        ▼                                         │
+  hand frame to display ───────────────────────── ┘
 ```
 
-After drawing, you hand the frame to the display and immediately start the next one.
+After drawing, you hand the frame to the display and immediately start the next one. At 60 FPS this loop runs 60 times per second — fast enough that the eye sees smooth motion instead of a slideshow.
 
 ---
 
