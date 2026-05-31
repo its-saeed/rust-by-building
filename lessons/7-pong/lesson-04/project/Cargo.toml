@@ -1,0 +1,10 @@
+[package]
+name = "pong-04"
+edition.workspace = true
+
+[dependencies]
+macroquad = { workspace = true }
+
+[[bin]]
+name = "pong-04"
+path = "src/main.rs"
