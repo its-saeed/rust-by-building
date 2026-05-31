@@ -23,10 +23,12 @@ fn window_conf() -> Conf {
 // TODO: define struct Score { left: u32, right: u32 }
 // impl Score {
 //     fn new() -> Self { ... }
-//     fn update(&mut self, ball: &mut Ball) -> bool { ... }
+//     fn update(&mut self, ball: &mut Ball) -> Option<&'static str> { ... }
 //       - if ball exits left:  self.right += 1; ball.reset();
 //       - if ball exits right: self.left  += 1; ball.reset();
-//       - return self.left >= WIN_SCORE || self.right >= WIN_SCORE
+//       - if self.left  >= WIN_SCORE { return Some("Left player wins!"); }
+//       - if self.right >= WIN_SCORE { return Some("Right player wins!"); }
+//       - None
 //     fn draw(&self) { ... }  // format "left   right", measure_text, draw_text centred
 // }
 
@@ -137,6 +139,7 @@ async fn main() {
     let mut right = Paddle::new(WINDOW_W - PADDLE_OFFSET - PADDLE_W);
     let mut ball  = Ball::new();
     // TODO: let mut score = Score::new();
+    // TODO: let mut winner = "";
     // TODO: let mut state = State::Playing;
 
     loop {
@@ -150,8 +153,8 @@ async fn main() {
         ball.update(dt);
         ball.check_paddles(&left, &right);
 
-        // TODO: call score.update(&mut ball) and transition to GameOver if it returns true:
-        //   if score.update(&mut ball) { state = State::GameOver; }
+        // TODO: use if let to capture the winner and transition:
+        //   if let Some(w) = score.update(&mut ball) { winner = w; state = State::GameOver; }
 
         clear_background(BLACK);
         draw_centre_line();

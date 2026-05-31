@@ -43,7 +43,7 @@ impl Score {
         Score { left: 0, right: 0 }
     }
 
-    fn update(&mut self, ball: &mut Ball) -> bool {
+    fn update(&mut self, ball: &mut Ball) -> Option<&'static str> {
         if ball.rect.x + ball.rect.w < 0.0 {
             self.right += 1;
             ball.reset();
@@ -52,7 +52,9 @@ impl Score {
             self.left += 1;
             ball.reset();
         }
-        self.left >= WIN_SCORE || self.right >= WIN_SCORE
+        if self.left  >= WIN_SCORE { return Some("Left player wins!"); }
+        if self.right >= WIN_SCORE { return Some("Right player wins!"); }
+        None
     }
 
     fn draw(&self) {
@@ -63,7 +65,7 @@ impl Score {
 }
 ```
 
-`update` takes `&mut Ball` because it calls `ball.reset()` when a point is scored. It returns `bool` — `true` means someone has reached `WIN_SCORE` and the caller should transition to `GameOver`. All the exit-condition detail stays inside the method.
+`update` takes `&mut Ball` because it calls `ball.reset()` when a point is scored. It returns `Option<&'static str>` — `None` while the game continues, `Some("Left player wins!")` or `Some("Right player wins!")` when someone hits `WIN_SCORE`. The caller gets the winner string for free; no re-inspection of the score needed.
 
 Replace the `draw_score(0, 0)` free function call in the loop with `score.draw()`.
 
@@ -121,15 +123,23 @@ Also **remove** the two temporary left/right wall bounce blocks from `Ball::upda
 
 ## Calling `Score::update` in the game loop
 
+Declare `winner` alongside `state` before the loop:
+
+```rust
+let mut winner = "";
+let mut state  = State::Playing;
+```
+
 Inside the `State::Playing` arm, after `ball.update(dt)` and `ball.check_paddles(...)`:
 
 ```rust
-if score.update(&mut ball) {
-    state = State::GameOver;
+if let Some(w) = score.update(&mut ball) {
+    winner = w;
+    state  = State::GameOver;
 }
 ```
 
-One line. The method handles the exit checks, increments the right counter, resets the ball, and signals whether the game is over.
+`if let` destructures the `Option`: if `update` returned `Some(w)`, store the string and change state. If it returned `None`, skip the block entirely.
 
 ---
 
@@ -139,7 +149,6 @@ In the `State::GameOver` arm:
 
 ```rust
 State::GameOver => {
-    let winner = if score.left >= 5 { "Left player wins!" } else { "Right player wins!" };
     let dims = measure_text(winner, None, 48, 1.0);
     draw_text(winner, WINDOW_W / 2.0 - dims.width / 2.0, WINDOW_H / 2.0, 48.0, WHITE);
 
@@ -170,7 +179,7 @@ Open `lessons/7-pong/lesson-05/project/src/main.rs`.
 3. Add `fn reset(&mut self)` to `impl Ball`. Remove the left/right wall bounces from `Ball::update`.
 4. In `main`, create `let mut score = Score::new()` and `let mut state = State::Playing`.
 5. Wrap the update logic in `match state { State::Playing => { ... } State::GameOver => { ... } }`.
-6. Call `score.update(&mut ball)` inside `State::Playing` and transition to `GameOver` if it returns `true`.
+6. Use `if let Some(w) = score.update(&mut ball)` to capture the winner and transition to `GameOver`.
 7. Add the game over screen inside `State::GameOver`.
 
 ```sh

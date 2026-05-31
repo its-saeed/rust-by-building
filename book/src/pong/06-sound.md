@@ -149,11 +149,10 @@ For the score sound, `score.update` doesn't tell you *which* event happened — 
 
 ```rust
 let prev = score.left + score.right;
-let game_over = score.update(&mut ball);
+if let Some(w) = score.update(&mut ball) { winner = w; state = State::GameOver; }
 if score.left + score.right > prev {
     if let Some(ref s) = score_sound { play_sound_once(s); }
 }
-if game_over { state = State::GameOver; }
 ```
 
 ---

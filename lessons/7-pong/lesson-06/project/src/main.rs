@@ -34,7 +34,7 @@ impl Score {
         Score { left: 0, right: 0 }
     }
 
-    fn update(&mut self, ball: &mut Ball) -> bool {
+    fn update(&mut self, ball: &mut Ball) -> Option<&'static str> {
         if ball.rect.x + ball.rect.w < 0.0 {
             self.right += 1;
             ball.reset();
@@ -43,7 +43,9 @@ impl Score {
             self.left += 1;
             ball.reset();
         }
-        self.left >= WIN_SCORE || self.right >= WIN_SCORE
+        if self.left  >= WIN_SCORE { return Some("Left player wins!"); }
+        if self.right >= WIN_SCORE { return Some("Right player wins!"); }
+        None
     }
 
     fn draw(&self) {
@@ -160,9 +162,10 @@ async fn main() {
     let mut left  = Paddle::new(PADDLE_OFFSET);
     let mut right = Paddle::new(WINDOW_W - PADDLE_OFFSET - PADDLE_W);
     let mut ball  = Ball::new();
-    let mut score = Score::new();
+    let mut score  = Score::new();
+    let mut winner = "";
     // TODO: change initial state to State::WaitingToStart
-    let mut state = State::Playing;
+    let mut state  = State::Playing;
 
     loop {
         let dt = get_frame_time();
@@ -191,18 +194,17 @@ async fn main() {
 
                 // TODO: to play score_sound, snapshot the total before update and compare after:
                 //   let prev = score.left + score.right;
-                //   let game_over = score.update(&mut ball);
+                //   if let Some(w) = score.update(&mut ball) { winner = w; state = State::GameOver; }
                 //   if score.left + score.right > prev {
                 //       if let Some(ref s) = score_sound { play_sound_once(s); }
                 //   }
-                //   if game_over { state = State::GameOver; }
-                if score.update(&mut ball) {
-                    state = State::GameOver;
+                if let Some(w) = score.update(&mut ball) {
+                    winner = w;
+                    state  = State::GameOver;
                 }
             }
 
             State::GameOver => {
-                let winner = if score.left >= WIN_SCORE { "Left player wins!" } else { "Right player wins!" };
                 let dims = measure_text(winner, None, 48, 1.0);
                 draw_text(winner, WINDOW_W / 2.0 - dims.width / 2.0, WINDOW_H / 2.0, 48.0, WHITE);
 
