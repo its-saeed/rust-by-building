@@ -1,8 +1,0 @@
-[package]
-name = "lesson-01-hello"
-edition.workspace = true
-version.workspace = true
-license.workspace = true
-
-[lib]
-path = "src/lib.rs"

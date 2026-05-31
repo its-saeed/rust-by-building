@@ -68,11 +68,21 @@
 - [Lesson 5 — Mass](./collisions/05-mass.md)
 - [Lesson 6 — Wiring It Up](./collisions/06-wiring.md)
 
-# Project 7 — Stable World
+# Project 7 — Pong
+
+- [Overview](./pong/overview.md)
+- [Lesson 1 — Static Scene](./pong/01-static-scene.md)
+- [Lesson 2 — Paddle Movement](./pong/02-paddle-movement.md)
+- [Lesson 3 — The Ball](./pong/03-ball.md)
+- [Lesson 4 — Collision Detection](./pong/04-collision.md)
+- [Lesson 5 — Scoring](./pong/05-scoring.md)
+- [Lesson 6 — Sound and Polish](./pong/06-sound.md)
+
+# Project 8 — Stable World
 
 - [Overview](./stable-world/overview.md)
 
-# Project 8 — Boxes
+# Project 9 — Boxes
 
 - [Overview](./boxes/overview.md)
 

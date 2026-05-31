@@ -8,7 +8,8 @@ members = [
     "lessons/4-ball-moves/lesson-*/project",
     "lessons/5-many-bodies/lesson-*/project",
     "lessons/6-collisions/lesson-*/project",
-    "lessons/7-stable-world/lesson-*/project",
+    "lessons/7-pong/lesson-*/project",
+    "lessons/8-stable-world/lesson-*/project",
     "lessons/8-boxes/lesson-*/project",
     "capstones/*",
 ]
