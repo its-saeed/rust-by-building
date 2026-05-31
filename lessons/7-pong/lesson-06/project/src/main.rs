@@ -24,6 +24,12 @@ enum State {
     GameOver,
 }
 
+enum ScoreEvent {
+    Nothing,
+    Point,
+    GameOver(&'static str),
+}
+
 struct Score {
     left:  u32,
     right: u32,
@@ -34,18 +40,17 @@ impl Score {
         Score { left: 0, right: 0 }
     }
 
-    fn update(&mut self, ball: &mut Ball) -> Option<&'static str> {
-        if ball.rect.x + ball.rect.w < 0.0 {
-            self.right += 1;
-            ball.reset();
-        }
-        if ball.rect.x > WINDOW_W {
-            self.left += 1;
-            ball.reset();
-        }
-        if self.left  >= WIN_SCORE { return Some("Left player wins!"); }
-        if self.right >= WIN_SCORE { return Some("Right player wins!"); }
-        None
+    fn update(&mut self, ball: &Ball) -> ScoreEvent {
+        let left_exit  = ball.rect.x + ball.rect.w < 0.0;
+        let right_exit = ball.rect.x > WINDOW_W;
+
+        if left_exit  { self.right += 1; }
+        if right_exit { self.left  += 1; }
+
+        if self.left  >= WIN_SCORE { return ScoreEvent::GameOver("Left player wins!"); }
+        if self.right >= WIN_SCORE { return ScoreEvent::GameOver("Right player wins!"); }
+        if left_exit || right_exit { return ScoreEvent::Point; }
+        ScoreEvent::Nothing
     }
 
     fn draw(&self) {
@@ -192,15 +197,13 @@ async fn main() {
                 //   if hit { if let Some(ref s) = bounce_sound { play_sound_once(s); } }
                 ball.check_paddles(&left, &right);
 
-                // TODO: to play score_sound, snapshot the total before update and compare after:
-                //   let prev = score.left + score.right;
-                //   if let Some(w) = score.update(&mut ball) { winner = w; state = State::GameOver; }
-                //   if score.left + score.right > prev {
-                //       if let Some(ref s) = score_sound { play_sound_once(s); }
-                //   }
-                if let Some(w) = score.update(&mut ball) {
-                    winner = w;
-                    state  = State::GameOver;
+                // TODO: play score_sound on Point and GameOver:
+                //   ScoreEvent::Point       => { ball.reset(); play score_sound }
+                //   ScoreEvent::GameOver(w) => { winner = w; ball.reset(); state = GameOver; play score_sound }
+                match score.update(&ball) {
+                    ScoreEvent::Nothing     => {}
+                    ScoreEvent::Point       => { ball.reset(); }
+                    ScoreEvent::GameOver(w) => { winner = w; ball.reset(); state = State::GameOver; }
                 }
             }
 
