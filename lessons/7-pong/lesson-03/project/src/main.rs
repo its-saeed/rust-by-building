@@ -17,65 +17,93 @@ fn window_conf() -> Conf {
     }
 }
 
+struct Paddle {
+    rect: Rect,
+}
+
+impl Paddle {
+    fn new(x: f32) -> Self {
+        Paddle {
+            rect: Rect::new(x, WINDOW_H / 2.0 - PADDLE_H / 2.0, PADDLE_W, PADDLE_H),
+        }
+    }
+
+    fn update(&mut self, dt: f32, up: KeyCode, down: KeyCode) {
+        if is_key_down(up)   { self.rect.y -= PADDLE_SPEED * dt; }
+        if is_key_down(down) { self.rect.y += PADDLE_SPEED * dt; }
+        self.rect.y = self.rect.y.clamp(0.0, WINDOW_H - PADDLE_H);
+    }
+
+    fn draw(&self) {
+        draw_rectangle(self.rect.x, self.rect.y, self.rect.w, self.rect.h, WHITE);
+    }
+}
+
+// TODO: add `vel: Vec2` field to Ball
+struct Ball {
+    rect: Rect,
+}
+
+impl Ball {
+    // TODO: initialise vel: Vec2::new(300.0, 220.0) in new()
+    fn new() -> Self {
+        Ball {
+            rect: Rect::new(
+                WINDOW_W / 2.0 - BALL_SIZE / 2.0,
+                WINDOW_H / 2.0 - BALL_SIZE / 2.0,
+                BALL_SIZE,
+                BALL_SIZE,
+            ),
+        }
+    }
+
+    // TODO: add fn update(&mut self, dt: f32)
+    //   1. move:  self.rect.x += self.vel.x * dt;
+    //             self.rect.y += self.vel.y * dt;
+    //   2. top wall:    if self.rect.y < 0.0 { self.rect.y = 0.0; self.vel.y = self.vel.y.abs(); }
+    //   3. bottom wall: if self.rect.y + self.rect.h > WINDOW_H { ... vel.y = -vel.y.abs(); }
+    //   4. left wall (temp):  if self.rect.x < 0.0 { ... vel.x = vel.x.abs(); }
+    //   5. right wall (temp): if self.rect.x + self.rect.w > WINDOW_W { ... vel.x = -vel.x.abs(); }
+
+    fn draw(&self) {
+        draw_rectangle(self.rect.x, self.rect.y, self.rect.w, self.rect.h, WHITE);
+    }
+}
+
+fn draw_centre_line() {
+    let mut y = 10.0;
+    while y < WINDOW_H {
+        draw_line(WINDOW_W / 2.0, y, WINDOW_W / 2.0, y + 15.0, 2.0, DARKGRAY);
+        y += 25.0;
+    }
+}
+
+fn draw_score(left: u32, right: u32) {
+    let text = format!("{}   {}", left, right);
+    let dims = measure_text(&text, None, 48, 1.0);
+    draw_text(&text, WINDOW_W / 2.0 - dims.width / 2.0, 48.0, 48.0, WHITE);
+}
+
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut left_paddle  = Rect::new(PADDLE_OFFSET, WINDOW_H / 2.0 - PADDLE_H / 2.0, PADDLE_W, PADDLE_H);
-    let mut right_paddle = Rect::new(WINDOW_W - PADDLE_OFFSET - PADDLE_W, WINDOW_H / 2.0 - PADDLE_H / 2.0, PADDLE_W, PADDLE_H);
-    let mut ball         = Rect::new(WINDOW_W / 2.0 - BALL_SIZE / 2.0, WINDOW_H / 2.0 - BALL_SIZE / 2.0, BALL_SIZE, BALL_SIZE);
-
-    // TODO: add ball velocity
-    // let mut vel = Vec2::new(300.0, 220.0);
+    let mut left  = Paddle::new(PADDLE_OFFSET);
+    let mut right = Paddle::new(WINDOW_W - PADDLE_OFFSET - PADDLE_W);
+    // TODO: change to `let mut ball` once update() is implemented
+    let ball = Ball::new();
 
     loop {
         let dt = get_frame_time();
 
-        // paddle input
-        if is_key_down(KeyCode::W) { left_paddle.y -= PADDLE_SPEED * dt; }
-        if is_key_down(KeyCode::S) { left_paddle.y += PADDLE_SPEED * dt; }
-        if is_key_down(KeyCode::Up)   { right_paddle.y -= PADDLE_SPEED * dt; }
-        if is_key_down(KeyCode::Down) { right_paddle.y += PADDLE_SPEED * dt; }
-        left_paddle.y  = left_paddle.y.clamp(0.0, WINDOW_H - PADDLE_H);
-        right_paddle.y = right_paddle.y.clamp(0.0, WINDOW_H - PADDLE_H);
-
-        // TODO: move the ball
-        // ball.x += vel.x * dt;
-        // ball.y += vel.y * dt;
-
-        // TODO: bounce off top and bottom walls
-        // if ball.y < 0.0 {
-        //     ball.y = 0.0;
-        //     vel.y = vel.y.abs();
-        // }
-        // if ball.y + ball.h > WINDOW_H {
-        //     ball.y = WINDOW_H - ball.h;
-        //     vel.y = -vel.y.abs();
-        // }
-
-        // TODO: bounce off left and right walls (temporary — replaced by scoring in lesson 5)
-        // if ball.x < 0.0 {
-        //     ball.x = 0.0;
-        //     vel.x = vel.x.abs();
-        // }
-        // if ball.x + ball.w > WINDOW_W {
-        //     ball.x = WINDOW_W - ball.w;
-        //     vel.x = -vel.x.abs();
-        // }
+        left.update(dt, KeyCode::W, KeyCode::S);
+        right.update(dt, KeyCode::Up, KeyCode::Down);
+        // TODO: call ball.update(dt)
 
         clear_background(BLACK);
-
-        let mut y = 10.0;
-        while y < WINDOW_H {
-            draw_line(WINDOW_W / 2.0, y, WINDOW_W / 2.0, y + 15.0, 2.0, DARKGRAY);
-            y += 25.0;
-        }
-
-        draw_rectangle(left_paddle.x,  left_paddle.y,  left_paddle.w, left_paddle.h,  WHITE);
-        draw_rectangle(right_paddle.x, right_paddle.y, right_paddle.w, right_paddle.h, WHITE);
-        draw_rectangle(ball.x, ball.y, ball.w, ball.h, WHITE);
-
-        let score_text = "0   0";
-        let dims = measure_text(score_text, None, 48, 1.0);
-        draw_text(score_text, WINDOW_W / 2.0 - dims.width / 2.0, 48.0, 48.0, WHITE);
+        draw_centre_line();
+        left.draw();
+        right.draw();
+        ball.draw();
+        draw_score(0, 0);
 
         next_frame().await;
     }

@@ -1,8 +1,8 @@
 # Lesson 2 — Paddle Movement
 
-> **Goal**: Make both paddles move in response to held keys, clamped to the screen.
+> **Goal**: Add an `update` method to `Paddle` so both paddles respond to held keys and stay within the screen.
 >
-> **Concepts**: `is_key_down` vs `is_key_pressed`, `KeyCode`, `f32::clamp`, mutating a `Rect` field.
+> **Concepts**: `is_key_down` vs `is_key_pressed`, `KeyCode` as a parameter, `f32::clamp`, `&mut self`.
 
 ---
 
@@ -15,59 +15,77 @@ macroquad gives you two ways to read the keyboard:
 | `is_key_pressed(key)` | Only on the first frame the key is pressed |
 | `is_key_down(key)` | Every frame the key is held down |
 
-Paddle movement should happen continuously while the key is held — so `is_key_down` is the right choice. `is_key_pressed` fires once and then stops, which would make the paddle snap a fixed distance on each tap. That's useful for menus and jumps, not smooth movement.
+Paddle movement should happen continuously while the key is held — so `is_key_down` is the right choice. `is_key_pressed` fires once and stops, which would make the paddle snap on each tap rather than move smoothly. That's useful for menus and jumps, not continuous movement.
 
 ---
 
-## Moving a paddle
+## Adding `Paddle::update`
 
-Add a speed constant near the top:
+Add a speed constant:
 
 ```rust
 const PADDLE_SPEED: f32 = 400.0; // pixels per second
 ```
 
-Make the paddles mutable — they'll change position every frame:
+Then add `update` to `impl Paddle`. It takes the two key codes as parameters so the same method works for both paddles:
 
 ```rust
-let mut left_paddle  = Rect::new(...);
-let mut right_paddle = Rect::new(...);
+impl Paddle {
+    fn update(&mut self, dt: f32, up: KeyCode, down: KeyCode) {
+        if is_key_down(up)   { self.rect.y -= PADDLE_SPEED * dt; }
+        if is_key_down(down) { self.rect.y += PADDLE_SPEED * dt; }
+        self.rect.y = self.rect.y.clamp(0.0, WINDOW_H - PADDLE_H);
+    }
+}
 ```
 
-Inside the loop, read `dt` and move each paddle:
-
-```rust
-let dt = get_frame_time();
-
-if is_key_down(KeyCode::W) { left_paddle.y -= PADDLE_SPEED * dt; }
-if is_key_down(KeyCode::S) { left_paddle.y += PADDLE_SPEED * dt; }
-
-if is_key_down(KeyCode::Up)   { right_paddle.y -= PADDLE_SPEED * dt; }
-if is_key_down(KeyCode::Down) { right_paddle.y += PADDLE_SPEED * dt; }
-```
-
-`left_paddle.y` is just an `f32` field on the `Rect` — you mutate it directly. The draw call reads the updated value each frame.
+Passing `KeyCode` values as arguments means we write the logic once and reuse it for both players. The alternative — two separate methods or two separate structs — would be needless repetition.
 
 ---
 
 ## Clamping to the screen
 
-Without a limit, paddles can move off screen. `f32::clamp(min, max)` constrains a value to a range:
+`f32::clamp(min, max)` constrains a value to a range:
 
-```rust
-left_paddle.y  = left_paddle.y.clamp(0.0, WINDOW_H - PADDLE_H);
-right_paddle.y = right_paddle.y.clamp(0.0, WINDOW_H - PADDLE_H);
+```
+self.rect.y = self.rect.y.clamp(0.0, WINDOW_H - PADDLE_H);
 ```
 
-The upper bound is `WINDOW_H - PADDLE_H`, not `WINDOW_H` — we're clamping the top edge of the paddle, so the bottom edge (`y + PADDLE_H`) stays within the window.
+The upper bound is `WINDOW_H - PADDLE_H`, not `WINDOW_H`. We clamp the **top edge** of the paddle, so the bottom edge (`y + PADDLE_H`) stays within the screen:
+
+```
+y=0   ┌──────────────┐  ← clamp min (paddle top can't go above this)
+      │   ┌──────┐   │
+      │   │      │   │
+      │   └──────┘   │
+y=520 │              │  ← clamp max = WINDOW_H - PADDLE_H = 600 - 80
+      │              │    (paddle top can't go below this)
+y=600 └──────────────┘  ← paddle bottom = y + 80 = 600 ✓
+```
 
 ---
 
-## Why `dt` again
+## Calling `update` in the game loop
 
-At 60 FPS, `PADDLE_SPEED * dt = 400 × 0.016 = 6.4` pixels per frame. At 120 FPS, each frame is shorter so the step is smaller, but the paddle still travels 400 pixels per second. The speed is frame-rate independent.
+Make both paddles `mut`, then call `update` on each:
 
-Without `dt`, the paddle would move twice as fast on a 120 Hz display as on 60 Hz.
+```rust
+let mut left  = Paddle::new(PADDLE_OFFSET);
+let mut right = Paddle::new(WINDOW_W - PADDLE_OFFSET - PADDLE_W);
+
+loop {
+    let dt = get_frame_time();
+
+    left.update(dt, KeyCode::W, KeyCode::S);
+    right.update(dt, KeyCode::Up, KeyCode::Down);
+
+    clear_background(BLACK);
+    // ... draw ...
+    next_frame().await;
+}
+```
+
+The game loop stays readable — each line does one clear thing. The details of key codes and clamping live inside `Paddle`, not scattered through `main`.
 
 ---
 
@@ -76,10 +94,9 @@ Without `dt`, the paddle would move twice as fast on a 120 Hz display as on 60 H
 Open `lessons/7-pong/lesson-02/project/src/main.rs`.
 
 1. Add `const PADDLE_SPEED: f32 = 400.0;`.
-2. Change `let left_paddle` and `let right_paddle` to `let mut`.
-3. Inside the loop, read `dt` with `get_frame_time()`.
-4. Add four `if is_key_down(...)` blocks to move each paddle.
-5. After moving, clamp both `paddle.y` values to `0.0..=WINDOW_H - PADDLE_H`.
+2. Add `fn update(&mut self, dt: f32, up: KeyCode, down: KeyCode)` to `impl Paddle`.
+3. Change `let left` and `let right` to `let mut`.
+4. In the loop, call `left.update(dt, KeyCode::W, KeyCode::S)` and `right.update(dt, KeyCode::Up, KeyCode::Down)`.
 
 ```sh
 cargo run --bin pong-02
