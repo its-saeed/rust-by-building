@@ -23,6 +23,10 @@ fn window_conf() -> Conf {
 // TODO: define struct Score { left: u32, right: u32 }
 // impl Score {
 //     fn new() -> Self { ... }
+//     fn update(&mut self, ball: &mut Ball) -> bool { ... }
+//       - if ball exits left:  self.right += 1; ball.reset();
+//       - if ball exits right: self.left  += 1; ball.reset();
+//       - return self.left >= WIN_SCORE || self.right >= WIN_SCORE
 //     fn draw(&self) { ... }  // format "left   right", measure_text, draw_text centred
 // }
 
@@ -146,10 +150,8 @@ async fn main() {
         ball.update(dt);
         ball.check_paddles(&left, &right);
 
-        // TODO: add scoring checks after check_paddles:
-        //   if ball.rect.x + ball.rect.w < 0.0 { score.right += 1; ball.reset(); }
-        //   if ball.rect.x > WINDOW_W          { score.left  += 1; ball.reset(); }
-        //   if score.left >= WIN_SCORE || score.right >= WIN_SCORE { state = State::GameOver; }
+        // TODO: call score.update(&mut ball) and transition to GameOver if it returns true:
+        //   if score.update(&mut ball) { state = State::GameOver; }
 
         clear_background(BLACK);
         draw_centre_line();

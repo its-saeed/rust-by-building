@@ -43,6 +43,18 @@ impl Score {
         Score { left: 0, right: 0 }
     }
 
+    fn update(&mut self, ball: &mut Ball) -> bool {
+        if ball.rect.x + ball.rect.w < 0.0 {
+            self.right += 1;
+            ball.reset();
+        }
+        if ball.rect.x > WINDOW_W {
+            self.left += 1;
+            ball.reset();
+        }
+        self.left >= WIN_SCORE || self.right >= WIN_SCORE
+    }
+
     fn draw(&self) {
         let text = format!("{}   {}", self.left, self.right);
         let dims = measure_text(&text, None, 48, 1.0);
@@ -50,6 +62,8 @@ impl Score {
     }
 }
 ```
+
+`update` takes `&mut Ball` because it calls `ball.reset()` when a point is scored. It returns `bool` — `true` means someone has reached `WIN_SCORE` and the caller should transition to `GameOver`. All the exit-condition detail stays inside the method.
 
 Replace the `draw_score(0, 0)` free function call in the loop with `score.draw()`.
 
@@ -105,24 +119,17 @@ Also **remove** the two temporary left/right wall bounce blocks from `Ball::upda
 
 ---
 
-## Scoring logic in the game loop
+## Calling `Score::update` in the game loop
 
 Inside the `State::Playing` arm, after `ball.update(dt)` and `ball.check_paddles(...)`:
 
 ```rust
-if ball.rect.x + ball.rect.w < 0.0 {
-    score.right += 1;
-    ball.reset();
-}
-if ball.rect.x > WINDOW_W {
-    score.left += 1;
-    ball.reset();
-}
-
-if score.left >= 5 || score.right >= 5 {
+if score.update(&mut ball) {
     state = State::GameOver;
 }
 ```
+
+One line. The method handles the exit checks, increments the right counter, resets the ball, and signals whether the game is over.
 
 ---
 
@@ -158,12 +165,12 @@ State::GameOver => {
 
 Open `lessons/7-pong/lesson-05/project/src/main.rs`.
 
-1. Define `struct Score` with `new` and `draw`.
+1. Define `struct Score` with `new`, `update`, and `draw`.
 2. Define `enum State { Playing, GameOver }`.
 3. Add `fn reset(&mut self)` to `impl Ball`. Remove the left/right wall bounces from `Ball::update`.
 4. In `main`, create `let mut score = Score::new()` and `let mut state = State::Playing`.
 5. Wrap the update logic in `match state { State::Playing => { ... } State::GameOver => { ... } }`.
-6. Add scoring checks and the win condition inside `State::Playing`.
+6. Call `score.update(&mut ball)` inside `State::Playing` and transition to `GameOver` if it returns `true`.
 7. Add the game over screen inside `State::GameOver`.
 
 ```sh

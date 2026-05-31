@@ -34,6 +34,18 @@ impl Score {
         Score { left: 0, right: 0 }
     }
 
+    fn update(&mut self, ball: &mut Ball) -> bool {
+        if ball.rect.x + ball.rect.w < 0.0 {
+            self.right += 1;
+            ball.reset();
+        }
+        if ball.rect.x > WINDOW_W {
+            self.left += 1;
+            ball.reset();
+        }
+        self.left >= WIN_SCORE || self.right >= WIN_SCORE
+    }
+
     fn draw(&self) {
         let text = format!("{}   {}", self.left, self.right);
         let dims = measure_text(&text, None, 48, 1.0);
@@ -177,17 +189,14 @@ async fn main() {
                 //   if hit { if let Some(ref s) = bounce_sound { play_sound_once(s); } }
                 ball.check_paddles(&left, &right);
 
-                if ball.rect.x + ball.rect.w < 0.0 {
-                    score.right += 1;
-                    ball.reset();
-                    // TODO: play score_sound here
-                }
-                if ball.rect.x > WINDOW_W {
-                    score.left += 1;
-                    ball.reset();
-                    // TODO: play score_sound here
-                }
-                if score.left >= WIN_SCORE || score.right >= WIN_SCORE {
+                // TODO: to play score_sound, snapshot the total before update and compare after:
+                //   let prev = score.left + score.right;
+                //   let game_over = score.update(&mut ball);
+                //   if score.left + score.right > prev {
+                //       if let Some(ref s) = score_sound { play_sound_once(s); }
+                //   }
+                //   if game_over { state = State::GameOver; }
+                if score.update(&mut ball) {
                     state = State::GameOver;
                 }
             }

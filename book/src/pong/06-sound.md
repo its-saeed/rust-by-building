@@ -145,19 +145,15 @@ if hit {
 }
 ```
 
-Play the score sound similarly in the two scoring branches:
+For the score sound, `score.update` doesn't tell you *which* event happened — only whether the game is over. Compare the total before and after the call to detect a new point:
 
 ```rust
-if ball.rect.x + ball.rect.w < 0.0 {
-    score.right += 1;
-    ball.reset();
+let prev = score.left + score.right;
+let game_over = score.update(&mut ball);
+if score.left + score.right > prev {
     if let Some(ref s) = score_sound { play_sound_once(s); }
 }
-if ball.rect.x > WINDOW_W {
-    score.left += 1;
-    ball.reset();
-    if let Some(ref s) = score_sound { play_sound_once(s); }
-}
+if game_over { state = State::GameOver; }
 ```
 
 ---
@@ -171,7 +167,7 @@ Open `lessons/7-pong/lesson-06/project/src/main.rs`.
 3. Add the `WaitingToStart` match arm with the title text and Space-to-start transition.
 4. Change `check_paddles` to return `bool` and multiply `self.vel *= 1.05` on each hit.
 5. Capture the return value of `check_paddles` and play `bounce_sound` when it's `true`.
-6. Play `score_sound` in each scoring branch.
+6. Snapshot `score.left + score.right` before calling `score.update`, compare after, and play `score_sound` if the total increased.
 
 ```sh
 cargo run --bin pong-06
