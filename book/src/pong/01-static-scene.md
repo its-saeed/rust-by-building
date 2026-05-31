@@ -6,6 +6,32 @@
 
 ---
 
+## The game board
+
+Here's what we're building — a fixed 800×600 window with a score display, two paddles, a ball, and a dashed centre line:
+
+```
+(0,0)                   (800,0)
+  ┌──────────────────────────────┐
+  │           0   0              │  ← score, centred
+  │                              │
+  │  ┃    ┊              ┊    ┃  │
+  │  ┃    ┊      □       ┊    ┃  │  ← ball (□)
+  │  ┃    ┊              ┊    ┃  │
+  │        ┊              ┊       │
+  │        ┊              ┊       │
+  └──────────────────────────────┘
+(0,600)                 (800,600)
+
+  ↑            ↑
+left          centre
+paddle         line
+```
+
+The origin `(0, 0)` is the top-left corner. `x` increases to the right, `y` increases **downward** — the same screen convention from project 4.
+
+---
+
 ## Fixing the window size
 
 Previous projects used whatever window macroquad opened by default. For a game, we want a specific size. macroquad's `Conf` struct lets you set it at startup:
@@ -43,6 +69,16 @@ struct Rect {
 }
 ```
 
+`x` and `y` are the **top-left corner** of the rectangle, not its centre:
+
+```
+(x, y) ┌──────────┐
+       │          │  h
+       │          │
+       └──────────┘
+            w
+```
+
 It represents an axis-aligned rectangle. We'll use it for both paddles and the ball. Later, `rect.overlaps(&other)` will be our entire collision detection.
 
 Create it with `Rect::new(x, y, w, h)` and draw it with `draw_rectangle`:
@@ -75,6 +111,48 @@ let right_paddle = Rect::new(WINDOW_W - PADDLE_OFFSET - PADDLE_W, WINDOW_H / 2.0
 let ball         = Rect::new(WINDOW_W / 2.0 - BALL_SIZE / 2.0, WINDOW_H / 2.0 - BALL_SIZE / 2.0, BALL_SIZE, BALL_SIZE);
 ```
 
+**Left paddle x** — `PADDLE_OFFSET = 20`. The paddle starts 20 px from the left edge:
+
+```
+x=0          x=20
+ │←─ 20 ──►│┃
+ │           ┃
+```
+
+**Right paddle x** — `WINDOW_W - PADDLE_OFFSET - PADDLE_W = 800 - 20 - 12 = 768`. We subtract `PADDLE_W` because `x` is the *left* edge of the paddle — if we only subtracted the offset, the paddle would hang 12 pixels off the right side of the screen:
+
+```
+                x=768  x=800
+                  ┃◄12►│←20─│
+                  ┃          │
+```
+
+**Both paddles y** — `WINDOW_H / 2.0 - PADDLE_H / 2.0 = 300 - 40 = 260`. Subtracting half the paddle height shifts the top edge up so the paddle is centred on the midpoint:
+
+```
+y=0   ┌──────────────┐
+      │              │
+y=260 │   ┌──────┐   │  ← paddle top (y)
+      │   │      │   │
+y=300 │   │  ────┤   │  ← screen centre (WINDOW_H / 2)
+      │   │      │   │
+y=340 │   └──────┘   │  ← paddle bottom (y + PADDLE_H)
+      │              │
+y=600 └──────────────┘
+```
+
+**Ball position** — `WINDOW_W / 2.0 - BALL_SIZE / 2.0` for both axes. Same idea: the ball's top-left corner is offset by half its size so its centre lands on the screen centre:
+
+```
+         x=394  x=400 x=406
+           │◄6►│  │
+           ┌───┐   ← ball (12×12), top-left at (394, 294)
+           │   │
+           └───┘
+                ↑
+          screen centre (400, 300)
+```
+
 ---
 
 ## Drawing the centre line
@@ -87,6 +165,17 @@ while y < WINDOW_H {
     draw_line(WINDOW_W / 2.0, y, WINDOW_W / 2.0, y + 15.0, 2.0, DARKGRAY);
     y += 25.0;
 }
+```
+
+Each iteration draws a 15 px segment, then jumps 25 px before the next — leaving a 10 px gap:
+
+```
+y=10  ┊  ← draw_line y to y+15
+y=25  ·  ← gap (no draw)
+y=35  ┊  ← draw_line y to y+15
+y=50  ·
+y=60  ┊
+      ...
 ```
 
 ---
@@ -108,6 +197,19 @@ draw_text(
 ```
 
 `measure_text(text, font, font_size, font_scale)` returns a `TextDimensions` with `.width` and `.height`. Passing `None` for font uses the built-in default.
+
+Without the offset, `draw_text` at `x = WINDOW_W / 2.0` would place the *left edge* of the text at the centre — making it look right-heavy. Subtracting half the text width shifts the whole string left so it's visually centred:
+
+```
+              x=400 (centre)
+                │
+  ┌─────────────┼─────────────┐
+  │  ←dims.width/2→  0   0    │  ← wrong: left-aligned at centre
+  │        0   0              │  ← correct: centred
+  │        ↑                  │
+  │   WINDOW_W/2 - dims.width/2
+  └───────────────────────────┘
+```
 
 ---
 
