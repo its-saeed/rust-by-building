@@ -28,19 +28,7 @@ These checks replace the temporary left/right wall bounces from lesson 3.
 
 ---
 
-## `ScoreEvent` and `Score`
-
-`Score::update` needs to tell the caller one of three things: nothing happened, a point was scored (game continues), or the game is over. An enum is the right tool:
-
-```rust
-enum ScoreEvent {
-    Nothing,
-    Point,
-    GameOver(&'static str),
-}
-```
-
-`GameOver` carries the winner string directly — the caller gets it without inspecting the score again.
+## `Score` struct
 
 ```rust
 struct Score {
@@ -53,17 +41,12 @@ impl Score {
         Score { left: 0, right: 0 }
     }
 
-    fn update(&mut self, ball: &Ball) -> ScoreEvent {
+    fn update(&mut self, ball: &Ball) -> bool {
         let left_exit  = ball.rect.x + ball.rect.w < 0.0;
         let right_exit = ball.rect.x > WINDOW_W;
-
         if left_exit  { self.right += 1; }
         if right_exit { self.left  += 1; }
-
-        if self.left  >= WIN_SCORE { return ScoreEvent::GameOver("Left player wins!"); }
-        if self.right >= WIN_SCORE { return ScoreEvent::GameOver("Right player wins!"); }
-        if left_exit || right_exit { return ScoreEvent::Point; }
-        ScoreEvent::Nothing
+        left_exit || right_exit
     }
 
     fn draw(&self) {
@@ -74,7 +57,7 @@ impl Score {
 }
 ```
 
-`update` takes `&Ball` — a shared reference, no mutation. It just reads the ball's position to check the exit conditions. What happens to the ball after a point is the caller's business.
+`update` takes `&Ball` — read-only — checks whether the ball has exited either side, increments the appropriate counter, and returns `true` if a point happened. That's all it knows about. Win conditions and state transitions are game logic; they live in the game loop.
 
 Replace the `draw_score(0, 0)` free function call in the loop with `score.draw()`.
 
@@ -130,7 +113,7 @@ Also **remove** the two temporary left/right wall bounce blocks from `Ball::upda
 
 ---
 
-## Calling `Score::update` in the game loop
+## Scoring and win condition in the game loop
 
 Declare `winner` alongside `state` before the loop:
 
@@ -142,14 +125,19 @@ let mut state  = State::Playing;
 Inside the `State::Playing` arm, after `ball.update(dt)` and `ball.check_paddles(...)`:
 
 ```rust
-match score.update(&ball) {
-    ScoreEvent::Nothing  => {}
-    ScoreEvent::Point    => { ball.reset(); }
-    ScoreEvent::GameOver(w) => { winner = w; ball.reset(); state = State::GameOver; }
+if score.update(&ball) {
+    ball.reset();
+    if score.left >= WIN_SCORE {
+        winner = "Left player wins!";
+        state  = State::GameOver;
+    } else if score.right >= WIN_SCORE {
+        winner = "Right player wins!";
+        state  = State::GameOver;
+    }
 }
 ```
 
-`Score` only reads the ball's position. Everything that happens to the ball — `reset()` — is the caller's decision.
+`score.update` returns `true` the frame a point is scored. The game loop checks `WIN_SCORE` and sets `winner` itself — that decision belongs here, not inside `Score`.
 
 ---
 
@@ -189,7 +177,7 @@ Open `lessons/7-pong/lesson-05/project/src/main.rs`.
 3. Add `fn reset(&mut self)` to `impl Ball`. Remove the left/right wall bounces from `Ball::update`.
 4. In `main`, create `let mut score = Score::new()` and `let mut state = State::Playing`.
 5. Wrap the update logic in `match state { State::Playing => { ... } State::GameOver => { ... } }`.
-6. `match score.update(&ball)` — call `ball.reset()` on `Point`, store the winner and reset on `GameOver`.
+6. Call `score.update(&ball)` — on `true`, reset the ball and check `score.left`/`score.right` against `WIN_SCORE` to set `winner` and transition state.
 7. Add the game over screen inside `State::GameOver`.
 
 ```sh

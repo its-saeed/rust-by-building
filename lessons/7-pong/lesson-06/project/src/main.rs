@@ -24,12 +24,6 @@ enum State {
     GameOver,
 }
 
-enum ScoreEvent {
-    Nothing,
-    Point,
-    GameOver(&'static str),
-}
-
 struct Score {
     left:  u32,
     right: u32,
@@ -40,17 +34,12 @@ impl Score {
         Score { left: 0, right: 0 }
     }
 
-    fn update(&mut self, ball: &Ball) -> ScoreEvent {
+    fn update(&mut self, ball: &Ball) -> bool {
         let left_exit  = ball.rect.x + ball.rect.w < 0.0;
         let right_exit = ball.rect.x > WINDOW_W;
-
         if left_exit  { self.right += 1; }
         if right_exit { self.left  += 1; }
-
-        if self.left  >= WIN_SCORE { return ScoreEvent::GameOver("Left player wins!"); }
-        if self.right >= WIN_SCORE { return ScoreEvent::GameOver("Right player wins!"); }
-        if left_exit || right_exit { return ScoreEvent::Point; }
-        ScoreEvent::Nothing
+        left_exit || right_exit
     }
 
     fn draw(&self) {
@@ -197,13 +186,11 @@ async fn main() {
                 //   if hit { if let Some(ref s) = bounce_sound { play_sound_once(s); } }
                 ball.check_paddles(&left, &right);
 
-                // TODO: play score_sound on Point and GameOver:
-                //   ScoreEvent::Point       => { ball.reset(); play score_sound }
-                //   ScoreEvent::GameOver(w) => { winner = w; ball.reset(); state = GameOver; play score_sound }
-                match score.update(&ball) {
-                    ScoreEvent::Nothing     => {}
-                    ScoreEvent::Point       => { ball.reset(); }
-                    ScoreEvent::GameOver(w) => { winner = w; ball.reset(); state = State::GameOver; }
+                // TODO: play score_sound when a point is scored
+                if score.update(&ball) {
+                    ball.reset();
+                    if score.left  >= WIN_SCORE { winner = "Left player wins!";  state = State::GameOver; }
+                    if score.right >= WIN_SCORE { winner = "Right player wins!"; state = State::GameOver; }
                 }
             }
 

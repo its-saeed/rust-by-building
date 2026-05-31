@@ -20,19 +20,14 @@ fn window_conf() -> Conf {
 
 // TODO: define enum State { Playing, GameOver }
 
-// TODO: define enum ScoreEvent { Nothing, Point, GameOver(&'static str) }
-
 // TODO: define struct Score { left: u32, right: u32 }
 // impl Score {
 //     fn new() -> Self { ... }
-//     fn update(&mut self, ball: &Ball) -> ScoreEvent { ... }
+//     fn update(&mut self, ball: &Ball) -> bool { ... }
 //       - let left_exit  = ball.rect.x + ball.rect.w < 0.0;
 //       - let right_exit = ball.rect.x > WINDOW_W;
 //       - increment self.right / self.left accordingly
-//       - if self.left  >= WIN_SCORE { return ScoreEvent::GameOver("Left player wins!"); }
-//       - if self.right >= WIN_SCORE { return ScoreEvent::GameOver("Right player wins!"); }
-//       - if left_exit || right_exit { return ScoreEvent::Point; }
-//       - ScoreEvent::Nothing
+//       - return left_exit || right_exit
 //     fn draw(&self) { ... }  // format "left   right", measure_text, draw_text centred
 // }
 
@@ -157,10 +152,11 @@ async fn main() {
         ball.update(dt);
         ball.check_paddles(&left, &right);
 
-        // TODO: match score.update(&ball):
-        //   ScoreEvent::Nothing  => {}
-        //   ScoreEvent::Point    => { ball.reset(); }
-        //   ScoreEvent::GameOver(w) => { winner = w; ball.reset(); state = State::GameOver; }
+        // TODO: if score.update(&ball) {
+        //     ball.reset();
+        //     if score.left  >= WIN_SCORE { winner = "Left player wins!";  state = State::GameOver; }
+        //     if score.right >= WIN_SCORE { winner = "Right player wins!"; state = State::GameOver; }
+        // }
 
         clear_background(BLACK);
         draw_centre_line();
