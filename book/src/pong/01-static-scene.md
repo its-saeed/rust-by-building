@@ -39,8 +39,8 @@ Previous projects used whatever window macroquad opened by default. For a game, 
 fn window_conf() -> Conf {
     Conf {
         window_title: "Pong".to_owned(),
-        window_width: 800,
-        window_height: 600,
+        window_width:  WINDOW_W as i32,
+        window_height: WINDOW_H as i32,
         ..Default::default()
     }
 }
@@ -52,6 +52,36 @@ async fn main() {
 ```
 
 `..Default::default()` fills in every field you didn't name with its default value. `Conf` has many fields — fullscreen, high-dpi, resizable — and this pattern lets you set only what you care about.
+
+---
+
+## Constants
+
+The window size appears in multiple places — in `window_conf`, in every positioning calculation, and in the collision checks coming in later lessons. Hardcoding `800.0` and `600.0` everywhere makes those numbers easy to get out of step. Define them once as constants instead:
+
+```rust
+const WINDOW_W: f32 = 800.0;
+const WINDOW_H: f32 = 600.0;
+const PADDLE_W: f32 = 12.0;
+const PADDLE_H: f32 = 80.0;
+const BALL_SIZE: f32 = 12.0;
+const PADDLE_OFFSET: f32 = 20.0;
+```
+
+Then `window_conf` uses them directly:
+
+```rust
+fn window_conf() -> Conf {
+    Conf {
+        window_title: "Pong".to_owned(),
+        window_width:  WINDOW_W as i32,
+        window_height: WINDOW_H as i32,
+        ..Default::default()
+    }
+}
+```
+
+`Conf` expects `i32` fields, so the `as i32` cast is required. The `f32` constants are what the rest of the game uses — all the positioning math is floating point.
 
 ---
 

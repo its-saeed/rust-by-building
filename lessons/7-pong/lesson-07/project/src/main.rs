@@ -12,13 +12,12 @@ const WIN_SCORE: u32 = 5;
 fn window_conf() -> Conf {
     Conf {
         window_title: "Pong".to_owned(),
-        window_width: WINDOW_W as i32,
+        window_width:  WINDOW_W as i32,
         window_height: WINDOW_H as i32,
         ..Default::default()
     }
 }
 
-// TODO: add WaitingToStart variant → enum State { WaitingToStart, Playing, GameOver }
 enum State {
     Playing,
     GameOver,
@@ -34,6 +33,7 @@ impl Score {
         Score { left: 0, right: 0 }
     }
 
+    // TODO: update signature to ball: &Ball<'_>  (Ball will gain a lifetime parameter)
     fn update(&mut self, ball: &Ball) -> bool {
         let left_exit  = ball.rect.x + ball.rect.w < 0.0;
         let right_exit = ball.rect.x > WINDOW_W;
@@ -49,11 +49,16 @@ impl Score {
     }
 }
 
+// TODO: add lifetime parameter: struct Paddle<'a>
+// TODO: add field:              texture: &'a Texture2D
 struct Paddle {
     rect: Rect,
 }
 
+// TODO: update impl header: impl<'a> Paddle<'a>
 impl Paddle {
+    // TODO: add parameter: texture: &'a Texture2D
+    // TODO: store it:      Paddle { rect: ..., texture }
     fn new(x: f32) -> Self {
         Paddle {
             rect: Rect::new(x, WINDOW_H / 2.0 - PADDLE_H / 2.0, PADDLE_W, PADDLE_H),
@@ -67,16 +72,24 @@ impl Paddle {
     }
 
     fn draw(&self) {
+        // TODO: replace with draw_texture_ex(self.texture, self.rect.x, self.rect.y, WHITE,
+        //   DrawTextureParams { dest_size: Some(Vec2::new(self.rect.w, self.rect.h)),
+        //                       ..Default::default() })
         draw_rectangle(self.rect.x, self.rect.y, self.rect.w, self.rect.h, WHITE);
     }
 }
 
+// TODO: add lifetime parameter: struct Ball<'a>
+// TODO: add field:              texture: &'a Texture2D
 struct Ball {
     rect: Rect,
     vel:  Vec2,
 }
 
+// TODO: update impl header: impl<'a> Ball<'a>
 impl Ball {
+    // TODO: add parameter: texture: &'a Texture2D
+    // TODO: store it:      Ball { rect: ..., vel: ..., texture }
     fn new() -> Self {
         Ball {
             rect: Rect::new(
@@ -110,8 +123,6 @@ impl Ball {
         self.vel.y = factor * speed * 0.75;
     }
 
-    // TODO: change return type to bool — return true when a paddle was hit.
-    // TODO: inside each overlap branch, multiply self.vel *= 1.05 to speed the ball up.
     fn check_paddles(&mut self, left: &Paddle, right: &Paddle) {
         if self.rect.overlaps(&left.rect) {
             self.rect.x = left.rect.x + left.rect.w;
@@ -134,6 +145,9 @@ impl Ball {
     }
 
     fn draw(&self) {
+        // TODO: replace with draw_texture_ex(self.texture, self.rect.x, self.rect.y, WHITE,
+        //   DrawTextureParams { dest_size: Some(Vec2::new(self.rect.w, self.rect.h)),
+        //                       ..Default::default() })
         draw_rectangle(self.rect.x, self.rect.y, self.rect.w, self.rect.h, WHITE);
     }
 }
@@ -148,17 +162,16 @@ fn draw_centre_line() {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    // TODO: load sounds before the game loop:
-    //   let bounce_sound = load_sound("assets/bounce.wav").await.ok();
-    //   let score_sound  = load_sound("assets/score.wav").await.ok();
-    // (Using .ok() means missing files produce None instead of panicking.)
+    // TODO: load textures here, before creating structs:
+    //   let paddle_texture = load_texture("assets/paddle.png").await.unwrap();
+    //   let ball_texture   = load_texture("assets/ball.png").await.unwrap();
 
+    // TODO: pass &paddle_texture to Paddle::new, &ball_texture to Ball::new
     let mut left  = Paddle::new(PADDLE_OFFSET);
     let mut right = Paddle::new(WINDOW_W - PADDLE_OFFSET - PADDLE_W);
     let mut ball  = Ball::new();
     let mut score  = Score::new();
     let mut winner = "";
-    // TODO: change initial state to State::WaitingToStart
     let mut state  = State::Playing;
 
     loop {
@@ -172,21 +185,12 @@ async fn main() {
         score.draw();
 
         match state {
-            // TODO: add State::WaitingToStart arm:
-            //   draw a centred "PONG" title and "Press Space to start" hint
-            //   if is_key_pressed(KeyCode::Space) { state = State::Playing; }
-
             State::Playing => {
                 left.update(dt, KeyCode::W, KeyCode::S);
                 right.update(dt, KeyCode::Up, KeyCode::Down);
                 ball.update(dt);
-
-                // TODO: capture the return value of check_paddles:
-                //   let hit = ball.check_paddles(&left, &right);
-                //   if hit { if let Some(ref s) = bounce_sound { play_sound_once(s); } }
                 ball.check_paddles(&left, &right);
 
-                // TODO: play score_sound when a point is scored
                 if score.update(&ball) {
                     ball.reset();
                     if score.left  >= WIN_SCORE { winner = "Left player wins!";  state = State::GameOver; }
@@ -205,6 +209,7 @@ async fn main() {
                 if is_key_pressed(KeyCode::R) {
                     score = Score::new();
                     ball.reset();
+                    // TODO: pass &paddle_texture here too
                     left  = Paddle::new(PADDLE_OFFSET);
                     right = Paddle::new(WINDOW_W - PADDLE_OFFSET - PADDLE_W);
                     state = State::Playing;

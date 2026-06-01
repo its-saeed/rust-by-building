@@ -76,7 +76,9 @@
 - [Lesson 3 — The Ball](./pong/03-ball.md)
 - [Lesson 4 — Collision Detection](./pong/04-collision.md)
 - [Lesson 5 — Scoring](./pong/05-scoring.md)
-- [Lesson 6 — Sound and Polish](./pong/06-sound.md)
+- [Lifetimes](./pong/06-lifetimes.md)
+- [Lesson 7 — Sprites](./pong/07-sprites.md)
+- [Lesson 8 — Sound and Polish](./pong/08-sound.md)
 
 # Project 8 — Stable World
 

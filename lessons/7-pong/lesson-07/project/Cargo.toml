@@ -1,10 +1,10 @@
 [package]
-name = "pong-06"
+name = "pong-07"
 edition.workspace = true
 
 [dependencies]
 macroquad = { workspace = true }
 
 [[bin]]
-name = "pong-06"
+name = "pong-07"
 path = "src/main.rs"
