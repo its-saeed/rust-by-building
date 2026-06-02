@@ -81,7 +81,22 @@
 - [Lesson 8 — Ball Trail](./pong/08-trail.md)
 - [Lesson 9 — Sound and Polish](./pong/09-sound.md)
 
-# Project 8 — Stable World
+# Project 8 — Peggle Nights
+
+- [Overview](./peggle/overview.md)
+- [Modules](./peggle/modules.md)
+- [Rapier Primer](./peggle/rapier-primer.md)
+- [Lesson 1 — Static Scene](./peggle/01-static-scene.md)
+- [Lesson 2 — Rapier Setup](./peggle/02-rapier-setup.md)
+- [Lesson 3 — Aiming](./peggle/03-aiming.md)
+- [Lesson 4 — Trajectory Preview](./peggle/04-trajectory.md)
+- [Lesson 5 — The Ball](./peggle/05-ball.md)
+- [Lesson 6 — Collision Events](./peggle/06-collisions.md)
+- [Lesson 7 — The Bucket](./peggle/07-bucket.md)
+- [Lesson 8 — Score & States](./peggle/08-score-states.md)
+- [Lesson 9 — Polish](./peggle/09-polish.md)
+
+# Project 9 — Stable World
 
 - [Overview](./stable-world/overview.md)
 
