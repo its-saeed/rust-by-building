@@ -9,8 +9,9 @@ members = [
     "lessons/5-many-bodies/lesson-*/project",
     "lessons/6-collisions/lesson-*/project",
     "lessons/7-pong/lesson-*/project",
-    "lessons/8-stable-world/lesson-*/project",
-    "lessons/8-boxes/lesson-*/project",
+    "lessons/8-peggle/lesson-*/project",
+    "lessons/9-stable-world/lesson-*/project",
+    "lessons/10-boxes/lesson-*/project",
     "capstones/*",
 ]
 
@@ -32,3 +33,5 @@ notify-debouncer-mini = "0.4"
 ratatui = "0.29"
 crossterm = "0.28"
 macroquad = "0.4"
+# rapier2d added for Project 8 — Peggle. Run `rbb-admin vendor-sync` after this change.
+rapier2d = { version = "0.22", features = ["crossbeam-channel"] }

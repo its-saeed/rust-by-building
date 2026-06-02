@@ -1,0 +1,11 @@
+[package]
+name = "peggle-02"
+edition.workspace = true
+
+[dependencies]
+macroquad = { workspace = true }
+# TODO: add rapier2d = { workspace = true }
+
+[[bin]]
+name = "peggle-02"
+path = "src/main.rs"
