@@ -1,4 +1,4 @@
-# Lesson 6 — Sound and Polish
+# Lesson 9 — Sound and Polish
 
 > **Goal**: Load and play sounds on paddle hits and scoring, add a start screen, and make the ball accelerate with each rally.
 >
@@ -28,7 +28,7 @@ Place both lines **before** the game loop, right after the window opens. Loading
 Put two WAV files in the project alongside `Cargo.toml`:
 
 ```
-lesson-08/project/
+lesson-09/project/
     assets/
         bounce.wav    ← played on paddle hits and wall bounces
         score.wav     ← played when a point is scored
@@ -99,8 +99,8 @@ When restarting after a game over, go directly to `State::Playing` — the playe
 if is_key_pressed(KeyCode::R) {
     score = Score::new();
     ball.reset();
-    left  = Paddle::new(PADDLE_OFFSET);
-    right = Paddle::new(WINDOW_W - PADDLE_OFFSET - PADDLE_W);
+    left  = Paddle::new(PADDLE_OFFSET, &paddle_texture);
+    right = Paddle::new(WINDOW_W - PADDLE_OFFSET - PADDLE_W, &paddle_texture);
     state = State::Playing;   // skip start screen on restart
 }
 ```
@@ -160,7 +160,7 @@ if score.update(&ball) {
 
 ## Your task
 
-Open `lessons/7-pong/lesson-08/project/src/main.rs`.
+Open `lessons/7-pong/lesson-09/project/src/main.rs`.
 
 1. Add `WaitingToStart` to `enum State`. Change the initial state to `State::WaitingToStart`.
 2. Before the game loop, load `bounce_sound` and `score_sound` using `load_sound(...).await.ok()`.
@@ -170,8 +170,8 @@ Open `lessons/7-pong/lesson-08/project/src/main.rs`.
 6. Inside the `if score.update(&ball)` block, play `score_sound`.
 
 ```sh
-cargo run --bin pong-08
+cargo run --bin pong-09
 ```
 
-Put two WAV files in `lessons/7-pong/lesson-08/project/assets/` before running. Play a rally — the ball should get noticeably faster after a few hits, and each event should produce a sound.
+Put two WAV files in `lessons/7-pong/lesson-09/project/assets/` before running. Play a rally — the ball should get noticeably faster after a few hits, and each event should produce a sound.
 

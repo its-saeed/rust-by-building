@@ -78,7 +78,8 @@
 - [Lesson 5 — Scoring](./pong/05-scoring.md)
 - [Lifetimes](./pong/06-lifetimes.md)
 - [Lesson 7 — Sprites](./pong/07-sprites.md)
-- [Lesson 8 — Sound and Polish](./pong/08-sound.md)
+- [Lesson 8 — Ball Trail](./pong/08-trail.md)
+- [Lesson 9 — Sound and Polish](./pong/09-sound.md)
 
 # Project 8 — Stable World
 

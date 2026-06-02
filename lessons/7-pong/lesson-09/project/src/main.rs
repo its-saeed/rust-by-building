@@ -1,6 +1,5 @@
+use std::collections::VecDeque;
 use macroquad::prelude::*;
-
-// TODO: add: use std::collections::VecDeque;
 
 const WINDOW_W: f32 = 800.0;
 const WINDOW_H: f32 = 600.0;
@@ -10,7 +9,7 @@ const BALL_SIZE: f32 = 12.0;
 const PADDLE_OFFSET: f32 = 20.0;
 const PADDLE_SPEED: f32 = 400.0;
 const WIN_SCORE: u32 = 5;
-// TODO: add: const TRAIL_LEN: usize = 12;
+const TRAIL_LEN: usize = 12;
 
 fn window_conf() -> Conf {
     Conf {
@@ -21,6 +20,7 @@ fn window_conf() -> Conf {
     }
 }
 
+// TODO: add WaitingToStart variant → enum State { WaitingToStart, Playing, GameOver }
 enum State {
     Playing,
     GameOver,
@@ -88,7 +88,7 @@ struct Ball<'a> {
     rect:    Rect,
     vel:     Vec2,
     texture: &'a Texture2D,
-    // TODO: add field: trail: VecDeque<Vec2>
+    trail:   VecDeque<Vec2>,
 }
 
 impl<'a> Ball<'a> {
@@ -102,12 +102,15 @@ impl<'a> Ball<'a> {
             ),
             vel: Vec2::new(300.0, 220.0),
             texture,
-            // TODO: initialize: trail: VecDeque::new()
+            trail: VecDeque::new(),
         }
     }
 
     fn update(&mut self, dt: f32) {
-        // TODO: push self.rect.center() onto trail; pop_front if over TRAIL_LEN
+        self.trail.push_back(self.rect.center());
+        if self.trail.len() > TRAIL_LEN {
+            self.trail.pop_front();
+        }
 
         self.rect.x += self.vel.x * dt;
         self.rect.y += self.vel.y * dt;
@@ -129,6 +132,7 @@ impl<'a> Ball<'a> {
         self.vel.y = factor * speed * 0.75;
     }
 
+    // TODO: return bool (true if hit) and multiply self.vel *= 1.05 on each hit
     fn check_paddles(&mut self, left: &Paddle, right: &Paddle) {
         if self.rect.overlaps(&left.rect) {
             self.rect.x = left.rect.x + left.rect.w;
@@ -143,7 +147,7 @@ impl<'a> Ball<'a> {
     }
 
     fn reset(&mut self) {
-        // TODO: call self.trail.clear()
+        self.trail.clear();
         self.rect.x = WINDOW_W / 2.0 - BALL_SIZE / 2.0;
         self.rect.y = WINDOW_H / 2.0 - BALL_SIZE / 2.0;
         let dir_x = if macroquad::rand::gen_range(0, 2) == 0 { 1.0_f32 } else { -1.0 };
@@ -152,12 +156,11 @@ impl<'a> Ball<'a> {
     }
 
     fn draw(&self) {
-        // TODO: iterate self.trail, draw circles with decreasing alpha and radius
-        //   let len = self.trail.len();
-        //   for (i, &pos) in self.trail.iter().enumerate() {
-        //       let t = i as f32 / len as f32;
-        //       draw_circle(pos.x, pos.y, t * BALL_SIZE * 0.5, Color::new(1.0, 1.0, 1.0, t * 0.6));
-        //   }
+        let len = self.trail.len();
+        for (i, &pos) in self.trail.iter().enumerate() {
+            let t = i as f32 / len as f32;
+            draw_circle(pos.x, pos.y, t * BALL_SIZE * 0.5, Color::new(1.0, 1.0, 1.0, t * 0.6));
+        }
         draw_texture_ex(
             self.texture,
             self.rect.x,
@@ -184,11 +187,16 @@ async fn main() {
     let paddle_texture = load_texture("assets/paddle.png").await.unwrap();
     let ball_texture   = load_texture("assets/ball.png").await.unwrap();
 
+    // TODO: load sounds:
+    //   let bounce_sound = load_sound("assets/bounce.wav").await.ok();
+    //   let score_sound  = load_sound("assets/score.wav").await.ok();
+
     let mut left  = Paddle::new(PADDLE_OFFSET, &paddle_texture);
     let mut right = Paddle::new(WINDOW_W - PADDLE_OFFSET - PADDLE_W, &paddle_texture);
     let mut ball  = Ball::new(&ball_texture);
     let mut score  = Score::new();
     let mut winner = "";
+    // TODO: change to State::WaitingToStart
     let mut state  = State::Playing;
 
     loop {
@@ -202,14 +210,19 @@ async fn main() {
         score.draw();
 
         match state {
+            // TODO: add State::WaitingToStart arm — title + "Press Space to start"
+
             State::Playing => {
                 left.update(dt, KeyCode::W, KeyCode::S);
                 right.update(dt, KeyCode::Up, KeyCode::Down);
                 ball.update(dt);
+
+                // TODO: let hit = ball.check_paddles(...); play bounce_sound if hit
                 ball.check_paddles(&left, &right);
 
                 if score.update(&ball) {
                     ball.reset();
+                    // TODO: play score_sound here
                     if score.left  >= WIN_SCORE { winner = "Left player wins!";  state = State::GameOver; }
                     if score.right >= WIN_SCORE { winner = "Right player wins!"; state = State::GameOver; }
                 }
