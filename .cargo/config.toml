@@ -1,9 +1,7 @@
-# Use vendored crates so the whole course builds offline. Run
-# `cargo vendor` at the workspace root after editing any Cargo.toml,
-# then commit both the change and the refreshed `vendor/` tree.
-
-[source.crates-io]
-replace-with = "vendored-sources"
-
-[source.vendored-sources]
-directory = "vendor"
+# If you need to build fully offline, run `cargo vendor` and uncomment:
+#
+# [source.crates-io]
+# replace-with = "vendored-sources"
+#
+# [source.vendored-sources]
+# directory = "vendor"
