@@ -4,6 +4,8 @@ Every network connection your programs make — TCP or UDP, client or server —
 
 Sockets are the bridge between your code and the network. Everything in the networking chapters so far — TCP streams, UDP datagrams, HTTP — is built on sockets.
 
+> **Think of it like this:** A socket is like a telephone wall jack. The jack is fixed in the wall at a known address (your phone number = IP + port). You plug your phone in (your program opens the socket). When someone calls (a client connects), your phone rings and a conversation begins — you can talk and listen (send and receive). The telephone exchange (the OS) handles all the copper wires and switching in the wall — you just pick up the handset and talk. And just like you can have one phone plugged in and only answer one call at a time, a single-threaded server handles one connection at a time; to handle many simultaneous calls you would need more phones (threads or async).
+
 ---
 
 ## What a socket is

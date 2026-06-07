@@ -4,6 +4,8 @@ IP delivers packets best-effort: they can arrive out of order, get dropped by a 
 
 **TCP** (Transmission Control Protocol) provides that guarantee. It runs on top of IP and makes it look like a reliable, ordered stream of bytes from one point to another.
 
+> **Think of it like this:** Imagine reading a book aloud to a friend over walkie-talkie, one paragraph at a time. After each paragraph you say "did you get that?" Your friend replies "yes, continue" — or "no, say it again" if the signal broke up. You also number each paragraph so if two arrive at once your friend knows the right order. You never move on until the current paragraph is confirmed. That is TCP: every chunk of data is acknowledged, lost chunks are resent, and order is guaranteed. It takes longer than just talking — but nothing is missed.
+
 ---
 
 ## The connection

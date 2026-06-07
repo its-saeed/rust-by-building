@@ -2,6 +2,8 @@
 
 You have been using HTTP your entire programming life — every time a browser loads a page, every time you call a web API. HTTP is the application-layer protocol of the web. It runs over TCP, which handles delivery, so HTTP can focus entirely on the conversation.
 
+> **Think of it like this:** HTTP works like ordering at a restaurant. You (the client) call the waiter (HTTP) over and place your order (the request): the method is what you want done ("bring me"), the path is the item ("/pasta/carbonara"), and headers are special instructions ("no dairy, please"). The waiter disappears into the kitchen and comes back once with your food (the response): a status code tells you if it went well (200 OK — here's your pasta) or not (404 Not Found — we don't have that dish, 500 Internal Server Error — the kitchen is on fire). Crucially, the waiter never brings you something you didn't order. And you get exactly one response per order — not a stream, not a subscription.
+
 ---
 
 ## Request and response
@@ -121,6 +123,60 @@ curl -X POST https://httpbin.org/post \
 - `-d` — the request body
 
 The response will echo back your JSON so you can verify it arrived correctly.
+
+---
+
+## Free APIs worth exploring
+
+All of these require no sign-up and no API key (or accept a free `DEMO_KEY`). Try them with `curl` before writing Rust code — that is how real API development works.
+
+### NASA Astronomy Picture of the Day
+
+```sh
+curl "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY"
+```
+
+Returns the title, explanation, and URL of today's astronomy photo. The `DEMO_KEY` allows 30 requests per hour. The response has a `url` field pointing to the actual image.
+
+### Open Trivia Database
+
+```sh
+curl "https://opentdb.com/api.php?amount=5&type=multiple&category=18"
+```
+
+Returns 5 multiple-choice questions (category 18 = computers). Each question has a `correct_answer` and three `incorrect_answers`. Great for building a quiz game.
+
+### Chuck Norris jokes
+
+```sh
+curl "https://api.chucknorris.io/jokes/random"
+```
+
+Returns a single joke in `{"value": "..."}`. The simplest possible JSON response — good for a first serde exercise. You can also filter by category: `?category=dev`.
+
+### JokeAPI — programming jokes
+
+```sh
+curl "https://v2.jokeapi.dev/joke/Programming?type=single"
+```
+
+Returns a programming-specific joke. The `type=single` gives you one-liners. Without it you get two-part setup/punchline jokes with separate `setup` and `delivery` fields.
+
+### REST Countries
+
+```sh
+curl "https://restcountries.com/v3.1/name/germany"
+```
+
+Returns detailed information about a country: population, area, capital, currencies, languages, flag emoji. Try replacing `germany` with any country name. A rich response — good for practising selective deserialisation (you do not have to map every field, just the ones you want).
+
+### Your IP's location
+
+```sh
+curl "https://ipapi.co/json/"
+```
+
+Returns your public IP address and its estimated geographic location (city, country, coordinates, timezone). Every student gets a different response — it is personalised to their connection.
 
 ---
 

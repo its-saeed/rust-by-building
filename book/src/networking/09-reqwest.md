@@ -174,6 +174,78 @@ let data: Response = resp.json().expect("parse error");
 
 ---
 
+## Other APIs to try
+
+Once you have the weather client working, try replacing the API with one of these. Each has a different response shape — good practice for writing `#[derive(Deserialize)]` structs.
+
+### Chuck Norris jokes
+
+```rust
+#[derive(Deserialize, Debug)]
+struct Joke {
+    value: String,
+}
+
+let joke: Joke = client
+    .get("https://api.chucknorris.io/jokes/random")
+    .send()?
+    .json()?;
+
+println!("{}", joke.value);
+```
+
+### NASA Astronomy Picture of the Day
+
+```rust
+#[derive(Deserialize, Debug)]
+struct Apod {
+    title:       String,
+    explanation: String,
+    url:         String,
+    date:        String,
+}
+
+let apod: Apod = client
+    .get("https://api.nasa.gov/planetary/apod")
+    .query(&[("api_key", "DEMO_KEY")])
+    .send()?
+    .json()?;
+
+println!("{} ({})", apod.title, apod.date);
+println!("{}", apod.url);
+```
+
+### Open Trivia Database
+
+```rust
+#[derive(Deserialize, Debug)]
+struct TriviaResponse {
+    results: Vec<Question>,
+}
+
+#[derive(Deserialize, Debug)]
+struct Question {
+    question:         String,
+    correct_answer:   String,
+    incorrect_answers: Vec<String>,
+}
+
+let trivia: TriviaResponse = client
+    .get("https://opentdb.com/api.php")
+    .query(&[("amount", "3"), ("type", "multiple"), ("category", "18")])
+    .send()?
+    .json()?;
+
+for q in &trivia.results {
+    println!("Q: {}", q.question);
+    println!("A: {}", q.correct_answer);
+}
+```
+
+Note: the trivia API HTML-encodes some characters in strings (e.g. `&amp;` for `&`). You will need to unescape them for a real quiz app, but for the exercise it does not matter.
+
+---
+
 ## What reqwest handles for you
 
 When you call `.send()`, reqwest:

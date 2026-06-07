@@ -2,6 +2,8 @@
 
 At its most basic, a network is two or more computers that can send data to each other. That is it. Everything else — the internet, HTTP, DNS, sockets, Rust's `TcpStream` — is built on top of that single idea.
 
+> **Think of it like this:** Imagine you want to mail a very long book to a friend in another city. Instead of shipping the entire book in one enormous box, you tear out each chapter, put each in its own labelled envelope, and drop them all in the post. Each envelope travels independently — some may go via different sorting offices and arrive slightly out of order. Your friend collects all the envelopes and reassembles the book. A computer network works exactly like this: data is split into packets (envelopes), each carrying a destination address, sent independently across shared roads, and put back together at the other end.
+
 ---
 
 ## Data travels in packets

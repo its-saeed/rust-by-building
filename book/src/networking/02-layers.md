@@ -4,6 +4,8 @@ In chapter 1, a packet traveled from your laptop to a server in another country,
 
 This is the same reason your Rust projects use modules: separate concerns, hide complexity, let each part be understood and changed independently. Networks are built on exactly the same principle.
 
+> **Think of it like this:** Imagine international shipping. You hand a parcel to your local courier — they don't care what's inside. The courier hands it to the national postal service — they don't care who the local courier was. The national post handles customs — customs doesn't care about postal routes. Finally, a courier in the destination country delivers it — they don't know it crossed an ocean. Each organisation only talks to the one above and below it. If the airline changes, the local courier doesn't notice. If you switch from FedEx to DHL domestically, customs doesn't care. That independence is exactly what the network layer model gives you.
+
 ---
 
 ## The TCP/IP model

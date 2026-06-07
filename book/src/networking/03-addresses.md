@@ -2,6 +2,8 @@
 
 Every letter you post needs an address. Network packets are no different. The internet layer uses **IP addresses** to route packets to the right machine, and the transport layer uses **port numbers** to route them to the right program. And because numeric addresses are hard to remember, the internet has a phone book: **DNS**.
 
+> **Think of it like this:** An IP address is like a building's street address — it gets mail to the right building. A port number is like an apartment number — it gets the mail to the right door inside that building. The full address `192.168.1.12:8080` reads as "building 192.168.1.12, apartment 8080." DNS is your phone's contacts app: instead of remembering your friend's number (+1-555-0193), you just search "Alice." Instead of remembering `142.250.185.14`, you just type `google.com`.
+
 ---
 
 ## IP addresses

@@ -2,6 +2,8 @@
 
 TCP's guarantees — reliability, ordering, flow control — come at a price. Every packet must be acknowledged. Lost packets are retransmitted. If a packet is delayed by 50 ms, every packet behind it waits. For applications that cannot afford to wait, there is **UDP**.
 
+> **Think of it like this:** Picture a live sports radio commentary. The commentator describes every play as it happens — fast, continuous, no pauses. If your radio signal cuts out for a second, you miss those words. The commentator does not stop and repeat them; play has moved on. You accept the gap and keep listening. That is UDP: data flows as fast as possible, lost packets stay lost, and nobody waits. Missing a few frames of a video call is fine — you just see a tiny glitch. But missing a piece of a bank transfer is not fine at all — that needs TCP.
+
 ---
 
 ## What UDP does (and does not do)
