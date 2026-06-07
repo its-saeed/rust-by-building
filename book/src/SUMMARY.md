@@ -96,6 +96,23 @@
 - [Lesson 8 — Score & States](./peggle/08-score-states.md)
 - [Lesson 9 — Polish](./peggle/09-polish.md)
 
+# How Networks Work
+
+- [Chapter 1 — What is a Network?](./networking/01-what-is-a-network.md)
+- [Chapter 2 — The Layered Model](./networking/02-layers.md)
+- [Chapter 3 — Addresses and Names](./networking/03-addresses.md)
+- [Chapter 4 — TCP — Reliable Streams](./networking/04-tcp.md)
+- [Chapter 5 — UDP — Fast Datagrams](./networking/05-udp.md)
+- [Chapter 6 — HTTP and the Web](./networking/06-http.md)
+- [Chapter 7 — Sockets](./networking/07-sockets.md)
+
+# Network Programming in Rust
+
+- [Lesson 1 — TCP Echo Server](./networking/08-tcp-server.md)
+- [Lesson 2 — HTTP Client with reqwest](./networking/09-reqwest.md)
+- [Lesson 3 — TCP Client](./networking/10-tcp-client.md)
+- [Lesson 4 — UDP](./networking/11-udp.md)
+
 # Project 9 — Stable World
 
 - [Overview](./stable-world/overview.md)
