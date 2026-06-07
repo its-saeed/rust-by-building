@@ -1,0 +1,9 @@
+[package]
+name = "weather-client"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[dependencies]
+# TODO: add reqwest = { workspace = true }
+# TODO: add serde = { workspace = true }

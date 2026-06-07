@@ -1,0 +1,5 @@
+[package]
+name = "tcp-echo-server"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
