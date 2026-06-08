@@ -13,6 +13,7 @@ members = [
     "lessons/9-stable-world/lesson-*/project",
     "lessons/10-boxes/lesson-*/project",
     "lessons/networking/lesson-*/project",
+    "lessons/9-tele-sketch/lesson-*/project",
     "capstones/*",
 ]
 

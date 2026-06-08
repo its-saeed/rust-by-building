@@ -113,11 +113,20 @@
 - [Lesson 3 — TCP Client](./networking/10-tcp-client.md)
 - [Lesson 4 — UDP](./networking/11-udp.md)
 
-# Project 9 — Stable World
+# Project 9 — Tele-Sketch
+
+- [Overview](./tele-sketch/overview.md)
+- [Lesson 1 — Protocol & Project Setup](./tele-sketch/01-protocol.md)
+- [Lesson 2 — The Server](./tele-sketch/02-server.md)
+- [Lesson 3 — Local Canvas](./tele-sketch/03-canvas.md)
+- [Lesson 4 — Going Live](./tele-sketch/04-going-live.md)
+- [Lesson 5 — Polish](./tele-sketch/05-polish.md)
+
+# Project 10 — Stable World
 
 - [Overview](./stable-world/overview.md)
 
-# Project 9 — Boxes
+# Project 11 — Boxes
 
 - [Overview](./boxes/overview.md)
 
