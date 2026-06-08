@@ -6,6 +6,77 @@ In Tele-Sketch, every drawing action is a single `DrawEvent`. When your pen touc
 
 ---
 
+## Big picture
+
+Three programs, all running simultaneously:
+
+```
+ ┌──────────────────────────────────┐
+ │         cargo run --bin server   │
+ │                                  │
+ │   macroquad window               │
+ │   ┌────────────────────────┐     │
+ │   │  peers connected: 2   │     │
+ │   │  ● 127.0.0.1:54321    │     │
+ │   │  ● 127.0.0.1:54322    │     │
+ │   └────────────────────────┘     │
+ │                                  │
+ │   UdpSocket bound to :9090       │
+ │   non-blocking, drain each frame │
+ └──────────────┬───────────────────┘
+                │
+       relay DrawEvent
+       to all peers
+       except sender
+                │
+       ┌────────┴────────┐
+       │                 │
+       ▼                 ▼
+┌─────────────┐   ┌─────────────┐
+│  client A   │   │  client B   │
+│             │   │             │
+│  macroquad  │   │  macroquad  │
+│  canvas     │   │  canvas     │
+│             │   │             │
+│  draw ───── │──▶│ ─── draw   │
+│         DrawEvent (via server)│
+│             │   │             │
+│  UdpSocket  │   │  UdpSocket  │
+│  :0 (any)   │   │  :0 (any)  │
+│  non-block  │   │  non-block  │
+└─────────────┘   └─────────────┘
+```
+
+**What flows:**
+- Client A draws → sends `DrawEvent` → server → server relays to Client B → Client B draws the stroke
+- Client B draws → sends `DrawEvent` → server → server relays to Client A → Client A draws the stroke
+- Server **never echoes back to the sender** — each client draws its own strokes locally without waiting for the server
+
+**Per-frame loop (same shape on all three programs):**
+
+```
+┌─────────────────────────────────────────────────────┐
+│  every frame (~60 fps)                              │
+│                                                     │
+│  1. drain UDP receive loop                          │
+│     loop { recv_from() → Ok(data) or WouldBlock }  │
+│                                                     │
+│  2. update state                                    │
+│     client: record mouse input, send DrawEvent      │
+│     server: update peer map, relay packets          │
+│                                                     │
+│  3. render                                          │
+│     client: draw strokes                            │
+│     server: draw dashboard                          │
+│                                                     │
+│  4. next_frame().await                              │
+└─────────────────────────────────────────────────────┘
+```
+
+The only new idea in this project is step 1: `recv_from` with `set_nonblocking(true)` returns immediately with `WouldBlock` when nothing is waiting, keeping the frame loop running at full speed.
+
+---
+
 ## The DrawEvent
 
 ```rust
