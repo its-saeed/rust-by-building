@@ -118,9 +118,10 @@
 - [Overview](./tele-sketch/overview.md)
 - [Lesson 1 — Protocol & Project Setup](./tele-sketch/01-protocol.md)
 - [Lesson 2 — The Server](./tele-sketch/02-server.md)
-- [Lesson 3 — Local Canvas](./tele-sketch/03-canvas.md)
+- [Lesson 3 — Basic Canvas](./tele-sketch/03-canvas.md)
 - [Lesson 4 — Going Live](./tele-sketch/04-going-live.md)
-- [Lesson 5 — Polish](./tele-sketch/05-polish.md)
+- [Lesson 5 — Colour Palette](./tele-sketch/05-palette.md)
+- [Lesson 6 — Brush Size & Polish](./tele-sketch/06-brush.md)
 
 # Project 10 — Stable World
 
