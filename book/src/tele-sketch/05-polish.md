@@ -1,33 +1,72 @@
 # Lesson 5 — Polish
 
-The app works. Now add three things that turn a proof-of-concept into something you want to actually use: per-player colour, canvas clear, and a protocol version field.
+The app works. Now add three features that turn it from a proof-of-concept into something worth showing: per-player identity colour, a networked canvas clear, and a protocol version byte. Each one teaches something about the full lifecycle of a real protocol.
 
 ---
 
-## Per-player colour
+## Step 1 — The identity colour problem
 
-Right now both clients choose their own colour, which means they might pick the same one. A nicer approach: assign each client a random colour on startup, and use it for all strokes regardless of what is in the palette.
+Right now both clients choose their drawing colour from the same palette. Nothing stops them from both picking red. When that happens, you cannot tell whose strokes are whose.
 
-Or, keep the palette for local preference but also tag every event with the sender's **identity colour** — a random `(r, g, b)` chosen once at launch — and use that identity colour to tint remote strokes:
+The fix: each client picks a random colour once at startup — its **identity colour** — and uses it for all strokes. The palette still works for selecting what you draw locally, but remote strokes always appear in the remote client's identity colour, making the two players permanently distinguishable.
+
+macroquad ships its own random number functions, so no new dependency is needed:
 
 ```rust
-// on startup, pick a random identity colour
-let my_color = (
-    rand::gen_range(80u8, 220),
-    rand::gen_range(80u8, 220),
-    rand::gen_range(80u8, 220),
-);
+use macroquad::rand::gen_range;
+
+let my_r = gen_range(80u8, 220u8);
+let my_g = gen_range(80u8, 220u8);
+let my_b = gen_range(80u8, 220u8);
 ```
 
-macroquad exposes `rand::gen_range` — no extra crate needed. Use your chosen palette colour for local drawing, but when drawing remote strokes, use the remote's `r/g/b` directly (they encode their identity colour).
+The range 80–220 avoids colours that are too dark (hard to see on a dark background) or too bright (hard to distinguish from white).
 
 ---
 
-## Canvas clear — extending the protocol
+## Step 2 — Encoding identity in each event
 
-Clear needs to travel over the network: if you clear your canvas, you want to clear the remote one too. That means it needs to be a `DrawEvent`. But there is no natural "clear" in the current seven fields.
+The identity colour travels inside every `DrawEvent` as the `r`, `g`, `b` fields. Change the send block so that instead of using the palette colour, you send the identity colour:
 
-Add one byte:
+```rust
+if is_mouse_button_down(MouseButton::Left) && my < canvas_h {
+    let ev = DrawEvent {
+        x: mx, y: my,
+        r: my_r, g: my_g, b: my_b,  // identity colour, not palette
+        size: brush_size,
+        pen_down: true,
+    };
+    local_strokes.push(ev);
+    let _ = socket.send_to(&ev.to_bytes(), SERVER);
+}
+```
+
+Local strokes are still drawn with the palette colour — use `PALETTE[color_idx]` when rendering `local_strokes`. Remote strokes use `ev.r`, `ev.g`, `ev.b` directly, which decode as the remote player's identity colour.
+
+```rust
+// local strokes — use palette colour
+let (pr, pg, pb) = PALETTE[color_idx];
+for ev in local_strokes.iter().filter(|e| e.pen_down) {
+    draw_circle(ev.x, ev.y, ev.size as f32, Color::from_rgba(pr, pg, pb, 255));
+}
+
+// remote strokes — use the colour embedded in the event
+for ev in remote_strokes.iter().filter(|e| e.pen_down) {
+    draw_circle(ev.x, ev.y, ev.size as f32, Color::from_rgba(ev.r, ev.g, ev.b, 200));
+}
+```
+
+No extra field needed. The `r`, `g`, `b` fields already exist in the protocol — we just repurpose them to carry identity rather than palette choice.
+
+---
+
+## Step 3 — Canvas clear must travel over the network
+
+Pressing `C` to clear your canvas is easy — just `local_strokes.clear()`. But if you do that locally without telling the other client, the canvases go out of sync: you see a blank canvas, they still see everything you drew.
+
+Clear needs to travel as a `DrawEvent`. There is no "clear" concept in the current 13-byte protocol, so you need to add one.
+
+The cleanest solution is a dedicated boolean field. Add it to `DrawEvent`:
 
 ```rust
 pub struct DrawEvent {
@@ -38,96 +77,176 @@ pub struct DrawEvent {
     pub b:        u8,
     pub size:     u8,
     pub pen_down: bool,
-    pub clear:    bool,  // ← new: if true, receiver clears their canvas
+    pub clear:    bool,   // ← new
 }
-// now 14 bytes — update to_bytes / from_bytes
 ```
 
-Update `to_bytes` to write `buf[13] = self.clear as u8;` and `from_bytes` to read `clear: buf[13] != 0`. Update the buffer declaration in server and client to `[0u8; 64]` — both already use that size.
+The struct is now 14 bytes. Update serialisation in both directions:
 
-Send it when `C` is pressed:
+```rust
+// to_bytes — add at the end:
+buf[13] = self.clear as u8;
+
+// from_bytes — change the size check and add the field:
+if buf.len() < 14 { return None; }
+// ...
+clear: buf[13] != 0,
+```
+
+The buffer in both client and server is already `[0u8; 64]` — no change needed there.
+
+---
+
+## Step 4 — Sending a clear event
+
+When `C` is pressed:
 
 ```rust
 if is_key_pressed(KeyCode::C) {
-    remote_strokes.clear();
     local_strokes.clear();
+    remote_strokes.clear();
+
     let ev = DrawEvent {
-        x: 0.0, y: 0.0, r: 0, g: 0, b: 0, size: 0,
-        pen_down: false, clear: true,
+        x: 0.0, y: 0.0,
+        r: 0, g: 0, b: 0, size: 0,
+        pen_down: false,
+        clear: true,
     };
     let _ = socket.send_to(&ev.to_bytes(), SERVER);
 }
 ```
 
-Handle it on receive:
+The non-`clear` fields are all zero — they are ignored by the receiver. The server validates the packet with `from_bytes` (which now requires 14 bytes and returns `Some` for any valid event), then relays it to the other client. The other client sees `ev.clear == true` and clears its canvas too.
+
+Both canvases — local and remote — are cleared on the sending side before the event even reaches the server. This gives instant local feedback. The other client's canvas clears a round-trip later (a few milliseconds), which is imperceptible.
+
+---
+
+## Step 5 — Handling clear on receive
+
+The receive loop needs one extra branch:
 
 ```rust
 if let Some(ev) = DrawEvent::from_bytes(&buf[..n]) {
     if ev.clear {
-        remote_strokes.clear();
         local_strokes.clear();
-    } else {
+        remote_strokes.clear();
+    } else if ev.pen_down {
         remote_strokes.push(ev);
     }
 }
 ```
 
-This is a protocol-breaking change — a server or client that does not know about `clear` will misread the 14th byte. Real protocols handle this with version numbers. For a classroom project, just restart everything.
+When `ev.clear` is true, both lists are cleared — you clear everything, not just the remote player's strokes, because a clear is a mutual reset of the shared canvas.
+
+The `else if ev.pen_down` guard skips lift events (pen-up without drawing). These are not currently sent, but the field exists in the struct for future use.
 
 ---
 
-## Protocol version field
+## Step 6 — This is a breaking protocol change
 
-While you are adding a byte, consider adding a version byte at the front:
+Adding a byte changes the wire format. A client built against the old 13-byte protocol would:
+- Send 13 bytes; a 14-byte server would see `buf.len() < 14` and return `None` → silently dropped
+- Receive 14 bytes; old `from_bytes` would see only the first 13 → `clear` would never be set, which is wrong but harmless for regular strokes
+
+In the classroom setting, the fix is simple: rebuild all three programs together. In a production system, every participant must agree on the same version before exchanging messages. Which brings us to versioning.
+
+---
+
+## Step 7 — Protocol version byte
+
+Add a version number at byte 0. Shift everything else by one:
 
 ```rust
-// to_bytes: buf[0] = 1;  // version
-// from_bytes: if buf[0] != 1 { return None; }
+// to_bytes:
+buf[0]   = 1;                              // version
+buf[1..5].copy_from_slice(&self.x.to_le_bytes());
+buf[5..9].copy_from_slice(&self.y.to_le_bytes());
+buf[9]   = self.r;
+buf[10]  = self.g;
+buf[11]  = self.b;
+buf[12]  = self.size;
+buf[13]  = self.pen_down as u8;
+buf[14]  = self.clear as u8;
+// 15 bytes total
+
+// from_bytes:
+if buf.len() < 15 { return None; }
+if buf[0] != 1 { return None; }   // wrong version → drop silently
+// ... read fields from buf[1..] ...
 ```
 
-`from_bytes` returning `None` on version mismatch means the server silently drops incompatible packets rather than relaying garbage. The `is_some()` check in the server already handles this.
+`from_bytes` returning `None` on version mismatch means the server drops the packet (its `is_some()` guard), and the client ignores it (its `if let Some` guard). A stale client connecting to a new server — or vice versa — fails gracefully rather than drawing garbage.
+
+This is how virtually every binary protocol handles versioning: a fixed byte (or two) at the start, checked immediately, reject anything that does not match. TLS, Postgres wire protocol, and most game networking protocols all do this.
 
 ---
 
-## A nicer server display
+## Step 8 — Upgrading the server display
 
-Now that the server shows peer addresses, you can make it more useful. Display how long each peer has been connected:
+The server can now show not just that a peer is connected, but how long it has been connected. Change the peer map value from a single `Instant` (last seen) to a pair:
 
 ```rust
-// store connect time alongside last-seen time
 let mut peers: HashMap<SocketAddr, (Instant, Instant)> = HashMap::new();
-// (connected_at, last_seen)
+//                                  ╰─ connected_at    ╰─ last_seen
+```
 
-// on new peer:
-peers.entry(from).or_insert((now, now)).1 = now;
+On a new packet from a known peer, update only `last_seen`. On a brand-new peer, set both:
 
-// on render:
+```rust
+peers
+    .entry(from)
+    .and_modify(|(_, last_seen)| *last_seen = now)
+    .or_insert((now, now));
+```
+
+`entry` / `and_modify` / `or_insert` is the idiomatic Rust way to update-or-insert in a single pass through the hash map:
+- If the key exists: `and_modify` runs, updating `last_seen`
+- If the key is new: `or_insert` runs, inserting `(now, now)`
+
+In the render section, display the uptime alongside the address:
+
+```rust
 for (addr, (connected_at, _)) in &peers {
     let secs = connected_at.elapsed().as_secs();
-    draw_text(&format!("  ●  {addr}  ({secs}s)"), 40.0, y, 20.0, LIGHTGRAY);
+    let label = format!("  ●  {addr}   ({secs}s)");
+    draw_text(&label, 40.0, y, 20.0, LIGHTGRAY);
 }
 ```
+
+`connected_at.elapsed()` is equivalent to `Instant::now().duration_since(*connected_at)` — a convenient shorthand when you just need the duration from a past instant to now.
 
 ---
 
 ## Exercise
 
-> **TODO 1**: Add the `clear` field and update the protocol. Test with two clients: press `C` in one and watch the other's canvas clear.
+> **TODO 1**: Implement the `clear: bool` extension. Add the field, update `to_bytes` and `from_bytes`, update the client to send a clear event on `C`, update the receive loop to handle it. Test: press `C` in one client and verify the other's canvas clears.
 >
-> **TODO 2**: Add a version byte at position 0 and shift all other fields by 1. Update both to_bytes and from_bytes. Confirm that starting a mismatched client and server results in the server dropping the packets silently.
+> **TODO 2**: Implement the version byte (step 7). After updating both client and server, intentionally run a client built without the version byte against the new server. What does the server log (packet counter, peer list)? Does the client appear as a peer?
 >
-> **TODO 3**: The canvas replays all events every frame. For a long session with many strokes this becomes slow. How would you fix it? (Hint: macroquad has render textures — `render_target()` lets you draw to an offscreen buffer once and blit it each frame.) You do not need to implement this; just describe the approach.
+> **TODO 3**: The canvas replays all events every frame — rendering cost is O(n) in total strokes. Describe (no implementation required) how you would fix this with a render texture: what macroquad API would you use, when would you draw to the texture versus blit it, and what events would require redrawing from scratch?
 
 ---
 
 ## What you built
 
-In five lessons, from protocol design to live shared drawing:
+In five lessons, from blank Cargo.toml to live shared drawing:
 
-1. Defined a binary protocol and tested it in isolation
-2. Built a relay server with a visual dashboard (macroquad + non-blocking UDP)
-3. Built a local drawing canvas (macroquad, event-driven)
-4. Wired them together with a non-blocking drain loop
-5. Extended the protocol with clear and player identity
+1. **Protocol** — a fixed-size binary struct, `to_bytes`/`from_bytes`, verified with a unit test
+2. **Server** — UDP relay with implicit peer registration, pruning, and a macroquad dashboard
+3. **Canvas** — event-driven drawing, colour palette, brush size, replay rendering
+4. **Going live** — non-blocking drain loop, send on draw, connection indicator
+5. **Polish** — identity colour, networked clear, protocol versioning, server uptime display
 
-The patterns here — fixed-size binary messages, drain loop in a game frame, implicit peer registration — appear in virtually every real-time multiplayer system.
+The patterns here — compact binary messages, drain loop in a frame, implicit registration, version byte at position zero — appear in virtually every real-time multiplayer system, from game engines to collaborative editors.
+
+---
+
+## Key APIs
+
+| API | What it does |
+|-----|-------------|
+| `macroquad::rand::gen_range(lo, hi)` | Random value in `[lo, hi)`, no extra crate |
+| `is_key_pressed(KeyCode::C)` | True on the single frame the key first goes down |
+| `HashMap::entry(key).and_modify(\|v\| ...).or_insert(val)` | Update existing or insert new in one pass |
+| `instant.elapsed()` | Duration from `instant` to now — shorthand for `now.duration_since(instant)` |
