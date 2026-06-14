@@ -123,11 +123,30 @@
 - [Lesson 5 — Colour Palette](./tele-sketch/05-palette.md)
 - [Lesson 6 — Brush Size & Polish](./tele-sketch/06-brush.md)
 
-# Project 10 — Stable World
+# How Concurrency Works
+
+- [Chapter 1 — The CPU and Memory](./threading/01-cpu-memory.md)
+- [Chapter 2 — What the Operating System Does](./threading/02-operating-system.md)
+- [Chapter 3 — How a Process Lives in Memory](./threading/03-process-memory.md)
+- [Chapter 4 — Scheduling: The Illusion of Simultaneity](./threading/04-scheduling.md)
+- [Chapter 5 — Threads: Multiple Stacks, One Heap](./threading/05-threads.md)
+- [Chapter 6 — Why We Need Threads](./threading/06-why-threads.md)
+- [Chapter 7 — The Problems: Races and Deadlocks](./threading/07-races-deadlocks.md)
+
+# Threading in Rust
+
+- [Lesson 1 — Threads and Spawn](./threading/08-spawn-join.md)
+- [Lesson 2 — Message Passing](./threading/09-channels.md)
+
+# Project 10 — Chat Server
+
+- [Overview](./chat-server/overview.md)
+
+# Project 11 — Stable World
 
 - [Overview](./stable-world/overview.md)
 
-# Project 11 — Boxes
+# Project 12 — Boxes
 
 - [Overview](./boxes/overview.md)
 
