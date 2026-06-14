@@ -135,6 +135,7 @@
 
 # Threading in Rust
 
+- [Closures](./threading/closures.md)
 - [Lesson 1 — Threads and Spawn](./threading/08-spawn-join.md)
 - [Lesson 2 — Message Passing](./threading/09-channels.md)
 

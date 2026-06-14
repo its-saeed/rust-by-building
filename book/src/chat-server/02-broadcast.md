@@ -1,49 +1,81 @@
 # Lesson 2 — Broadcasting with Channels
 
-Echo works, but every client only sees their own messages. The goal is: anything one client sends, every connected client receives. That requires the connection threads to share information — and the cleanest way to share information between threads is a channel.
+Echo is working: each client gets their own messages back. Now make it a real chat server: any message one client sends should appear on every other client's screen.
+
+The challenge is coordination. Multiple threads — one per client — need to deliver messages to a single list of connected clients. How do threads share that list safely?
+
+---
+
+## Why not a shared Vec?
+
+The obvious approach: put the writers in a `Vec`, wrap it in a `Mutex` so only one thread touches it at a time, wrap that in an `Arc` so multiple threads can hold a reference to it.
+
+```rust
+// the "obvious" approach — not what we will do
+let writers = Arc::new(Mutex::new(Vec::<TcpStream>::new()));
+```
+
+This works, but it has a problem: every time a client sends a message, its thread has to lock the mutex, write to all writers, and unlock. If ten clients send messages simultaneously, nine threads are blocked waiting for the one holding the lock. Under load, this serialises all writes through a single bottleneck.
+
+There is a cleaner design. Instead of sharing the `Vec` across threads, keep it in exactly one place — the main thread — and let all other threads talk to it through a channel. Only one thread ever touches the `Vec`; no locking needed at all.
 
 ---
 
 ## The design
 
-Each connection thread reads lines and sends them somewhere central. That central place — the **broadcaster** — holds a list of all connected clients and writes each message to all of them.
-
 ```
-accept thread
-  │  for each new connection:
-  │    clone stream → send writer to broadcaster
-  │    spawn reader thread
-  │
-  ├── reader thread A ──"hello"──╮
-  ├── reader thread B ──"world"──┤──▶  broadcaster (main thread)
-  └── reader thread C ──"!"─────╯       │
-                                         ├── write to client A
-                                         ├── write to client B
-                                         └── write to client C
+                         ┌─────────────────────────────────────┐
+                         │             server                  │
+                         │                                     │
+  client A connects ───▶ │  accept thread                      │
+  client B connects ───▶ │    for each connection:             │
+  client C connects ───▶ │      try_clone → send NewClient ──╮ │
+                         │      spawn reader thread           │ │
+                         │                                    │ │
+                         │  reader A  ──── Message("hi") ────┤ │
+                         │  reader B  ──── Message("hey") ───┤ │
+                         │  reader C  ──── Message("!") ─────┘ │
+                         │                    channel (mpsc)    │
+                         │                         │            │
+                         │  broadcaster (main) ◀───┘            │
+                         │    match event:                      │
+                         │      NewClient → writers.push()      │
+                         │      Message   → write to all        │
+                         │                                      │
+                         └─────────────────────────────────────┘
 ```
 
-The broadcaster needs two things from the outside: new client writers (when someone connects) and messages (when someone types). Both arrive through one channel as an **enum**.
+Three roles:
+1. **Accept thread** — waits for connections; for each, sends a writer through the channel and spawns a reader thread
+2. **Reader threads** — one per client; reads lines and sends them through the channel
+3. **Broadcaster (main thread)** — receives everything from the channel; maintains the writer list; writes each message to all clients
+
+All communication flows through one channel. The broadcaster never shares state with anyone — it only receives events and acts on them.
 
 ---
 
 ## Step 1 — The Event enum
 
+The channel carries two kinds of things: a new writer when a client connects, and a message when a client types. An enum unifies them into one type:
+
 ```rust
 use std::net::TcpStream;
 
 enum Event {
-    NewClient(TcpStream),  // a new writer to add to the list
-    Message(String),       // a line to broadcast to everyone
+    NewClient(TcpStream),  // a writer for a newly connected client
+    Message(String),       // text to broadcast to everyone
 }
 ```
 
-A single channel of `Event` carries both kinds of updates. The broadcaster switches on the variant to decide what to do.
+A single `mpsc::channel::<Event>()` carries both. The broadcaster `match`es on the variant to know what to do.
+
+Without the enum, you would need two separate channels — one for writers, one for messages — and the broadcaster would need to check both on every iteration, which is awkward with `std::sync::mpsc`.
 
 ---
 
 ## Step 2 — The broadcaster loop
 
-The broadcaster is the main thread after the accept thread is spawned. It maintains a `Vec` of writers — one per connected client:
+The broadcaster is the simplest part. It keeps a `Vec<TcpStream>` of all active writers and processes events one at a time:
 
 ```rust
 use std::io::Write;
@@ -62,22 +94,46 @@ for event in rx {
 }
 ```
 
-`retain_mut` iterates the vec and keeps only elements for which the closure returns `true`. Writing to a disconnected client returns an error — `is_ok()` returns false — so that writer is automatically removed. No cleanup needed elsewhere.
+**`retain_mut` is doing double duty here.** It iterates the vec and keeps the element only if the closure returns `true`. Writing to a disconnected client returns an `Err`, so `.is_ok()` returns `false` — and that client is silently removed from the list. No separate disconnection handling, no tombstone flags, no second pass to clean up. The write attempt and the cleanup happen in one step.
+
+```
+before Message("hello"):
+  writers: [A, B, C]     (C disconnected without us knowing yet)
+
+retain_mut tries each:
+  write to A → Ok(())    → keep
+  write to B → Ok(())    → keep
+  write to C → Err(...)  → remove
+
+after:
+  writers: [A, B]
+```
 
 ---
 
-## Step 3 — The accept thread
+## Step 3 — The accept thread and sender tree
 
-The accept loop needs to run concurrently with the broadcaster, so it goes in a thread. For each new connection it:
-1. Clones the stream and sends the writer to the broadcaster
-2. Spawns a reader thread with the original stream
+The accept loop must run concurrently with the broadcaster, so it lives in its own thread. Each reader thread also needs a sender. This means `tx` gets cloned into a tree:
 
-Both the accept thread and each reader thread need a sender — so we clone `tx` freely:
+```
+tx (original) ── drop(tx) immediately
+  │
+  ├── tx_accept (clone) → accept thread
+  │     │
+  │     ├── tx_reader_A (clone of tx_accept) → reader thread A
+  │     ├── tx_reader_B (clone of tx_accept) → reader thread B
+  │     └── tx_reader_C (clone of tx_accept) → reader thread C
+  │
+  └── rx → broadcaster (main thread)
+```
+
+The channel stays open as long as at least one `tx` clone exists. When a reader thread finishes, its `tx_reader` is dropped. When all clients disconnect and the accept thread exits (if the server is shutting down), `tx_accept` is dropped. At that point, `rx` ends and the broadcaster's `for event in rx` loop terminates.
 
 ```rust
 use std::sync::mpsc;
 use std::thread;
 use std::net::TcpListener;
+use std::io::{BufRead, BufReader};
 
 let (tx, rx) = mpsc::channel::<Event>();
 
@@ -88,31 +144,31 @@ thread::spawn(move || {
 
     for stream in listener.incoming() {
         let stream = stream.expect("accept failed");
-        let writer = stream.try_clone().expect("clone failed");
 
-        // send the writer to the broadcaster
+        // clone stream: writer goes to broadcaster, reader stays here
+        let writer = stream.try_clone().expect("clone failed");
         tx_accept.send(Event::NewClient(writer)).ok();
 
-        // spawn a reader thread for this connection
+        // each reader thread gets its own sender clone
         let tx_reader = tx_accept.clone();
         thread::spawn(move || {
             let reader = BufReader::new(stream);
             for line in reader.lines() {
                 match line {
                     Ok(text) => { tx_reader.send(Event::Message(text)).ok(); }
-                    Err(_)   => break,
+                    Err(_)   => break,  // client disconnected
                 }
+                // tx_reader dropped when thread exits
             }
-            // tx_reader is dropped here — one fewer sender
         });
     }
-    // tx_accept is dropped here when listener exits
+    // tx_accept dropped when accept thread exits
 });
 
-drop(tx); // close the original — broadcaster ends when all threads finish
+drop(tx);  // ← critical: drop the original so rx can end
 ```
 
-`drop(tx)` is important: if we keep the original sender, `rx` would never end — even after every thread exits. Dropping it means `rx` ends as soon as the last thread drops its clone.
+`drop(tx)` is easy to forget and causes a subtle bug: if the original `tx` is never dropped, `rx` never ends — the broadcaster's `for event in rx` loops forever even after every client disconnects and every thread exits.
 
 ---
 
@@ -161,11 +217,10 @@ fn main() {
     for event in rx {
         match event {
             Event::NewClient(writer) => {
-                println!("new client connected");
+                println!("client connected  (total: {})", writers.len() + 1);
                 writers.push(writer);
             }
             Event::Message(msg) => {
-                println!("broadcasting: {msg}");
                 writers.retain_mut(|w| writeln!(w, "{msg}").is_ok());
             }
         }
@@ -188,25 +243,30 @@ nc 127.0.0.1 8080
 nc 127.0.0.1 8080
 ```
 
-Type in either terminal. The message appears in the other. The server logs each broadcast.
+Type in terminal 2 — the message appears in terminal 3, and vice versa. Disconnect one with `Ctrl+C` — the other keeps working. The server log shows connection counts going up and down.
 
 ---
 
-## What the channel buys you
+## What the design buys you
 
-Notice what is *not* in this code: no `Mutex`, no `Arc`, no locks. The `writers` vec lives entirely in the main thread — no other thread touches it. The channel is the only point of coordination. Ownership of data moves cleanly: each string moves from the reader thread into the channel, arrives in the broadcaster, gets written to each client.
+| | Arc<Mutex<Vec>> | Channel + broadcaster |
+|--|--|--|
+| Synchronisation | Lock on every message | None — single owner |
+| Disconnection cleanup | Separate pass or lock-while-iterating | `retain_mut` handles it inline |
+| Threads blocked waiting | Yes — under load | No — broadcaster is never locked |
+| Code complexity | Higher — shared state across threads | Lower — each thread has one job |
 
-This is the message-passing model from lesson 2 applied to a real problem.
+The channel design is not always better — if you need many threads to both read and write the list concurrently, `Arc<RwLock<>>` might be cleaner. Here, one thread owns the list and everyone else just sends events, which is a natural fit for channels.
 
 ---
 
 ## Exercise
 
-> **TODO 1**: Add a `Disconnect` variant to `Event`. Send it when a reader thread's loop ends. In the broadcaster, print the client count when someone disconnects.
+> **TODO 1**: Add a `Disconnect(SocketAddr)` variant to `Event`. Send it after the reader loop exits. In the broadcaster, print `"{addr} left — {n} clients remaining"`.
 >
-> **TODO 2**: Prefix each broadcast with a client identifier so recipients can tell who sent it. Add `addr: SocketAddr` to `Message(String)` → `Message { text: String, from: SocketAddr }`. Get the address before moving the stream into BufReader.
+> **TODO 2**: Prefix each broadcast with the sender's address: `"[127.0.0.1:54321] hello"`. Change `Message(String)` to `Message { text: String, from: SocketAddr }`. Capture `stream.peer_addr()` before `try_clone`.
 >
-> **TODO 3**: The server broadcasts to all clients including the sender. Change it so the sender's own message is not echoed back. You will need to include the sender's address in `Message` and skip the matching writer.
+> **TODO 3**: Currently a client receives its own messages back. Fix it: skip the writer whose address matches the sender. You will need the sender's `SocketAddr` in the `Message` variant and the receiver's address stored alongside each writer.
 
 ---
 
@@ -214,8 +274,9 @@ This is the message-passing model from lesson 2 applied to a real problem.
 
 | API | What it does |
 |-----|-------------|
-| `enum Event { ... }` | Unified message type for the channel |
-| `tx.clone()` | Give each thread its own sender |
-| `drop(tx)` | Close the original sender so `rx` ends when all threads finish |
-| `writers.retain_mut(\|w\| ...)` | Keep only writers where the closure returns `true` |
-| `writeln!(writer, "{msg}")` | Write a line to a TCP stream |
+| `mpsc::channel::<Event>()` | Channel where messages carry an `Event` enum |
+| `tx.clone()` | Second sender to the same channel |
+| `drop(tx)` | Close original — `rx` ends when all clones are dropped |
+| `for event in rx` | Block until next event; ends when channel closes |
+| `writers.retain_mut(\|w\| ...)` | Keep only writers for which the closure returns `true` |
+| `writeln!(w, "{msg}").is_ok()` | Write a line; `false` if client is disconnected |
