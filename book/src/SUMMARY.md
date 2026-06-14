@@ -138,6 +138,8 @@
 - [Closures](./threading/closures.md)
 - [Lesson 1 — Threads and Spawn](./threading/08-spawn-join.md)
 - [Lesson 2 — Message Passing](./threading/09-channels.md)
+- [Mini Project 1 — Parallel Weather](./threading/10-parallel-weather.md)
+- [Mini Project 2 — Parallel File Search](./threading/11-file-search.md)
 
 # Project 10 — Mandelbrot
 
