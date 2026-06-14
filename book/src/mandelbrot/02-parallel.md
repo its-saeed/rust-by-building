@@ -126,6 +126,7 @@ On a 4-core machine you should see roughly a 3–4× speedup. On an 8-core machi
 
 ```rust
 use macroquad::prelude::*;
+use num_complex::Complex;
 use std::sync::mpsc;
 use std::thread;
 use std::time::Instant;
@@ -146,12 +147,11 @@ fn pixel_to_complex(px: usize, py: usize) -> (f64, f64) {
 }
 
 fn mandelbrot(cx: f64, cy: f64) -> u32 {
-    let (mut x, mut y) = (0.0, 0.0);
+    let c = Complex::new(cx, cy);
+    let mut z = Complex::new(0.0, 0.0);
     for i in 0..MAX_ITER {
-        if x*x + y*y > 4.0 { return i; }
-        let xnew = x*x - y*y + cx;
-        y = 2.0*x*y + cy;
-        x = xnew;
+        if z.norm_sqr() > 4.0 { return i; }
+        z = z * z + c;
     }
     MAX_ITER
 }

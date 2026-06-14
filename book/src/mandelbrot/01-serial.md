@@ -6,7 +6,7 @@ Build the Mandelbrot renderer from scratch on a single thread. By the end of thi
 
 ## Step 1 — Project setup
 
-One binary, one dependency:
+One binary, two dependencies:
 
 ```toml
 [package]
@@ -14,8 +14,11 @@ name = "mandelbrot"
 edition = "2021"
 
 [dependencies]
-macroquad = "0.4"
+macroquad   = "0.4"
+num-complex = "0.4"
 ```
+
+`num-complex` provides a `Complex<T>` type with arithmetic operators already implemented — so `z * z + c` works directly, matching the formula from the primer exactly.
 
 ```rust
 use macroquad::prelude::*;
@@ -65,17 +68,18 @@ This is just a linear interpolation. Pixel 0 maps to the minimum, pixel WIDTH ma
 ## Step 3 — The iteration function
 
 ```rust
+use num_complex::Complex;
+
 const MAX_ITER: u32 = 256;
 
 fn mandelbrot(cx: f64, cy: f64) -> u32 {
-    let (mut x, mut y) = (0.0, 0.0);
+    let c = Complex::new(cx, cy);
+    let mut z = Complex::new(0.0, 0.0);
     for i in 0..MAX_ITER {
-        if x*x + y*y > 4.0 {
+        if z.norm_sqr() > 4.0 {
             return i;
         }
-        let xnew = x*x - y*y + cx;
-        y = 2.0*x*y + cy;
-        x = xnew;
+        z = z * z + c;
     }
     MAX_ITER
 }
@@ -83,10 +87,9 @@ fn mandelbrot(cx: f64, cy: f64) -> u32 {
 
 Returns the iteration count at escape, or `MAX_ITER` if the point never escaped.
 
-Three lines of maths, the rest is loop bookkeeping:
-- `x*x + y*y > 4.0` — magnitude squared exceeds 4, i.e. |z| > 2
-- `xnew = x*x - y*y + cx` — real part of z² + c
-- `y = 2.0*x*y + cy` — imaginary part of z² + c
+Compare this with the formula from the primer: `z = z² + c`. The code says exactly that. `num-complex` implements `*` and `+` for `Complex<f64>` so the arithmetic works without any manual unpacking.
+
+`z.norm_sqr()` returns `x² + y²` — the squared magnitude — which is cheaper than computing the square root and equivalent to checking `|z| > 2`.
 
 ---
 
@@ -170,6 +173,7 @@ Run it. Note the time. On a typical laptop this takes somewhere between 0.5 and 
 
 ```rust
 use macroquad::prelude::*;
+use num_complex::Complex;
 use std::time::Instant;
 
 const WIDTH:    usize = 800;
@@ -188,12 +192,11 @@ fn pixel_to_complex(px: usize, py: usize) -> (f64, f64) {
 }
 
 fn mandelbrot(cx: f64, cy: f64) -> u32 {
-    let (mut x, mut y) = (0.0, 0.0);
+    let c = Complex::new(cx, cy);
+    let mut z = Complex::new(0.0, 0.0);
     for i in 0..MAX_ITER {
-        if x*x + y*y > 4.0 { return i; }
-        let xnew = x*x - y*y + cx;
-        y = 2.0*x*y + cy;
-        x = xnew;
+        if z.norm_sqr() > 4.0 { return i; }
+        z = z * z + c;
     }
     MAX_ITER
 }

@@ -39,3 +39,5 @@ macroquad = "0.4"
 rapier2d = { version = "0.22", features = ["crossbeam-channel"] }
 # reqwest added for networking lessons. Run `rbb-admin vendor-sync` after this change.
 reqwest = { version = "0.12", features = ["blocking", "json"] }
+# num-complex added for Mandelbrot project. Run `rbb-admin vendor-sync` after this change.
+num-complex = "0.4"
