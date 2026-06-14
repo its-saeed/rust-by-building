@@ -112,6 +112,7 @@
 - [Lesson 2 — HTTP Client with reqwest](./networking/09-reqwest.md)
 - [Lesson 3 — TCP Client](./networking/10-tcp-client.md)
 - [Lesson 4 — UDP](./networking/11-udp.md)
+- [Mini Project — HTTP over Raw TCP](./networking/12-raw-http.md)
 
 # Project 9 — Tele-Sketch
 
