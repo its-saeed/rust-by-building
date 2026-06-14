@@ -148,6 +148,9 @@
 # Project 11 — Chat Server
 
 - [Overview](./chat-server/overview.md)
+- [Lesson 1 — Accept and Echo](./chat-server/01-accept.md)
+- [Lesson 2 — Broadcasting with Channels](./chat-server/02-broadcast.md)
+- [Lesson 3 — The Client](./chat-server/03-client.md)
 
 # Project 12 — Stable World
 
