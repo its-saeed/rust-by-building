@@ -138,15 +138,22 @@
 - [Lesson 1 — Threads and Spawn](./threading/08-spawn-join.md)
 - [Lesson 2 — Message Passing](./threading/09-channels.md)
 
-# Project 10 — Chat Server
+# Project 10 — Mandelbrot
+
+- [Overview](./mandelbrot/overview.md)
+- [Complex Numbers](./mandelbrot/complex-numbers.md)
+- [Lesson 1 — Serial Renderer](./mandelbrot/01-serial.md)
+- [Lesson 2 — Parallel Renderer](./mandelbrot/02-parallel.md)
+
+# Project 11 — Chat Server
 
 - [Overview](./chat-server/overview.md)
 
-# Project 11 — Stable World
+# Project 12 — Stable World
 
 - [Overview](./stable-world/overview.md)
 
-# Project 12 — Boxes
+# Project 13 — Boxes
 
 - [Overview](./boxes/overview.md)
 
