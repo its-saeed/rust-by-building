@@ -148,6 +148,7 @@
 - [Complex Numbers](./mandelbrot/complex-numbers.md)
 - [Lesson 1 — Serial Renderer](./mandelbrot/01-serial.md)
 - [Lesson 2 — Parallel Renderer](./mandelbrot/02-parallel.md)
+- [Lesson 3 — Zoom](./mandelbrot/03-zoom.md)
 
 # Project 11 — Chat Server
 
