@@ -36,13 +36,21 @@ let num_threads = thread::available_parallelism()
 
 ## Step 2 — The channel
 
-Each thread sends one message: a `(strip_index, Vec<Color>)` pair — the strip's position and its computed pixels, row by row.
+Define a struct to carry each pixel's position alongside its colour, then open a channel that delivers one `Vec<PixelData>` per strip:
 
 ```rust
 use std::sync::mpsc;
 
-let (tx, rx) = mpsc::channel::<(usize, Vec<Color>)>();
+struct PixelData {
+    px: u32,
+    py: u32,
+    color: Color,
+}
+
+let (tx, rx) = mpsc::channel::<Vec<PixelData>>();
 ```
+
+Each thread computes its strip and sends a `Vec<PixelData>` — one entry per pixel. The receiver can write directly to the image with no index arithmetic.
 
 ---
 
@@ -64,12 +72,13 @@ for t in 0..num_threads {
 
         for py in row_start..row_end {
             for px in 0..WIDTH {
-                let c = pixel_to_complex(px, py);
-                pixels.push(iter_to_color(mandelbrot(c)));
+                let c     = pixel_to_complex(px, py);
+                let color = iter_to_color(mandelbrot(c));
+                pixels.push(PixelData { px: px as u32, py: py as u32, color });
             }
         }
 
-        tx.send((t, pixels)).unwrap();
+        tx.send(pixels).unwrap();
     });
 }
 
@@ -93,18 +102,16 @@ The main thread receives strips as they arrive and writes them into the image:
 ```rust
 let mut image = Image::gen_image_color(WIDTH as u16, HEIGHT as u16, BLACK);
 
-for (strip_idx, pixels) in rx {
-    let row_start = strip_idx * rows_per_strip;
-
-    for (i, color) in pixels.into_iter().enumerate() {
-        let py = row_start + i / WIDTH;
-        let px = i % WIDTH;
-        image.set_pixel(px as u32, py as u32, color);
+for pixels in rx {
+    for PixelData { px, py, color } in pixels {
+        image.set_pixel(px, py, color);
     }
 }
 ```
 
-`for (strip_idx, pixels) in rx` iterates until all senders are dropped — i.e., until all threads have sent their result. No explicit `join()` needed; the channel acts as the synchronisation point.
+`for pixels in rx` iterates until all senders are dropped — i.e., until all threads have sent their result. No explicit `join()` needed; the channel acts as the synchronisation point.
+
+Each `PixelData` carries its own coordinates, so the receiver just sets pixels directly — no index arithmetic to reconstruct which row or column a pixel belongs to.
 
 ---
 
@@ -140,6 +147,12 @@ const RE_MAX: f64 =  1.0;
 const IM_MIN: f64 = -1.2;
 const IM_MAX: f64 =  1.2;
 
+struct PixelData {
+    px: u32,
+    py: u32,
+    color: Color,
+}
+
 fn pixel_to_complex(px: usize, py: usize) -> Complex<f64> {
     let re = RE_MIN + (px as f64 / WIDTH  as f64) * (RE_MAX - RE_MIN);
     let im = IM_MIN + (py as f64 / HEIGHT as f64) * (IM_MAX - IM_MIN);
@@ -171,7 +184,7 @@ async fn main() {
 
     let t0 = Instant::now();
 
-    let (tx, rx) = mpsc::channel::<(usize, Vec<Color>)>();
+    let (tx, rx) = mpsc::channel::<Vec<PixelData>>();
     let rows_per_strip = HEIGHT / num_threads;
 
     for t in 0..num_threads {
@@ -182,23 +195,21 @@ async fn main() {
             let mut pixels = Vec::with_capacity((row_end - row_start) * WIDTH);
             for py in row_start..row_end {
                 for px in 0..WIDTH {
-                    let (cx, cy) = pixel_to_complex(px, py);
-                    pixels.push(iter_to_color(mandelbrot(cx, cy)));
+                    let c     = pixel_to_complex(px, py);
+                    let color = iter_to_color(mandelbrot(c));
+                    pixels.push(PixelData { px: px as u32, py: py as u32, color });
                 }
             }
-            tx.send((t, pixels)).unwrap();
+            tx.send(pixels).unwrap();
         });
     }
     drop(tx);
 
     let mut image = Image::gen_image_color(WIDTH as u16, HEIGHT as u16, BLACK);
 
-    for (strip_idx, pixels) in rx {
-        let row_start = strip_idx * rows_per_strip;
-        for (i, color) in pixels.into_iter().enumerate() {
-            let py = row_start + i / WIDTH;
-            let px = i % WIDTH;
-            image.set_pixel(px as u32, py as u32, color);
+    for pixels in rx {
+        for PixelData { px, py, color } in pixels {
+            image.set_pixel(px, py, color);
         }
     }
 
