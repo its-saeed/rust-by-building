@@ -51,17 +51,19 @@ const IM_MIN: f64 = -1.2;
 const IM_MAX: f64 =  1.2;
 ```
 
-Convert pixel `(px, py)` to complex coordinate `(cx, cy)`:
+Convert pixel `(px, py)` to a point on the complex plane:
 
 ```rust
-fn pixel_to_complex(px: usize, py: usize) -> (f64, f64) {
-    let cx = RE_MIN + (px as f64 / WIDTH  as f64) * (RE_MAX - RE_MIN);
-    let cy = IM_MIN + (py as f64 / HEIGHT as f64) * (IM_MAX - IM_MIN);
-    (cx, cy)
+use num_complex::Complex;
+
+fn pixel_to_complex(px: usize, py: usize) -> Complex<f64> {
+    let re = RE_MIN + (px as f64 / WIDTH  as f64) * (RE_MAX - RE_MIN);
+    let im = IM_MIN + (py as f64 / HEIGHT as f64) * (IM_MAX - IM_MIN);
+    Complex::new(re, im)
 }
 ```
 
-This is just a linear interpolation. Pixel 0 maps to the minimum, pixel WIDTH maps to the maximum.
+This is linear interpolation — pixel 0 maps to the minimum, pixel WIDTH maps to the maximum. The result is already a `Complex<f64>`, ready to pass straight into the iteration function.
 
 ---
 
@@ -72,8 +74,7 @@ use num_complex::Complex;
 
 const MAX_ITER: u32 = 256;
 
-fn mandelbrot(cx: f64, cy: f64) -> u32 {
-    let c = Complex::new(cx, cy);
+fn mandelbrot(c: Complex<f64>) -> u32 {
     let mut z = Complex::new(0.0, 0.0);
     for i in 0..MAX_ITER {
         if z.norm_sqr() > 4.0 {
@@ -126,9 +127,8 @@ let mut image = Image::gen_image_color(WIDTH as u16, HEIGHT as u16, BLACK);
 
 for py in 0..HEIGHT {
     for px in 0..WIDTH {
-        let (cx, cy) = pixel_to_complex(px, py);
-        let iter     = mandelbrot(cx, cy);
-        let color    = iter_to_color(iter);
+        let c     = pixel_to_complex(px, py);
+        let color = iter_to_color(mandelbrot(c));
         image.set_pixel(px as u32, py as u32, color);
     }
 }
@@ -191,8 +191,7 @@ fn pixel_to_complex(px: usize, py: usize) -> (f64, f64) {
     (cx, cy)
 }
 
-fn mandelbrot(cx: f64, cy: f64) -> u32 {
-    let c = Complex::new(cx, cy);
+fn mandelbrot(c: Complex<f64>) -> u32 {
     let mut z = Complex::new(0.0, 0.0);
     for i in 0..MAX_ITER {
         if z.norm_sqr() > 4.0 { return i; }
@@ -215,8 +214,8 @@ async fn main() {
 
     for py in 0..HEIGHT {
         for px in 0..WIDTH {
-            let (cx, cy) = pixel_to_complex(px, py);
-            let color    = iter_to_color(mandelbrot(cx, cy));
+            let c     = pixel_to_complex(px, py);
+            let color = iter_to_color(mandelbrot(c));
             image.set_pixel(px as u32, py as u32, color);
         }
     }

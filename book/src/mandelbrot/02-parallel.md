@@ -64,8 +64,8 @@ for t in 0..num_threads {
 
         for py in row_start..row_end {
             for px in 0..WIDTH {
-                let (cx, cy) = pixel_to_complex(px, py);
-                pixels.push(iter_to_color(mandelbrot(cx, cy)));
+                let c = pixel_to_complex(px, py);
+                pixels.push(iter_to_color(mandelbrot(c)));
             }
         }
 
@@ -140,14 +140,13 @@ const RE_MAX: f64 =  1.0;
 const IM_MIN: f64 = -1.2;
 const IM_MAX: f64 =  1.2;
 
-fn pixel_to_complex(px: usize, py: usize) -> (f64, f64) {
-    let cx = RE_MIN + (px as f64 / WIDTH  as f64) * (RE_MAX - RE_MIN);
-    let cy = IM_MIN + (py as f64 / HEIGHT as f64) * (IM_MAX - IM_MIN);
-    (cx, cy)
+fn pixel_to_complex(px: usize, py: usize) -> Complex<f64> {
+    let re = RE_MIN + (px as f64 / WIDTH  as f64) * (RE_MAX - RE_MIN);
+    let im = IM_MIN + (py as f64 / HEIGHT as f64) * (IM_MAX - IM_MIN);
+    Complex::new(re, im)
 }
 
-fn mandelbrot(cx: f64, cy: f64) -> u32 {
-    let c = Complex::new(cx, cy);
+fn mandelbrot(c: Complex<f64>) -> u32 {
     let mut z = Complex::new(0.0, 0.0);
     for i in 0..MAX_ITER {
         if z.norm_sqr() > 4.0 { return i; }
