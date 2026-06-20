@@ -2,7 +2,7 @@
 
 > **Goal**: Encrypt the entire message, not just one character.
 >
-> **Concepts**: `&str` vs `String`, `String::new()`, `.push()`, `let mut`, `for` loops, `.chars()`.
+> **Concepts**: `&str` vs `String`, `String::new()`, `.push()`, `let mut`, `for` loops, `.chars()`, numeric ranges.
 
 ---
 
@@ -111,6 +111,39 @@ o
 The `for c in ...` loop binds each character to `c` in turn and runs the body once per character.
 
 You cannot iterate over a `&str` directly — `for c in text` won't compile. You must call `.chars()` first. The reason: a `&str` is a sequence of bytes, not characters, and Rust makes you be explicit about the distinction.
+
+---
+
+## Iterating over a range of numbers
+
+The same `for ... in ...` syntax works with numbers. A **range** `0..n` produces the integers 0, 1, 2, … n−1:
+
+```rust
+for i in 0..5 {
+    println!("{}", i);
+}
+```
+
+Output:
+```
+0
+1
+2
+3
+4
+```
+
+`0..5` means "from 0 up to but not including 5". To include the endpoint, write `0..=5` (0 through 5 inclusive).
+
+This comes up whenever you need to repeat something a fixed number of times or try every value in a known set:
+
+```rust
+for key in 0u8..26 {
+    println!("key {}: {}", key, encrypt("Khoor", key));
+}
+```
+
+Notice the `0u8` — this tells Rust the range produces `u8` values, matching the type our functions expect. Without it, Rust infers `i32` by default.
 
 ---
 

@@ -15,7 +15,7 @@ Over the last five lessons you've learned:
 | 1 | Variables, `let`, `println!` |
 | 2 | `char`, ASCII, type casting with `as` |
 | 3 | Functions, return types, expressions vs statements |
-| 4 | `for` loops, `.chars()`, `String`, `let mut` |
+| 4 | `for` loops, `.chars()`, numeric ranges, `String`, `let mut` |
 | 5 | `if`/`else`, `match`, modulo, wrap-around |
 
 The result is a working Caesar cipher:
