@@ -1,5 +1,7 @@
 # Rust by Building
 
+**[Read the book →](https://its-saeed.github.io/rust-by-building/)**
+
 Learn Rust from scratch by writing small programs that get progressively more interesting. Designed to run on a single offline Linux server: an admin sets it up once, students SSH in and work.
 
 No crates.io access, no browser full of tabs — just a book, exercises, and projects, all local.
