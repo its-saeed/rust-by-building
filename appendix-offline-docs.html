@@ -35,7 +35,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-4786004b.js";
+            window.path_to_searchindex_js = "searchindex-27bbe08e.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-27627e6e.js"></script>
@@ -175,6 +175,65 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="reading-stdlib-docs-offline"><a class="header" href="#reading-stdlib-docs-offline">Reading stdlib docs offline</a></h1>
+<p>The course server has no internet connection — and you do not need one. The full Rust documentation is available locally.</p>
+<hr>
+<h2 id="the-standard-library"><a class="header" href="#the-standard-library">The standard library</a></h2>
+<pre><code class="language-sh">rustup doc --std
+</code></pre>
+<p>This opens the standard library reference in your browser (or prints the path if you are in a headless SSH session). Every type, trait, and function in <code>std</code> is documented there.</p>
+<p>Common starting points:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>What you need</th><th>Where to look</th></tr>
+</thead>
+<tbody>
+<tr><td>String methods</td><td><code>std::str</code> / <code>std::string::String</code></td></tr>
+<tr><td>Vec methods</td><td><code>std::vec::Vec</code></td></tr>
+<tr><td>HashMap</td><td><code>std::collections::HashMap</code></td></tr>
+<tr><td>File I/O</td><td><code>std::fs</code> / <code>std::io</code></td></tr>
+<tr><td>Threads</td><td><code>std::thread</code> / <code>std::sync</code></td></tr>
+<tr><td>Error handling</td><td><code>std::result</code> / <code>std::option</code></td></tr>
+<tr><td>Time</td><td><code>std::time</code></td></tr>
+<tr><td>Network</td><td><code>std::net</code></td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="compiler-error-explanations"><a class="header" href="#compiler-error-explanations">Compiler error explanations</a></h2>
+<p>When the compiler gives you an error code like <code>E0382</code>, run:</p>
+<pre><code class="language-sh">rustc --explain E0382
+</code></pre>
+<p>You get a full tutorial on that specific error — what causes it, why Rust rejects it, and how to fix it. These explanations are better than most Stack Overflow answers.</p>
+<hr>
+<h2 id="the-rust-book"><a class="header" href="#the-rust-book">The Rust book</a></h2>
+<pre><code class="language-sh">rustup doc --book
+</code></pre>
+<p>Opens <em>The Rust Programming Language</em> (the official book) locally. If you want to look up how ownership works, what lifetimes mean, or how traits are defined, it is here.</p>
+<hr>
+<h2 id="listing-all-available-docs"><a class="header" href="#listing-all-available-docs">Listing all available docs</a></h2>
+<pre><code class="language-sh">rustup doc
+</code></pre>
+<p>Without arguments, this opens an index of everything installed: the book, the reference, the standard library, Rustonomicon, and more.</p>
+<hr>
+<h2 id="finding-the-path"><a class="header" href="#finding-the-path">Finding the path</a></h2>
+<p>If you are on a headless SSH session and cannot open a browser:</p>
+<pre><code class="language-sh">rustup doc --path
+</code></pre>
+<p>This prints the filesystem path to the docs root. You can then either:</p>
+<ul>
+<li>Open the HTML files directly if you have a local mount</li>
+<li>Ask your admin whether docs are served over HTTP on the course server (they may be at something like <code>http://course-server:8080/doc</code>)</li>
+</ul>
+<hr>
+<h2 id="searching-within-the-docs"><a class="header" href="#searching-within-the-docs">Searching within the docs</a></h2>
+<p>The browser-based docs have a search bar (press <code>S</code> to focus it). Type any type or function name to jump straight to it. This is faster than navigating the module tree.</p>
+<hr>
+<h2 id="crate-docs"><a class="header" href="#crate-docs">Crate docs</a></h2>
+<p>The course’s vendor tree ships with documentation for every crate in the workspace. To read them:</p>
+<pre><code class="language-sh">cargo doc --open
+</code></pre>
+<p>Run this from inside a project directory. It builds and opens docs for all dependencies used by that project — <code>macroquad</code>, <code>num-complex</code>, <code>reqwest</code>, etc.</p>
 
                     </main>
 

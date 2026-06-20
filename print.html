@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-4786004b.js";
+            window.path_to_searchindex_js = "searchindex-27bbe08e.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-27627e6e.js"></script>
@@ -13187,10 +13187,223 @@ hello from client A     ← arrived from the server
 <p><em>Coming soon.</em></p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="reading-stdlib-docs-offline"><a class="header" href="#reading-stdlib-docs-offline">Reading stdlib docs offline</a></h1>
+<p>The course server has no internet connection — and you do not need one. The full Rust documentation is available locally.</p>
+<hr>
+<h2 id="the-standard-library"><a class="header" href="#the-standard-library">The standard library</a></h2>
+<pre><code class="language-sh">rustup doc --std
+</code></pre>
+<p>This opens the standard library reference in your browser (or prints the path if you are in a headless SSH session). Every type, trait, and function in <code>std</code> is documented there.</p>
+<p>Common starting points:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>What you need</th><th>Where to look</th></tr>
+</thead>
+<tbody>
+<tr><td>String methods</td><td><code>std::str</code> / <code>std::string::String</code></td></tr>
+<tr><td>Vec methods</td><td><code>std::vec::Vec</code></td></tr>
+<tr><td>HashMap</td><td><code>std::collections::HashMap</code></td></tr>
+<tr><td>File I/O</td><td><code>std::fs</code> / <code>std::io</code></td></tr>
+<tr><td>Threads</td><td><code>std::thread</code> / <code>std::sync</code></td></tr>
+<tr><td>Error handling</td><td><code>std::result</code> / <code>std::option</code></td></tr>
+<tr><td>Time</td><td><code>std::time</code></td></tr>
+<tr><td>Network</td><td><code>std::net</code></td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="compiler-error-explanations"><a class="header" href="#compiler-error-explanations">Compiler error explanations</a></h2>
+<p>When the compiler gives you an error code like <code>E0382</code>, run:</p>
+<pre><code class="language-sh">rustc --explain E0382
+</code></pre>
+<p>You get a full tutorial on that specific error — what causes it, why Rust rejects it, and how to fix it. These explanations are better than most Stack Overflow answers.</p>
+<hr>
+<h2 id="the-rust-book"><a class="header" href="#the-rust-book">The Rust book</a></h2>
+<pre><code class="language-sh">rustup doc --book
+</code></pre>
+<p>Opens <em>The Rust Programming Language</em> (the official book) locally. If you want to look up how ownership works, what lifetimes mean, or how traits are defined, it is here.</p>
+<hr>
+<h2 id="listing-all-available-docs"><a class="header" href="#listing-all-available-docs">Listing all available docs</a></h2>
+<pre><code class="language-sh">rustup doc
+</code></pre>
+<p>Without arguments, this opens an index of everything installed: the book, the reference, the standard library, Rustonomicon, and more.</p>
+<hr>
+<h2 id="finding-the-path"><a class="header" href="#finding-the-path">Finding the path</a></h2>
+<p>If you are on a headless SSH session and cannot open a browser:</p>
+<pre><code class="language-sh">rustup doc --path
+</code></pre>
+<p>This prints the filesystem path to the docs root. You can then either:</p>
+<ul>
+<li>Open the HTML files directly if you have a local mount</li>
+<li>Ask your admin whether docs are served over HTTP on the course server (they may be at something like <code>http://course-server:8080/doc</code>)</li>
+</ul>
+<hr>
+<h2 id="searching-within-the-docs"><a class="header" href="#searching-within-the-docs">Searching within the docs</a></h2>
+<p>The browser-based docs have a search bar (press <code>S</code> to focus it). Type any type or function name to jump straight to it. This is faster than navigating the module tree.</p>
+<hr>
+<h2 id="crate-docs"><a class="header" href="#crate-docs">Crate docs</a></h2>
+<p>The course’s vendor tree ships with documentation for every crate in the workspace. To read them:</p>
+<pre><code class="language-sh">cargo doc --open
+</code></pre>
+<p>Run this from inside a project directory. It builds and opens docs for all dependencies used by that project — <code>macroquad</code>, <code>num-complex</code>, <code>reqwest</code>, etc.</p>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="using-rbb-effectively"><a class="header" href="#using-rbb-effectively">Using rbb effectively</a></h1>
+<h1 id="using-rbb-effectively"><a class="header" href="#using-rbb-effectively">Using <code>rbb</code> effectively</a></h1>
+<p><code>rbb</code> is the student CLI. Every course interaction goes through it. This page covers all commands and some habits that make the feedback loop faster.</p>
+<hr>
+<h2 id="command-reference"><a class="header" href="#command-reference">Command reference</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>What it does</th></tr>
+</thead>
+<tbody>
+<tr><td><code>rbb status</code></td><td>Table of all lessons — title, exercise progress, project status</td></tr>
+<tr><td><code>rbb tui</code></td><td>Full-screen dashboard, updated live. Press <code>q</code> to quit</td></tr>
+<tr><td><code>rbb next</code></td><td>Print the next unfinished lesson and the command to open it</td></tr>
+<tr><td><code>rbb open &lt;n&gt;</code></td><td>Print lesson N’s README to the terminal</td></tr>
+<tr><td><code>rbb watch &lt;n&gt;</code></td><td>Run lesson N’s project tests on every file save — the main feedback loop</td></tr>
+<tr><td><code>rbb test &lt;n&gt;</code></td><td>Run lesson N’s project tests once and record completion</td></tr>
+<tr><td><code>rbb check &lt;n&gt;</code></td><td>Compile and run every exercise file in lesson N</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="the-feedback-loop"><a class="header" href="#the-feedback-loop">The feedback loop</a></h2>
+<p>The single most important command is <code>rbb watch</code>:</p>
+<pre><code class="language-sh">rbb watch 05
+</code></pre>
+<p>The screen clears. Tests run. Every time you save any file in lesson 05, they run again. You see the compiler output immediately — red until you fix it, green when you are done. Press <code>Ctrl-C</code> to stop.</p>
+<p>Use <code>rbb watch</code> while working. Use <code>rbb test</code> once at the end to record your completion.</p>
+<hr>
+<h2 id="exercises-vs-projects"><a class="header" href="#exercises-vs-projects">Exercises vs projects</a></h2>
+<p>Each lesson has two kinds of work:</p>
+<ul>
+<li><strong>Exercises</strong> — small isolated files in <code>lessons/NN-slug/exercises/</code>. Each one compiles independently. <code>rbb check &lt;n&gt;</code> runs all of them.</li>
+<li><strong>Project</strong> — a full Cargo project in <code>lessons/NN-slug/project/</code>. <code>rbb watch &lt;n&gt;</code> and <code>rbb test &lt;n&gt;</code> run its tests.</li>
+</ul>
+<p>Exercises come first. They are short drills on the lesson’s concept. The project applies everything together.</p>
+<hr>
+<h2 id="seeing-where-you-are"><a class="header" href="#seeing-where-you-are">Seeing where you are</a></h2>
+<pre><code class="language-sh">rbb status
+</code></pre>
+<pre><code>id  lesson              exercises  project   status
+01  caesar              4/4        done      complete
+02  contact-book        0/3        -         not started
+03  cipher-cracker      2/6        in prog   in progress
+</code></pre>
+<p><code>rbb next</code> cuts straight to the point:</p>
+<pre><code class="language-sh">rbb next
+# next up: lesson 02 — contact-book
+#   rbb open 02
+</code></pre>
+<hr>
+<h2 id="progress-is-local"><a class="header" href="#progress-is-local">Progress is local</a></h2>
+<p>Your progress is stored in <code>~/.rbb/progress.json</code> on the course server, inside your home directory. It is not part of the course repo — <code>git pull</code> never touches it and you cannot accidentally lose it by updating lessons.</p>
+<p>Do not edit it by hand. If something looks wrong, ask your admin.</p>
+<hr>
+<h2 id="a-typical-session"><a class="header" href="#a-typical-session">A typical session</a></h2>
+<pre><code class="language-sh">rbb next                        # where am I?
+rbb open 04                     # read the lesson chapter
+rbb check 04                    # work through exercises until green
+rbb watch 04                    # open the project, edit, watch tests
+rbb test 04                     # record completion
+rbb next                        # what is next
+</code></pre>
+<hr>
+<h2 id="tips"><a class="header" href="#tips">Tips</a></h2>
+<p><strong>Start with <code>rbb open</code></strong>, not by jumping straight into code. The chapter explains the concept; the exercises and project assume you have read it.</p>
+<p><strong>Read the full compiler error.</strong> Rust’s errors point at the exact line and often suggest the exact fix. Read from the bottom — the last message is usually the root cause.</p>
+<p><strong><code>rustc --explain EXXXX</code></strong> gives a deep dive on any error code. If you see <code>error[E0382]</code>, run <code>rustc --explain E0382</code> for a full explanation with examples.</p>
+<p><strong>Do not <code>cargo update</code></strong>. The vendor tree is pinned. Updating it offline will break things.</p>
+<p><strong>Save your own work on a branch</strong> if you want snapshots:</p>
+<pre><code class="language-sh">git checkout -b my-progress
+git add -A &amp;&amp; git commit -m "lesson 03 done"
+</code></pre>
+<p>The <code>main</code> branch belongs to the course. Your branch is yours.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="what-we-left-out"><a class="header" href="#what-we-left-out">What we left out</a></h1>
+<p>This course teaches Rust by building real programs, not by surveying the language. That means some topics were skipped entirely, some were touched lightly, and some were deferred to later in the curriculum. This page names them and points you where to go next.</p>
+<hr>
+<h2 id="asyncawait"><a class="header" href="#asyncawait">Async/await</a></h2>
+<p>Every network program in this course uses blocking I/O — <code>TcpStream::connect</code> blocks until the connection is open, <code>read_to_string</code> blocks until the response arrives. This is simple and correct for a course server where concurrency is handled with threads.</p>
+<p>The real world often uses <strong>async Rust</strong> instead: functions that can be paused while waiting for I/O, letting a single thread handle thousands of concurrent connections. The <code>async</code>/<code>await</code> keywords, the <code>Future</code> trait, and runtimes like <code>tokio</code> are the dominant way to write production network servers in Rust.</p>
+<p>We used <code>macroquad</code>’s async loop, but that is a thin wrapper — we never wrote <code>Future</code> implementations or used <code>tokio</code>. <em>The Rust Async Book</em> (available at <code>rustup doc</code>) is the starting point.</p>
+<hr>
+<h2 id="macros"><a class="header" href="#macros">Macros</a></h2>
+<p>We called macros throughout the course — <code>println!</code>, <code>vec!</code>, <code>format!</code>, <code>assert_eq!</code> — but never wrote one.</p>
+<p>Rust has two kinds:</p>
+<ul>
+<li><strong>Declarative macros</strong> (<code>macro_rules!</code>) — pattern-matching on token trees. Good for reducing repetition. Covered in chapter 19 of <em>The Rust Programming Language</em>.</li>
+<li><strong>Procedural macros</strong> — Rust code that runs at compile time and generates more Rust code. Used to implement <code>#[derive(Debug)]</code>, <code>#[derive(Serialize)]</code>, and similar attributes. Requires a separate crate and is significantly more complex.</li>
+</ul>
+<hr>
+<h2 id="unsafe"><a class="header" href="#unsafe"><code>unsafe</code></a></h2>
+<p>Every line of code in this course is safe Rust. The compiler guarantees memory safety for all of it.</p>
+<p><code>unsafe</code> blocks opt out of those guarantees. They are needed when calling C libraries (FFI), implementing low-level data structures, or writing OS/embedded code. The <em>Rustonomicon</em> (<code>rustup doc --nomicon</code>) covers unsafe Rust in depth.</p>
+<p>You should not need <code>unsafe</code> for typical application code.</p>
+<hr>
+<h2 id="arc-and-mutex"><a class="header" href="#arc-and-mutex"><code>Arc</code> and <code>Mutex</code></a></h2>
+<p>The threading lessons used channels for all communication between threads. Channels are the right tool when threads produce results and hand them off.</p>
+<p>Sometimes threads need to <em>share</em> mutable state — a counter, a cache, a list of connections. That requires:</p>
+<ul>
+<li><strong><code>Arc&lt;T&gt;</code></strong> — a reference-counted smart pointer that can be cloned across threads (<code>Rc&lt;T&gt;</code> is the single-threaded version)</li>
+<li><strong><code>Mutex&lt;T&gt;</code></strong> — a lock that ensures only one thread accesses the data at a time</li>
+</ul>
+<p><code>Arc&lt;Mutex&lt;T&gt;&gt;</code> is the standard pattern for shared mutable state. It was left out because channels cover most beginner use cases cleanly, and <code>Mutex</code> introduces deadlock risks that require careful discipline.</p>
+<hr>
+<h2 id="lifetimes-1"><a class="header" href="#lifetimes-1">Lifetimes</a></h2>
+<p>Lifetimes appeared once — in the Pong lesson, where a struct held a reference and needed an annotation. We treated them as “something the compiler asks for” without fully explaining the rules.</p>
+<p>Lifetimes are Rust’s way of tracking how long references are valid. They are most visible in structs that hold references, in functions that return references, and in some trait bounds. Chapter 10 of <em>The Rust Programming Language</em> covers them fully.</p>
+<hr>
+<h2 id="generics-in-depth"><a class="header" href="#generics-in-depth">Generics in depth</a></h2>
+<p>We wrote generic functions (<code>fn search&lt;T&gt;</code>) and used generic types (<code>Vec&lt;T&gt;</code>, <code>Option&lt;T&gt;</code>) throughout, but never wrote generic structs or explored trait bounds deeply. Topics not covered:</p>
+<ul>
+<li><code>where</code> clauses</li>
+<li>Associated types (vs type parameters)</li>
+<li>Generic structs and <code>impl</code> blocks</li>
+<li>Turbofish syntax (<code>::&lt;&gt;</code>)</li>
+<li>Const generics</li>
+</ul>
+<hr>
+<h2 id="error-handling-with-"><a class="header" href="#error-handling-with-">Error handling with <code>?</code></a></h2>
+<p>We used <code>.unwrap()</code> and <code>.expect()</code> throughout the course. These are fine for learning — they crash loudly on failure. Production code uses the <code>?</code> operator to propagate errors up the call stack:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn read_config(path: &amp;Path) -&gt; Result&lt;Config, io::Error&gt; {
+    let text = fs::read_to_string(path)?;  // returns early on error
+    // ...
+}
+<span class="boring">}</span></code></pre>
+<p>The <code>?</code> operator works with <code>Result</code> and <code>Option</code>, and requires that error types are compatible. The <code>thiserror</code> and <code>anyhow</code> crates handle the common cases for library and application error types respectively.</p>
+<hr>
+<h2 id="traits-in-depth"><a class="header" href="#traits-in-depth">Traits in depth</a></h2>
+<p>We defined and implemented traits, but some advanced uses were skipped:</p>
+<ul>
+<li><strong>Trait objects</strong> (<code>dyn Trait</code>) — dynamic dispatch, where the concrete type is not known at compile time</li>
+<li><strong>Blanket implementations</strong> — implementing a trait for all types that implement another trait</li>
+<li><strong>Operator overloading</strong> — touched in the physics projects but not generalised</li>
+<li><strong>Default method implementations</strong> — mentioned but not explored</li>
+<li><strong><code>impl Trait</code> in return position</strong> — returning “some type that implements Trait” without naming it</li>
+</ul>
+<hr>
+<h2 id="testing"><a class="header" href="#testing">Testing</a></h2>
+<p>We wrote tests in every project using <code>#[test]</code> and <code>assert_eq!</code>, but Rust’s testing infrastructure has more:</p>
+<ul>
+<li><strong><code>#[should_panic]</code></strong> — tests that expect a panic</li>
+<li><strong>Doc tests</strong> — examples in doc comments that run as tests</li>
+<li><strong>Integration tests</strong> — in a <code>tests/</code> directory, testing the public API as an external user would</li>
+<li><strong>Test organisation</strong> — the <code>#[cfg(test)]</code> module pattern</li>
+</ul>
+<p><code>cargo test -- --help</code> lists all the test runner flags (filtering by name, running ignored tests, controlling output).</p>
+<hr>
+<h2 id="what-to-read-next"><a class="header" href="#what-to-read-next">What to read next</a></h2>
+<p>If you want to continue learning Rust after this course:</p>
+<ul>
+<li><strong><a href="https://doc.rust-lang.org/book/"><em>The Rust Programming Language</em></a></strong> — the official book, available offline via <code>rustup doc --book</code>. Fill in the gaps left by this course.</li>
+<li><strong><a href="https://doc.rust-lang.org/rust-by-example/"><em>Rust by Example</em></a></strong> — short code examples for every language feature. Available at <code>rustup doc --example</code> if your toolchain includes it.</li>
+<li><strong><a href="https://github.com/rust-lang/rustlings"><em>Rustlings</em></a></strong> — small exercises that cover everything the Rust book covers. Good for drilling the concepts that felt shaky.</li>
+<li><strong><a href="https://www.zero2prod.com/"><em>Zero To Production In Rust</em></a></strong> — a book-length project building a real email newsletter service. Covers async, error handling, databases, testing, and deployment in depth.</li>
+</ul>
 
                     </main>
 

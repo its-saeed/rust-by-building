@@ -35,7 +35,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-4786004b.js";
+            window.path_to_searchindex_js = "searchindex-27bbe08e.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-27627e6e.js"></script>
@@ -175,6 +175,88 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="what-we-left-out"><a class="header" href="#what-we-left-out">What we left out</a></h1>
+<p>This course teaches Rust by building real programs, not by surveying the language. That means some topics were skipped entirely, some were touched lightly, and some were deferred to later in the curriculum. This page names them and points you where to go next.</p>
+<hr>
+<h2 id="asyncawait"><a class="header" href="#asyncawait">Async/await</a></h2>
+<p>Every network program in this course uses blocking I/O — <code>TcpStream::connect</code> blocks until the connection is open, <code>read_to_string</code> blocks until the response arrives. This is simple and correct for a course server where concurrency is handled with threads.</p>
+<p>The real world often uses <strong>async Rust</strong> instead: functions that can be paused while waiting for I/O, letting a single thread handle thousands of concurrent connections. The <code>async</code>/<code>await</code> keywords, the <code>Future</code> trait, and runtimes like <code>tokio</code> are the dominant way to write production network servers in Rust.</p>
+<p>We used <code>macroquad</code>’s async loop, but that is a thin wrapper — we never wrote <code>Future</code> implementations or used <code>tokio</code>. <em>The Rust Async Book</em> (available at <code>rustup doc</code>) is the starting point.</p>
+<hr>
+<h2 id="macros"><a class="header" href="#macros">Macros</a></h2>
+<p>We called macros throughout the course — <code>println!</code>, <code>vec!</code>, <code>format!</code>, <code>assert_eq!</code> — but never wrote one.</p>
+<p>Rust has two kinds:</p>
+<ul>
+<li><strong>Declarative macros</strong> (<code>macro_rules!</code>) — pattern-matching on token trees. Good for reducing repetition. Covered in chapter 19 of <em>The Rust Programming Language</em>.</li>
+<li><strong>Procedural macros</strong> — Rust code that runs at compile time and generates more Rust code. Used to implement <code>#[derive(Debug)]</code>, <code>#[derive(Serialize)]</code>, and similar attributes. Requires a separate crate and is significantly more complex.</li>
+</ul>
+<hr>
+<h2 id="unsafe"><a class="header" href="#unsafe"><code>unsafe</code></a></h2>
+<p>Every line of code in this course is safe Rust. The compiler guarantees memory safety for all of it.</p>
+<p><code>unsafe</code> blocks opt out of those guarantees. They are needed when calling C libraries (FFI), implementing low-level data structures, or writing OS/embedded code. The <em>Rustonomicon</em> (<code>rustup doc --nomicon</code>) covers unsafe Rust in depth.</p>
+<p>You should not need <code>unsafe</code> for typical application code.</p>
+<hr>
+<h2 id="arc-and-mutex"><a class="header" href="#arc-and-mutex"><code>Arc</code> and <code>Mutex</code></a></h2>
+<p>The threading lessons used channels for all communication between threads. Channels are the right tool when threads produce results and hand them off.</p>
+<p>Sometimes threads need to <em>share</em> mutable state — a counter, a cache, a list of connections. That requires:</p>
+<ul>
+<li><strong><code>Arc&lt;T&gt;</code></strong> — a reference-counted smart pointer that can be cloned across threads (<code>Rc&lt;T&gt;</code> is the single-threaded version)</li>
+<li><strong><code>Mutex&lt;T&gt;</code></strong> — a lock that ensures only one thread accesses the data at a time</li>
+</ul>
+<p><code>Arc&lt;Mutex&lt;T&gt;&gt;</code> is the standard pattern for shared mutable state. It was left out because channels cover most beginner use cases cleanly, and <code>Mutex</code> introduces deadlock risks that require careful discipline.</p>
+<hr>
+<h2 id="lifetimes"><a class="header" href="#lifetimes">Lifetimes</a></h2>
+<p>Lifetimes appeared once — in the Pong lesson, where a struct held a reference and needed an annotation. We treated them as “something the compiler asks for” without fully explaining the rules.</p>
+<p>Lifetimes are Rust’s way of tracking how long references are valid. They are most visible in structs that hold references, in functions that return references, and in some trait bounds. Chapter 10 of <em>The Rust Programming Language</em> covers them fully.</p>
+<hr>
+<h2 id="generics-in-depth"><a class="header" href="#generics-in-depth">Generics in depth</a></h2>
+<p>We wrote generic functions (<code>fn search&lt;T&gt;</code>) and used generic types (<code>Vec&lt;T&gt;</code>, <code>Option&lt;T&gt;</code>) throughout, but never wrote generic structs or explored trait bounds deeply. Topics not covered:</p>
+<ul>
+<li><code>where</code> clauses</li>
+<li>Associated types (vs type parameters)</li>
+<li>Generic structs and <code>impl</code> blocks</li>
+<li>Turbofish syntax (<code>::&lt;&gt;</code>)</li>
+<li>Const generics</li>
+</ul>
+<hr>
+<h2 id="error-handling-with-"><a class="header" href="#error-handling-with-">Error handling with <code>?</code></a></h2>
+<p>We used <code>.unwrap()</code> and <code>.expect()</code> throughout the course. These are fine for learning — they crash loudly on failure. Production code uses the <code>?</code> operator to propagate errors up the call stack:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn read_config(path: &amp;Path) -&gt; Result&lt;Config, io::Error&gt; {
+    let text = fs::read_to_string(path)?;  // returns early on error
+    // ...
+}
+<span class="boring">}</span></code></pre>
+<p>The <code>?</code> operator works with <code>Result</code> and <code>Option</code>, and requires that error types are compatible. The <code>thiserror</code> and <code>anyhow</code> crates handle the common cases for library and application error types respectively.</p>
+<hr>
+<h2 id="traits-in-depth"><a class="header" href="#traits-in-depth">Traits in depth</a></h2>
+<p>We defined and implemented traits, but some advanced uses were skipped:</p>
+<ul>
+<li><strong>Trait objects</strong> (<code>dyn Trait</code>) — dynamic dispatch, where the concrete type is not known at compile time</li>
+<li><strong>Blanket implementations</strong> — implementing a trait for all types that implement another trait</li>
+<li><strong>Operator overloading</strong> — touched in the physics projects but not generalised</li>
+<li><strong>Default method implementations</strong> — mentioned but not explored</li>
+<li><strong><code>impl Trait</code> in return position</strong> — returning “some type that implements Trait” without naming it</li>
+</ul>
+<hr>
+<h2 id="testing"><a class="header" href="#testing">Testing</a></h2>
+<p>We wrote tests in every project using <code>#[test]</code> and <code>assert_eq!</code>, but Rust’s testing infrastructure has more:</p>
+<ul>
+<li><strong><code>#[should_panic]</code></strong> — tests that expect a panic</li>
+<li><strong>Doc tests</strong> — examples in doc comments that run as tests</li>
+<li><strong>Integration tests</strong> — in a <code>tests/</code> directory, testing the public API as an external user would</li>
+<li><strong>Test organisation</strong> — the <code>#[cfg(test)]</code> module pattern</li>
+</ul>
+<p><code>cargo test -- --help</code> lists all the test runner flags (filtering by name, running ignored tests, controlling output).</p>
+<hr>
+<h2 id="what-to-read-next"><a class="header" href="#what-to-read-next">What to read next</a></h2>
+<p>If you want to continue learning Rust after this course:</p>
+<ul>
+<li><strong><a href="https://doc.rust-lang.org/book/"><em>The Rust Programming Language</em></a></strong> — the official book, available offline via <code>rustup doc --book</code>. Fill in the gaps left by this course.</li>
+<li><strong><a href="https://doc.rust-lang.org/rust-by-example/"><em>Rust by Example</em></a></strong> — short code examples for every language feature. Available at <code>rustup doc --example</code> if your toolchain includes it.</li>
+<li><strong><a href="https://github.com/rust-lang/rustlings"><em>Rustlings</em></a></strong> — small exercises that cover everything the Rust book covers. Good for drilling the concepts that felt shaky.</li>
+<li><strong><a href="https://www.zero2prod.com/"><em>Zero To Production In Rust</em></a></strong> — a book-length project building a real email newsletter service. Covers async, error handling, databases, testing, and deployment in depth.</li>
+</ul>
 
                     </main>
 
