@@ -1,0 +1,419 @@
+<!DOCTYPE HTML>
+<html lang="en" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Lifetimes - Rust by Building</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-0392ca55.css">
+        <link rel="stylesheet" href="../css/chrome-fc474251.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "ayu";
+            window.path_to_searchindex_js = "../searchindex-4786004b.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc-27627e6e.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Rust by Building</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="lifetimes"><a class="header" href="#lifetimes">Lifetimes</a></h1>
+<blockquote>
+<p><strong>Goal</strong>: Understand what lifetimes are, why Rust requires you to name them when a struct holds a reference, and how to write the annotations confidently.</p>
+<p><strong>Concepts</strong>: borrow validity, the dangling-pointer problem, lifetime elision, lifetime annotations on structs and impls, the <code>'a</code> syntax, anonymous lifetime <code>'_</code>.</p>
+</blockquote>
+<hr>
+<h2 id="the-problem-dangling-pointers"><a class="header" href="#the-problem-dangling-pointers">The problem: dangling pointers</a></h2>
+<p>In many languages, you can hold a reference to something after it has been destroyed. The reference still exists — it just points to garbage, or to memory that has been repurposed for something else entirely. Using it causes crashes, corrupted state, or security vulnerabilities. This class of bug is called a <strong>dangling pointer</strong> or <strong>use-after-free</strong>.</p>
+<p>Rust eliminates this at compile time. Every reference has a <strong>lifetime</strong> — the span of time during which the value it points to is guaranteed to exist. Rust checks, at compile time, that every reference is used only within that span. If the check fails, you get a compiler error rather than a crash at runtime.</p>
+<hr>
+<h2 id="lifetimes-you-have-already-used"><a class="header" href="#lifetimes-you-have-already-used">Lifetimes you have already used</a></h2>
+<p>You have been working with lifetimes throughout this book. You just have not had to write them yet, because in most situations the compiler can figure them out on its own.</p>
+<p>Consider <code>Score::update</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn update(&amp;mut self, ball: &amp;Ball) -&gt; bool {
+    let left_exit  = ball.rect.x + ball.rect.w &lt; 0.0;
+    let right_exit = ball.rect.x &gt; WINDOW_W;
+    ...
+}
+<span class="boring">}</span></code></pre>
+<p>There is a reference here: <code>ball: &amp;Ball</code>. It has a lifetime — the duration of this function call. The compiler knows that the borrow is valid because <code>ball</code> is alive before the call starts and the call returns before anything can drop it. You did not have to say any of this. The compiler inferred it.</p>
+<p>This inference is called <strong>lifetime elision</strong> — the compiler applies a set of built-in rules to fill in lifetimes you did not write. Elision works in the vast majority of functions.</p>
+<p>The one place elision cannot help is when you store a reference inside a struct. That is where you have to step in.</p>
+<hr>
+<h2 id="a-concrete-example-of-the-problem"><a class="header" href="#a-concrete-example-of-the-problem">A concrete example of the problem</a></h2>
+<p>Suppose you wanted a struct that holds a reference to a <code>String</code> owned somewhere else:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Greeting {
+    text: &amp;str,   // reference to someone else's String
+}
+<span class="boring">}</span></code></pre>
+<p>The compiler rejects this immediately:</p>
+<pre><code>error[E0106]: missing lifetime specifier
+ --&gt; src/main.rs:2:11
+  |
+2 |     text: &amp;str,
+  |           ^ expected named lifetime parameter
+</code></pre>
+<p>Why? Because the compiler has no idea how long <code>Greeting</code> will live relative to the <code>String</code> it borrows. What if you created the <code>String</code>, put a reference to it in <code>Greeting</code>, then dropped the <code>String</code> — but kept the <code>Greeting</code> around? You would have a <code>Greeting</code> pointing to freed memory:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let greeting;
+{
+    let s = String::from("hello");
+    greeting = Greeting { text: &amp;s };
+    // s is dropped here
+}
+// greeting is still alive here — but text points to freed memory
+println!("{}", greeting.text); // ← disaster
+<span class="boring">}</span></code></pre>
+<p>Rust refuses to compile this pattern. The lifetime annotation is how you tell the compiler about the constraint that prevents it.</p>
+<hr>
+<h2 id="the-house-key-analogy"><a class="header" href="#the-house-key-analogy">The house-key analogy</a></h2>
+<p>Think of it this way: a friend gives you a key to their house. The key (the reference) is only useful while they still live there (while the <code>String</code> is still alive). If they move out — if the <code>String</code> is dropped — arriving with the key leads nowhere.</p>
+<p>When you add a lifetime parameter to <code>Greeting</code>, you are writing down this contract:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Greeting&lt;'a&gt; {
+    text: &amp;'a str,
+}
+<span class="boring">}</span></code></pre>
+<p>Read this aloud: <em>“a <code>Greeting&lt;'a&gt;</code> holds a reference to a <code>str</code> that lives at least as long as <code>'a</code>, and a <code>Greeting</code> cannot outlive <code>'a</code>.”</em></p>
+<p>The compiler now understands the relationship. It can check, everywhere <code>Greeting</code> is used, that the referenced data will outlive the struct. The house-key analogy becomes code: the key (<code>Greeting</code>) cannot exist after the house (<code>str</code>) is gone.</p>
+<hr>
+<h2 id="lifetime-elision-when-you-do-not-write-anything"><a class="header" href="#lifetime-elision-when-you-do-not-write-anything">Lifetime elision: when you do not write anything</a></h2>
+<p>Before diving further into annotations, it is worth understanding why you rarely need them in functions. The compiler’s elision rules handle the most common cases automatically:</p>
+<p><strong>One input reference → output borrows from it:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn first_word(s: &amp;str) -&gt; &amp;str {
+    &amp;s[..s.find(' ').unwrap_or(s.len())]
+}
+<span class="boring">}</span></code></pre>
+<p>The compiler reads this as: the returned <code>&amp;str</code> lives at most as long as <code>s</code>. No annotation needed.</p>
+<p><strong>Method with <code>&amp;self</code> → output borrows from <code>self</code>:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Score {
+    fn label(&amp;self) -&gt; &amp;str {
+        "Score"
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>The rule: if there is a <code>&amp;self</code> or <code>&amp;mut self</code>, the return borrows from it. No annotation needed.</p>
+<p><strong>Multiple input references, no output reference:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn print_both(a: &amp;str, b: &amp;str) {
+    println!("{} {}", a, b);
+}
+<span class="boring">}</span></code></pre>
+<p>Nothing is returned, so there is nothing to track. No annotation needed.</p>
+<p>Elision fails when the compiler would have to guess which input a returned reference comes from, or — as in our case — when a reference is stored inside a struct where the relationship cannot be derived from function signatures alone.</p>
+<hr>
+<h2 id="adding-the-annotation-step-by-step"><a class="header" href="#adding-the-annotation-step-by-step">Adding the annotation step by step</a></h2>
+<p>Let’s walk through fixing <code>Greeting</code>:</p>
+<p><strong>Step 1 — add the lifetime parameter to the struct:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Greeting&lt;'a&gt; {
+    text: &amp;'a str,
+}
+<span class="boring">}</span></code></pre>
+<p>The <code>&lt;'a&gt;</code> after <code>Greeting</code> introduces the name <code>'a</code> (pronounced “tick a” or just “a”). The <code>'a</code> in <code>&amp;'a str</code> says: “this reference must be valid for at least the lifetime named <code>'a</code>.”</p>
+<p><strong>Step 2 — add the same parameter to the <code>impl</code> block:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl&lt;'a&gt; Greeting&lt;'a&gt; {
+    fn new(text: &amp;'a str) -&gt; Self {
+        Greeting { text }
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>The <code>&lt;'a&gt;</code> after <code>impl</code> brings the name into scope so <code>Greeting&lt;'a&gt;</code> can use it. The <code>text: &amp;'a str</code> parameter carries the same constraint: the caller must pass a reference that lives at least as long as <code>'a</code>.</p>
+<p><strong>Step 3 — create a <code>Greeting</code> with data that lives long enough:</strong></p>
+<pre class="playground"><code class="language-rust">fn main() {
+    let s = String::from("hello");
+    let g = Greeting::new(&amp;s);
+    println!("{}", g.text);
+    // s is dropped here, after g — that's fine
+}</code></pre>
+<p>The compiler checks: <code>g</code> borrows from <code>s</code>. <code>s</code> is dropped after <code>g</code>. The constraint holds. Program compiles.</p>
+<p>If you tried to drop <code>s</code> first:</p>
+<pre class="playground"><code class="language-rust">fn main() {
+    let g;
+    {
+        let s = String::from("hello");
+        g = Greeting::new(&amp;s);
+    } // s dropped here
+    println!("{}", g.text); // g is still alive — ERROR
+}</code></pre>
+<pre><code>error[E0597]: `s` does not live long enough
+  --&gt; src/main.rs:5:26
+   |
+5  |         g = Greeting::new(&amp;s);
+   |                           ^^ borrowed value does not live long enough
+6  |     } // s dropped here
+   |     - `s` dropped here while still borrowed
+7  |     println!("{}", g.text);
+   |                    ------ borrow later used here
+</code></pre>
+<p>This is exactly the protection lifetimes provide. The error points directly at the problem — no runtime crash, no undefined behavior.</p>
+<hr>
+<h2 id="naming-does-not-matter-the-constraint-does"><a class="header" href="#naming-does-not-matter-the-constraint-does">Naming does not matter; the constraint does</a></h2>
+<p><code>'a</code> is just a placeholder name. You could write <code>'texture</code>, <code>'game</code>, or any identifier preceded by a tick:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Paddle&lt;'texture&gt; {
+    rect:    Rect,
+    texture: &amp;'texture Texture2D,
+}
+<span class="boring">}</span></code></pre>
+<p>Convention is to use single lowercase letters (<code>'a</code>, <code>'b</code>), but named lifetimes can help readability when there are multiple. The compiler only cares that the names are used consistently, not what they are called.</p>
+<hr>
+<h2 id="the-anonymous-lifetime-_"><a class="header" href="#the-anonymous-lifetime-_">The anonymous lifetime <code>'_</code></a></h2>
+<p>When you reference a struct with a lifetime parameter from a function that does <em>not</em> store the reference — it just reads from it momentarily — you do not need to name the lifetime:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn update(&amp;mut self, ball: &amp;Ball&lt;'_&gt;) -&gt; bool {
+    ...
+}
+<span class="boring">}</span></code></pre>
+<p><code>'_</code> means: “there is a lifetime here, and I know it — please infer it for me.” It is different from leaving the lifetime out entirely (which would be an error, since <code>Ball</code> requires a lifetime parameter). It is a way of saying: <em>“I acknowledge this reference has a lifetime, but I do not need to track it further.”</em></p>
+<p>You will see <code>'_</code> specifically when you pass a reference to a struct into a function that only reads from it within the call. <code>Score::update</code> does not store the <code>Ball</code> reference anywhere — it reads two fields and returns. The borrow starts and ends in the same call. <code>'_</code> is perfect here.</p>
+<hr>
+<h2 id="what-the-annotation-actually-means"><a class="header" href="#what-the-annotation-actually-means">What the annotation actually means</a></h2>
+<p>A lifetime annotation is a <strong>constraint</strong>, not a timer. Writing <code>'a</code> does not extend or shorten how long data lives. The data lives exactly as long as it would have anyway. The annotation is purely a statement of a relationship:</p>
+<blockquote>
+<p>“The <code>Paddle</code> holding this reference cannot outlive the <code>Texture2D</code> it holds a reference to.”</p>
+</blockquote>
+<p>The compiler verifies that relationship everywhere the struct is used. In practice, when the owned data is created before the struct and lives until the program ends — as textures loaded at startup do — the constraint is satisfied without any special effort. The annotation is just the price of admission for storing a reference.</p>
+<p>Another way to think about it: you are not <em>managing</em> memory with lifetime annotations. Rust manages memory automatically via ownership. Lifetime annotations are a <em>description</em> of what the ownership structure already is, written explicitly enough that the compiler can verify it.</p>
+<hr>
+<h2 id="common-questions"><a class="header" href="#common-questions">Common questions</a></h2>
+<p><strong>“Do I need to worry about this for local variables?”</strong></p>
+<p>No. Lifetimes on local variables are inferred by the compiler and are always correct by construction — you cannot move a local variable into a position where a reference to it would dangle. You only write lifetime annotations on structs and (occasionally) on functions with multiple reference parameters where the compiler cannot determine which input the output borrows from.</p>
+<p><strong>“What if I just store an owned value instead?”</strong></p>
+<p>You can, and often should. If you store <code>Texture2D</code> instead of <code>&amp;Texture2D</code>, you own the texture and there is no lifetime to track. The reason to use a reference here is that <code>Texture2D</code> holds GPU resources — cloning or moving it is expensive and semantically wrong. Two paddles should share one texture, not each own a copy. Storing a reference with a lifetime annotation is the right tool for “borrow this once, use it many times.”</p>
+<p><strong>“Will this come up often?”</strong></p>
+<p>In application code: occasionally. Lifetime annotations appear most when you build data structures that hold references (parsers, tree nodes, iterators over borrowed data). In game code like ours, they appear exactly here — when a struct holds a reference to a loaded asset.</p>
+<hr>
+<h2 id="whats-next"><a class="header" href="#whats-next">What’s next</a></h2>
+<p>In the next lesson you will add sprite textures to <code>Ball</code> and <code>Paddle</code>. Each struct will hold a <code>&amp;'a Texture2D</code> — a reference to a texture loaded once, before the game loop, shared between instances. You will write the lifetime annotations yourself, guided by the compiler, and see how the steps above map directly onto the code.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../pong/05-scoring.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../pong/07-sprites.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../pong/05-scoring.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../pong/07-sprites.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
+
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-c22b7243.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

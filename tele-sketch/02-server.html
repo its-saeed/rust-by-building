@@ -1,0 +1,447 @@
+<!DOCTYPE HTML>
+<html lang="en" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Lesson 2 — The Server - Rust by Building</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-0392ca55.css">
+        <link rel="stylesheet" href="../css/chrome-fc474251.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "ayu";
+            window.path_to_searchindex_js = "../searchindex-4786004b.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc-27627e6e.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Rust by Building</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="lesson-2--the-server"><a class="header" href="#lesson-2--the-server">Lesson 2 — The Server</a></h1>
+<p>The server has one job: receive a <code>DrawEvent</code> from any client, then send it to every other client. It never stores the canvas, never validates moves, never interprets the drawing — it is a pure relay.</p>
+<p>It also opens a macroquad window so you can see who is connected and watch packets flow in real time. Both server and client share the same overall frame shape: drain incoming packets, update state, render, repeat.</p>
+<hr>
+<h2 id="step-1--binding-the-socket"><a class="header" href="#step-1--binding-the-socket">Step 1 — Binding the socket</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let socket = UdpSocket::bind("0.0.0.0:9090").expect("failed to bind :9090");
+<span class="boring">}</span></code></pre>
+<p><code>0.0.0.0</code> means “listen on every network interface” — loopback (<code>127.0.0.1</code>), Wi-Fi, Ethernet, all at once. Port <code>9090</code> is the address clients will send to. If you wanted only local connections you would bind <code>127.0.0.1:9090</code> instead, but then a client on another machine could not reach the server.</p>
+<p>Clients, by contrast, bind to <code>0.0.0.0:0</code>. The <code>0</code> port tells the OS to pick any free port — clients do not need a fixed, known port because nobody dials them; they dial the server.</p>
+<hr>
+<h2 id="step-2--non-blocking-mode"><a class="header" href="#step-2--non-blocking-mode">Step 2 — Non-blocking mode</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>socket.set_nonblocking(true).expect("set_nonblocking failed");
+<span class="boring">}</span></code></pre>
+<p>By default, <code>recv_from</code> blocks: your thread freezes and waits until a packet arrives. That would be fine for a dedicated server process sitting in an infinite loop, but this server runs inside macroquad’s frame loop. If no packet arrives for 50 ms, the macroquad window would hang — no redraws, no responses to the OS.</p>
+<p><code>set_nonblocking(true)</code> changes <code>recv_from</code> so that it returns immediately with <code>Err(WouldBlock)</code> when nothing is waiting. The frame loop keeps running, the window keeps drawing, and packets are picked up whenever they happen to arrive.</p>
+<hr>
+<h2 id="step-3--tracking-peers"><a class="header" href="#step-3--tracking-peers">Step 3 — Tracking peers</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut peers: HashMap&lt;SocketAddr, Instant&gt; = HashMap::new();
+<span class="boring">}</span></code></pre>
+<p>That is the entire server state. <code>SocketAddr</code> is the combined IP address and port of a remote endpoint — it uniquely identifies a connected client. <code>Instant</code> records the last time we heard from that client.</p>
+<p>There is no handshake. No “hello” message. No registration. The moment a packet arrives from a new address, that address becomes a peer. The moment a peer goes silent for five seconds, it is removed. This is called <strong>implicit registration</strong> — clients register themselves by sending, not by asking permission.</p>
+<p>Why <code>Instant</code> and not a counter or a flag? Because we need to know <em>how long ago</em> we last heard from a peer, not just <em>whether</em> we heard from them. <code>Instant::now().duration_since(last_seen)</code> gives us elapsed time in any unit.</p>
+<hr>
+<h2 id="step-4--receiving-a-packet"><a class="header" href="#step-4--receiving-a-packet">Step 4 — Receiving a packet</a></h2>
+<p>Inside the game loop, at the top of every frame:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let now = Instant::now();
+
+loop {
+    match socket.recv_from(&amp;mut buf) {
+        Ok((n, from)) =&gt; {
+            // a packet arrived: n bytes from address `from`
+        }
+        Err(e) if e.kind() == WouldBlock =&gt; break, // nothing waiting — move on
+        Err(_) =&gt; break,                            // real error — ignore for now
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>This is the drain loop. It keeps calling <code>recv_from</code> until nothing is left. Because <code>set_nonblocking(true)</code> is set, each call either returns a packet immediately or returns <code>WouldBlock</code>. The loop empties the OS receive buffer in one burst and then stops — it never waits.</p>
+<p>One subtlety: multiple packets can arrive between frames. At 60 fps, one frame lasts ~16 ms. If 10 clients are drawing simultaneously, dozens of packets could queue up during that window. The drain loop handles all of them before rendering — no packet is ever left sitting in the buffer until the next frame.</p>
+<hr>
+<h2 id="step-5--validating-and-registering"><a class="header" href="#step-5--validating-and-registering">Step 5 — Validating and registering</a></h2>
+<p>Not every UDP packet is a valid <code>DrawEvent</code>. Any program on the network can send bytes to port 9090. Before doing anything with a packet, verify it:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>Ok((n, from)) =&gt; {
+    if DrawEvent::from_bytes(&amp;buf[..n]).is_some() {
+        peers.insert(from, now);
+        // relay...
+    }
+    // invalid packets are silently dropped
+}
+<span class="boring">}</span></code></pre>
+<p><code>from_bytes</code> returns <code>None</code> if the buffer is too short or the data does not make sense. Only on <code>Some(_)</code> do we update the peer map and relay. This is the entire security model — minimal, but enough for a classroom demo on a local network.</p>
+<p><code>peers.insert(from, now)</code> does two things at once: if <code>from</code> is a new address, it adds it; if <code>from</code> is already known, it updates the timestamp. This is why <code>Instant</code> is the value — every valid packet refreshes the peer’s “last seen” time.</p>
+<hr>
+<h2 id="step-6--relaying"><a class="header" href="#step-6--relaying">Step 6 — Relaying</a></h2>
+<p>Now the interesting part: send the packet to everyone except the sender.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>for (&amp;addr, _) in &amp;peers {
+    if addr != from {
+        let _ = socket.send_to(&amp;buf[..n], addr);
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>Why not echo back to <code>from</code>? Because the client that sent this packet already drew the stroke locally — it does not need a copy of its own event. Echoing back would cause double-drawing.</p>
+<p><code>let _ = socket.send_to(...)</code> discards the <code>Result</code>. UDP sends can fail silently (the peer’s buffer is full, the OS is busy) and there is nothing useful to do about it in a relay — if a frame is dropped, the drawing is slightly incomplete on that client, and life goes on.</p>
+<p>One thing to notice: we relay the raw bytes <code>&amp;buf[..n]</code>, not a re-serialised <code>DrawEvent</code>. The server never needs to deserialise the event fully — <code>from_bytes</code> is called only to validate. The bytes travel through unchanged, which means the relay adds zero transformation overhead.</p>
+<hr>
+<h2 id="step-7--pruning-inactive-peers"><a class="header" href="#step-7--pruning-inactive-peers">Step 7 — Pruning inactive peers</a></h2>
+<p>After the drain loop, before rendering:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>peers.retain(|_, last_seen| {
+    now.duration_since(*last_seen).as_secs() &lt; 5
+});
+<span class="boring">}</span></code></pre>
+<p><code>HashMap::retain</code> removes every entry where the closure returns <code>false</code>. Any peer whose last packet was more than five seconds ago is considered disconnected — its client crashed, closed the window, or lost the network.</p>
+<p>Why does this matter? If you never prune, dead peers accumulate. The relay loop tries to <code>send_to</code> each known peer every frame. Sending to a dead address is harmless (UDP does not error on unreachable destinations) but wasteful, and on a long-running server it would grow without bound.</p>
+<p>Five seconds is a generous threshold — a client sends 60 events per second while drawing, so even a client sitting idle and not drawing would need to send a heartbeat to stay registered. For this project, we skip heartbeats: a client that stops drawing for 5 seconds disappears from the server’s peer list, and reappears the moment it draws again.</p>
+<hr>
+<h2 id="step-8--the-macroquad-window"><a class="header" href="#step-8--the-macroquad-window">Step 8 — The macroquad window</a></h2>
+<p>The render section turns the server from a headless relay into a visible dashboard. It runs every frame, after the drain loop and pruning:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>clear_background(Color::from_rgba(18, 18, 28, 255));
+
+draw_text("Tele-Sketch  Server", 40.0, 55.0, 36.0, WHITE);
+draw_line(40.0, 68.0, screen_width() - 40.0, 68.0, 1.0, DARKGRAY);
+<span class="boring">}</span></code></pre>
+<p>A dark background, a title, a separator line. Nothing unusual — same macroquad calls you used in previous projects.</p>
+<p>The peer count changes colour based on whether anyone is connected:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let peer_color = if peers.is_empty() { GRAY } else { GREEN };
+draw_text(
+    &amp;format!("peers connected: {}", peers.len()),
+    40.0, 110.0, 28.0, peer_color,
+);
+<span class="boring">}</span></code></pre>
+<p>Gray means waiting. Green means live. Students watching the server can tell at a glance when their clients connect.</p>
+<p>List each peer’s address, and briefly highlight the most recently active one in yellow:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>for (i, (addr, _)) in peers.iter().enumerate() {
+    let color = if last_active == Some(*addr) { YELLOW } else { LIGHTGRAY };
+    draw_text(
+        &amp;format!("  ●  {addr}"),
+        40.0,
+        185.0 + i as f32 * 30.0,
+        20.0,
+        color,
+    );
+}
+<span class="boring">}</span></code></pre>
+<p><code>last_active</code> is set to <code>Some(from)</code> each time a valid packet arrives. Because it is updated inside the drain loop (which processes all queued packets in one burst), the last packet processed wins the yellow highlight for that frame.</p>
+<hr>
+<h2 id="full-server"><a class="header" href="#full-server">Full server</a></h2>
+<pre class="playground"><code class="language-rust">use macroquad::prelude::*;
+use std::collections::HashMap;
+use std::io::ErrorKind::WouldBlock;
+use std::net::{SocketAddr, UdpSocket};
+use std::time::Instant;
+use tele_sketch::event::DrawEvent;
+
+#[macroquad::main("Tele-Sketch Server")]
+async fn main() {
+    let socket = UdpSocket::bind("0.0.0.0:9090").expect("failed to bind :9090");
+    socket.set_nonblocking(true).expect("set_nonblocking failed");
+
+    let mut peers:       HashMap&lt;SocketAddr, Instant&gt; = HashMap::new();
+    let mut buf          = [0u8; 64];
+    let mut relayed: u64 = 0;
+    let mut last_active: Option&lt;SocketAddr&gt; = None;
+
+    loop {
+        let now = Instant::now();
+
+        // drain incoming packets
+        loop {
+            match socket.recv_from(&amp;mut buf) {
+                Ok((n, from)) =&gt; {
+                    if DrawEvent::from_bytes(&amp;buf[..n]).is_some() {
+                        peers.insert(from, now);
+                        last_active = Some(from);
+                        for (&amp;addr, _) in &amp;peers {
+                            if addr != from {
+                                let _ = socket.send_to(&amp;buf[..n], addr);
+                                relayed += 1;
+                            }
+                        }
+                    }
+                }
+                Err(e) if e.kind() == WouldBlock =&gt; break,
+                Err(_) =&gt; break,
+            }
+        }
+
+        // prune peers silent for &gt;5 s
+        peers.retain(|_, t| now.duration_since(*t).as_secs() &lt; 5);
+
+        // render
+        clear_background(Color::from_rgba(18, 18, 28, 255));
+
+        draw_text("Tele-Sketch  Server", 40.0, 55.0, 36.0, WHITE);
+        draw_line(40.0, 68.0, screen_width() - 40.0, 68.0, 1.0, DARKGRAY);
+
+        let peer_color = if peers.is_empty() { GRAY } else { GREEN };
+        draw_text(&amp;format!("peers connected: {}", peers.len()), 40.0, 110.0, 28.0, peer_color);
+        draw_text(&amp;format!("packets relayed: {relayed}"), 40.0, 142.0, 20.0, DARKGRAY);
+
+        for (i, (addr, _)) in peers.iter().enumerate() {
+            let color = if last_active == Some(*addr) { YELLOW } else { LIGHTGRAY };
+            draw_text(&amp;format!("  ●  {addr}"), 40.0, 185.0 + i as f32 * 30.0, 20.0, color);
+        }
+
+        next_frame().await;
+    }
+}</code></pre>
+<p>Run it: <code>cargo run --bin server</code>. A dark window opens showing “peers connected: 0” in gray. Keep it running while you work on the next lesson — when clients connect, you will see the count turn green and their addresses appear.</p>
+<hr>
+<h2 id="exercise"><a class="header" href="#exercise">Exercise</a></h2>
+<blockquote>
+<p><strong>TODO 1</strong>: <code>last_active</code> currently flips to the most recent sender inside the drain loop, so the yellow highlight only lasts one frame (by the next drain loop it has moved on). Change <code>last_active</code> to <code>Option&lt;(SocketAddr, Instant)&gt;</code> and highlight any peer whose last packet arrived within the past 200 ms, using <code>now.duration_since(instant).as_millis() &lt; 200</code>.</p>
+<p><strong>TODO 2</strong>: Add a packets-per-second counter. Introduce <code>let mut pps_count: u64 = 0</code> and <code>let mut pps_timer = Instant::now()</code>. Increment <code>pps_count</code> each relay. Every time <code>pps_timer.elapsed().as_secs() &gt;= 1</code>, save the count to a <code>pps_display</code> variable and reset both. Draw <code>pps_display</code> on screen.</p>
+<p><strong>TODO 3</strong>: What happens if three clients are connected and one of them crashes mid-drawing? Trace through the pruning logic: how many frames pass before the dead peer is removed? What do the other two clients experience in the meantime?</p>
+</blockquote>
+<hr>
+<h2 id="key-apis"><a class="header" href="#key-apis">Key APIs</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>API</th><th>What it does</th></tr>
+</thead>
+<tbody>
+<tr><td><code>UdpSocket::bind("0.0.0.0:9090")</code></td><td>Listen on all interfaces, port 9090</td></tr>
+<tr><td><code>socket.set_nonblocking(true)</code></td><td><code>recv_from</code> returns immediately if no data</td></tr>
+<tr><td><code>socket.recv_from(&amp;mut buf)</code></td><td>Receive one datagram; returns <code>(n_bytes, sender_addr)</code></td></tr>
+<tr><td><code>socket.send_to(&amp;buf[..n], addr)</code></td><td>Send <code>n</code> bytes to a specific address</td></tr>
+<tr><td><code>peers.insert(addr, instant)</code></td><td>Add or update a peer’s last-seen time</td></tr>
+<tr><td><code>HashMap::retain(|k, v| ...)</code></td><td>Remove all entries where the closure returns <code>false</code></td></tr>
+<tr><td><code>now.duration_since(t).as_secs()</code></td><td>Seconds elapsed since a past <code>Instant</code></td></tr>
+</tbody>
+</table>
+</div>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tele-sketch/01-protocol.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../tele-sketch/03-canvas.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tele-sketch/01-protocol.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../tele-sketch/03-canvas.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
+
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-c22b7243.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
