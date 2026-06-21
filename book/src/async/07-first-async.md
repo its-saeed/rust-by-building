@@ -121,9 +121,9 @@ This is correct and it does what it looks like: the second sleep only starts aft
 
 ---
 
-## Step 5 — Two sleeps, done concurrently
+## Step 5 — Two tasks at once with `tokio::spawn`
 
-`tokio::join!` runs multiple futures at the same time and waits for all of them:
+You already know `thread::spawn` from the threading chapter. `tokio::spawn` is the async equivalent: it hands a future to the runtime and runs it independently, returning a `JoinHandle` you can `.await` later.
 
 ```rust
 use std::time::{Duration, Instant};
@@ -133,16 +133,33 @@ use tokio::time::sleep;
 async fn main() {
     let t0 = Instant::now();
 
-    let _ = tokio::join!(
-        sleep(Duration::from_secs(1)),
-        sleep(Duration::from_secs(1)),
-    );
+    let handle_a = tokio::spawn(sleep(Duration::from_secs(1)));
+    let handle_b = tokio::spawn(sleep(Duration::from_secs(1)));
+
+    handle_a.await.unwrap();
+    handle_b.await.unwrap();
 
     println!("done in {:.2?}", t0.elapsed());  // ~1.00s
 }
 ```
 
-Both sleeps start at the same instant. Both yield control to the runtime. The runtime sets two timers. When either fires, it wakes the relevant future. When both have fired, `join!` returns. Total time: ~1 second, not 2.
+Compare this directly with the threading version you already wrote:
+
+```rust
+// threads
+let h1 = thread::spawn(|| thread::sleep(Duration::from_secs(1)));
+let h2 = thread::spawn(|| thread::sleep(Duration::from_secs(1)));
+h1.join().unwrap();
+h2.join().unwrap();
+
+// async tasks
+let h1 = tokio::spawn(sleep(Duration::from_secs(1)));
+let h2 = tokio::spawn(sleep(Duration::from_secs(1)));
+h1.await.unwrap();
+h2.await.unwrap();
+```
+
+The shape is identical. The difference: `thread::spawn` creates an OS thread (stack, scheduler slot, ~2 MB); `tokio::spawn` creates a task (a struct on the heap, no OS thread).
 
 ```
 sequential:
@@ -151,20 +168,20 @@ sequential:
   sleep B                            [────────── 1s ──────────]
   total: ~2 seconds
 
-concurrent (tokio::join!):
+concurrent (tokio::spawn):
   time ──────────────────────────────────────────▶
   sleep A  [────────── 1s ──────────]
   sleep B  [────────── 1s ──────────]
   total: ~1 second
 ```
 
-This is the point of async. You can do many things at once on a single thread, because waiting is cheap — the thread is free while a future is suspended.
+Both tasks start immediately. Both suspend, leaving the thread free. When the first timer fires the runtime resumes that task; same for the second. Total time is the duration of the longest sleep, not their sum.
 
 ---
 
 ## Step 6 — Simulating real work
 
-Real programs wait for networks, disks, and databases. We simulate this with sleep. Here is a small program that "fetches" two things at once:
+Real programs wait for networks, disks, and databases. We can simulate this with sleep. Here is a small async function that pretends to fetch something:
 
 ```rust
 async fn fetch(name: &str, delay: Duration) -> String {
@@ -173,27 +190,25 @@ async fn fetch(name: &str, delay: Duration) -> String {
 }
 ```
 
-Call it sequentially, then concurrently, and compare the times.
+Sequential — each fetch waits for the previous to finish:
 
-Sequential — about 1.5 seconds:
 ```rust
 let a = fetch("api",      Duration::from_millis(1000)).await;
 let b = fetch("database", Duration::from_millis(500)).await;
-println!("{a}");
-println!("{b}");
+// total: ~1500ms
 ```
 
-Concurrent with `join!` — about 1 second:
+Concurrent with `tokio::spawn` — both start at the same time:
+
 ```rust
-let (a, b) = tokio::join!(
-    fetch("api",      Duration::from_millis(1000)),
-    fetch("database", Duration::from_millis(500)),
-);
-println!("{a}");
-println!("{b}");
+let ha = tokio::spawn(fetch("api",      Duration::from_millis(1000)));
+let hb = tokio::spawn(fetch("database", Duration::from_millis(500)));
+let a = ha.await.unwrap();
+let b = hb.await.unwrap();
+// total: ~1000ms
 ```
 
-The concurrent version is faster because the database fetch completes during the time we're waiting for the API — no wasted waiting.
+The database fetch completes while we are waiting for the API. No wasted time.
 
 ---
 
@@ -223,10 +238,10 @@ async fn main() {
 
     // --- concurrent ---
     let t1 = Instant::now();
-    let (a, b) = tokio::join!(
-        fetch("api",      Duration::from_millis(1000)),
-        fetch("database", Duration::from_millis(500)),
-    );
+    let ha = tokio::spawn(fetch("api",      Duration::from_millis(1000)));
+    let hb = tokio::spawn(fetch("database", Duration::from_millis(500)));
+    let a = ha.await.unwrap();
+    let b = hb.await.unwrap();
     println!("[concurrent]");
     println!("  {a}");
     println!("  {b}");
@@ -253,9 +268,9 @@ Expected output:
 
 > **TODO 1**: Change the two delays so one is 200 ms and the other is 800 ms. Predict the sequential and concurrent times before running. Verify your prediction.
 >
-> **TODO 2**: Add five `fetch` calls to the `tokio::join!` — one for each of: `"api"`, `"database"`, `"cache"`, `"auth"`, `"logger"` — with delays of 300, 700, 100, 500, and 200 ms. What is the total concurrent time? What would the sequential time be?
+> **TODO 2**: Spawn five tasks — `"api"`, `"database"`, `"cache"`, `"auth"`, `"logger"` — with delays of 300, 700, 100, 500, and 200 ms. Collect all five `JoinHandle`s in a `Vec`, then `.await` each one. What is the total time?
 >
-> **TODO 3**: Try 1000 concurrent sleeps. Replace `tokio::join!` with a `Vec` of futures and use `futures::future::join_all`. Does it stay fast? (Add `futures = "0.3"` to Cargo.toml, then `futures::future::join_all(vec![...]).await`.)
+> **TODO 3**: Spawn 1000 tasks, each sleeping for 1 second. How long does it take? Compare to spawning 1000 OS threads doing `thread::sleep` — try both and time them.
 
 ---
 
@@ -267,5 +282,6 @@ Expected output:
 | `async fn f() { }` | Declares a function that returns a future when called |
 | `f().await` | Polls the future to completion; suspends the task if not yet ready |
 | `tokio::time::sleep(d)` | Returns a future that resolves after duration `d` |
-| `tokio::join!(a, b, ...)` | Runs multiple futures concurrently; returns when all complete |
+| `tokio::spawn(future)` | Hands a future to the runtime as an independent task; returns a `JoinHandle` |
+| `handle.await.unwrap()` | Waits for a spawned task to finish and unwraps its result |
 | `Instant::now()` / `.elapsed()` | Measure wall-clock time |
