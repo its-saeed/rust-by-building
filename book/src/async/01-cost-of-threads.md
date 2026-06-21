@@ -39,6 +39,39 @@ Most of that stack is empty. A thread handling a chat client spends nearly all i
 
 You cannot fix this by making stacks smaller — there is a minimum size below which programs crash with stack overflows. The limit is physical: one thread per connection simply does not scale.
 
+### Check it yourself
+
+Rust's default stack size for spawned threads is documented, but you can confirm it experimentally. `thread::Builder` lets you set the stack size explicitly — so you can also read back what the default would be:
+
+```rust
+use std::thread;
+
+fn main() {
+    // Spawn with the default stack (2 MB)
+    thread::spawn(|| {
+        println!("default stack thread running");
+    }).join().unwrap();
+
+    // Spawn with an explicit small stack (64 KB) — overflows much sooner
+    thread::Builder::new()
+        .stack_size(64 * 1024)
+        .spawn(|| {
+            println!("tiny stack thread running");
+        })
+        .unwrap()
+        .join()
+        .unwrap();
+}
+```
+
+To see what the OS reports for the current process's stack limit:
+
+```sh
+ulimit -s        # prints stack size in KB (typically 8192 = 8 MB on Linux/macOS)
+```
+
+Note the difference: `ulimit -s` shows the OS limit for the *main thread*. Rust sets spawned threads to **2 MB** regardless of that limit — it is hardcoded in the standard library (`std::thread::DEFAULT_STACK_SIZE = 2 * 1024 * 1024`).
+
 ---
 
 ## CPU: context switching cost
