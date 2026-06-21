@@ -157,6 +157,39 @@
 - [Lesson 2 — Broadcasting with Channels](./chat-server/02-broadcast.md)
 - [Lesson 3 — The Client](./chat-server/03-client.md)
 
+# How Async Works
+
+- [Chapter 1 — The Cost of Threads at Scale](./async/01-cost-of-threads.md)
+- [Chapter 2 — Non-blocking I/O](./async/02-nonblocking-io.md)
+- [Chapter 3 — The Event Loop](./async/03-event-loop.md)
+- [Chapter 4 — Futures](./async/04-futures.md)
+- [Chapter 5 — async/await](./async/05-async-await.md)
+- [Chapter 6 — The Runtime](./async/06-runtime.md)
+
+# Async in Rust
+
+- [Lesson 1 — First Async Program](./async/07-first-async.md)
+- [Lesson 2 — Tasks](./async/08-tasks.md)
+- [Lesson 3 — Async I/O](./async/09-async-io.md)
+- [Lesson 4 — Async Channels](./async/10-async-channels.md)
+- [Lesson 5 — join! and select!](./async/11-join-select.md)
+- [Mini Project 1 — Async Weather](./async/12-async-weather.md)
+- [Mini Project 2 — Async File Search](./async/13-async-file-search.md)
+
+# Project 14 — Async Chat Server
+
+- [Overview](./async-chat/overview.md)
+- [Lesson 1 — Accept and Spawn](./async-chat/01-accept.md)
+- [Lesson 2 — Broadcasting](./async-chat/02-broadcast.md)
+
+# Project 15 — Download Manager
+
+- [Overview](./download-manager/overview.md)
+- [Lesson 1 — Single File](./download-manager/01-single-file.md)
+- [Lesson 2 — Concurrent Downloads](./download-manager/02-concurrent.md)
+- [Lesson 3 — Racing Mirrors](./download-manager/03-racing-mirrors.md)
+- [Lesson 4 — Progress Bars](./download-manager/04-progress.md)
+
 # Project 12 — Stable World
 
 - [Overview](./stable-world/overview.md)
