@@ -92,30 +92,50 @@ If `fetch_data()` returns `Pending`, the state machine saves where it is (still 
 
 Returning `Pending` is only useful if the future gets polled again at the right moment. That is what the `Waker` is for.
 
-The `Context` passed into `poll()` carries a `Waker`. When a future cannot make progress — for instance, it is waiting for data on a socket — it stores a clone of the waker and returns `Pending`. Later, when the OS reports that data has arrived on that socket, the event loop calls `waker.wake()`. This signals the runtime to schedule another `poll()` on that future.
+There are three parties involved:
+
+- **Runtime** — drives futures by calling `poll()`
+- **Future** — the state machine doing the work
+- **Reactor** — the part of the runtime that watches OS events (epoll/kqueue)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      waker flow                             │
-│                                                             │
-│  1. Runtime calls poll(cx) on a future                      │
-│                                                             │
-│  2. Future asks OS for data — not ready                     │
-│     Future stores cx.waker().clone() inside itself          │
-│     Future returns Poll::Pending                            │
-│                                                             │
-│  3. Runtime does other work                                 │
-│                                                             │
-│  4. OS: data arrives on socket                              │
-│     Event loop fires the stored waker                       │
-│                                                             │
-│  5. Runtime schedules the future for polling again          │
-│     Runtime calls poll(cx) — this time data is available    │
-│     Future returns Poll::Ready(data)                        │
-└─────────────────────────────────────────────────────────────┘
+   Runtime              Future              Reactor / OS
+      │                    │                     │
+      │── poll(cx) ────────▶│                     │
+      │                    │                     │
+      │                    │─── register fd ────▶│  "tell me when socket 7 is ready"
+      │                    │─── store waker ────▶│  future hands waker to reactor
+      │                    │                     │
+      │◀── Pending ─────────│                     │
+      │                    │                     │
+      │  (polls other       │                     │
+      │   futures ...)      │                     │
+      │                    │      data arrives   │
+      │                    │                ◀────│
+      │                    │                     │
+      │◀──────────────────────── waker.wake() ───│  reactor fires the stored waker
+      │                    │                     │
+      │── poll(cx) ────────▶│                     │
+      │                    │─── read data ──────▶│
+      │                    │◀── bytes ───────────│
+      │◀── Ready(data) ─────│                     │
 ```
 
-No thread is parked between steps 2 and 5. The future just sits as a struct on the heap, holding its state.
+### Why does the future store the waker?
+
+Here is the key insight: by the time data arrives on the socket, `poll()` has already returned and the runtime has moved on to other work. There is no thread sitting and waiting. The runtime has no memory of this particular future — it is just a struct on the heap.
+
+The reactor is the only thing that will notice when the socket is ready. But the reactor does not know which future to reschedule. The future solves this by handing its waker to the reactor when it registers the socket:
+
+```
+future → reactor: "here is my waker. when socket 7 has data, call waker.wake()"
+```
+
+When the OS fires, the reactor calls `waker.wake()`, which puts the future back on the runtime's queue to be polled. Without the stored waker, the reactor would have no way to reach the runtime on behalf of this specific future.
+
+The `Context` passed into `poll()` carries the waker for the current task. The future clones it — `cx.waker().clone()` — because `poll()` only lends `cx` temporarily, but the reactor needs to hold onto the waker until the OS fires.
+
+No thread is parked between the `Pending` and the next `poll()`. The future is just a struct on the heap, waiting.
 
 ---
 
