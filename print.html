@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-27bbe08e.js";
+            window.path_to_searchindex_js = "searchindex-f5fe6ab5.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-27627e6e.js"></script>
@@ -723,7 +723,7 @@ fn main() {
 <h1 id="lesson-4--iteration--strings"><a class="header" href="#lesson-4--iteration--strings">Lesson 4 — Iteration &amp; Strings</a></h1>
 <blockquote>
 <p><strong>Goal</strong>: Encrypt the entire message, not just one character.</p>
-<p><strong>Concepts</strong>: <code>&amp;str</code> vs <code>String</code>, <code>String::new()</code>, <code>.push()</code>, <code>let mut</code>, <code>for</code> loops, <code>.chars()</code>.</p>
+<p><strong>Concepts</strong>: <code>&amp;str</code> vs <code>String</code>, <code>String::new()</code>, <code>.push()</code>, <code>let mut</code>, <code>for</code> loops, <code>.chars()</code>, numeric ranges.</p>
 </blockquote>
 <hr>
 <h2 id="two-kinds-of-strings"><a class="header" href="#two-kinds-of-strings">Two kinds of strings</a></h2>
@@ -811,6 +811,31 @@ o
 </code></pre>
 <p>The <code>for c in ...</code> loop binds each character to <code>c</code> in turn and runs the body once per character.</p>
 <p>You cannot iterate over a <code>&amp;str</code> directly — <code>for c in text</code> won’t compile. You must call <code>.chars()</code> first. The reason: a <code>&amp;str</code> is a sequence of bytes, not characters, and Rust makes you be explicit about the distinction.</p>
+<hr>
+<h2 id="iterating-over-a-range-of-numbers"><a class="header" href="#iterating-over-a-range-of-numbers">Iterating over a range of numbers</a></h2>
+<p>The same <code>for ... in ...</code> syntax works with numbers. A <strong>range</strong> <code>0..n</code> produces the integers 0, 1, 2, … n−1:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>for i in 0..5 {
+    println!("{}", i);
+}
+<span class="boring">}</span></code></pre>
+<p>Output:</p>
+<pre><code>0
+1
+2
+3
+4
+</code></pre>
+<p><code>0..5</code> means “from 0 up to but not including 5”. To include the endpoint, write <code>0..=5</code> (0 through 5 inclusive).</p>
+<p>This comes up whenever you need to repeat something a fixed number of times or try every value in a known set:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>for key in 0u8..26 {
+    println!("key {}: {}", key, encrypt("Khoor", key));
+}
+<span class="boring">}</span></code></pre>
+<p>Notice the <code>0u8</code> — this tells Rust the range produces <code>u8</code> values, matching the type our functions expect. Without it, Rust infers <code>i32</code> by default.</p>
 <hr>
 <h2 id="the-encrypt-function"><a class="header" href="#the-encrypt-function">The <code>encrypt</code> function</a></h2>
 <p>Now we have everything we need to encrypt a full message:</p>
@@ -1103,7 +1128,7 @@ Decrypted : Hello, World!
 <tr><td>1</td><td>Variables, <code>let</code>, <code>println!</code></td></tr>
 <tr><td>2</td><td><code>char</code>, ASCII, type casting with <code>as</code></td></tr>
 <tr><td>3</td><td>Functions, return types, expressions vs statements</td></tr>
-<tr><td>4</td><td><code>for</code> loops, <code>.chars()</code>, <code>String</code>, <code>let mut</code></td></tr>
+<tr><td>4</td><td><code>for</code> loops, <code>.chars()</code>, numeric ranges, <code>String</code>, <code>let mut</code></td></tr>
 <tr><td>5</td><td><code>if</code>/<code>else</code>, <code>match</code>, modulo, wrap-around</td></tr>
 </tbody>
 </table>
