@@ -98,7 +98,14 @@ When the scheduler switches from one thread to another, it must:
 └─────────────────────────────────────────────────────┘
 ```
 
-With 10,000 threads, the scheduler performs thousands of context switches per second. With a 10 µs cost each, tens of milliseconds per second are spent just switching — not on your program's actual work. The more threads, the higher the fraction of CPU time consumed by bookkeeping.
+With 10,000 threads, the math gets ugly fast. The OS gives each thread a time-slice (typically ~1 ms) before switching to the next. One full cycle through all 10,000 threads takes:
+
+```
+10,000 threads × 1 ms time-slice = 10 seconds per full cycle
+10,000 switches × 10 µs switch cost = 100 ms of pure overhead per cycle
+```
+
+That is **100 ms out of every 10 seconds** — 1% of all CPU time — spent saving and restoring registers, not running your program. And that is the optimistic case where every thread actually has work to do. When most threads are blocked on `read()`, the scheduler still has to visit them to discover they have nothing to do.
 
 ---
 
