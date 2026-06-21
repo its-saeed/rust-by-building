@@ -179,6 +179,10 @@ The `.await` yields control back to the event loop when there is nothing to do, 
 
 The event loop is a great idea. The problem is that writing handlers without blocking is painful without language support. `async`/`await` is Rust's solution to that.
 
+But there is one more piece to understand before we get to the syntax. The event loop needs a *type* that represents a handler mid-flight — paused at a wait point, not yet done, but not forgotten either. A value the runtime can hold onto and come back to when the socket is ready.
+
+That type is called a **`Future`**. It is what the compiler generates from every `async fn`. The next chapter explains exactly what it is and how the poll model works.
+
 ---
 
 ## Key ideas

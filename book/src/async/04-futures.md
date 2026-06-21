@@ -1,6 +1,10 @@
 # Chapter 4 — Futures
 
-Think of a ticket at a deli counter: you hand in your order and get a small numbered slip back. The food isn't ready yet — the ticket just represents "food that will exist at some point." You can check on it, wait by the counter, or go browse the shop while you wait. A `Future` in Rust is that ticket.
+In the last chapter, the event loop needed handlers that could be *paused*. When a socket has no data yet, the handler cannot block the thread — it has to stop, hand control back to the loop, and be resumed later when data arrives. The loop needs something to hold onto: a value representing "this handler started, it paused, it will finish later."
+
+That value is a `Future`.
+
+Think of it like a ticket at a deli counter: you hand in your order and get a small numbered slip back. The food is not ready yet — the ticket just represents "food that will exist at some point." You can come back and check, or do other things while you wait. The event loop is the person checking the tickets. When one is ready, it gets handled; the others wait.
 
 ---
 
