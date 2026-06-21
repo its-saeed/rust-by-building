@@ -194,10 +194,6 @@
 
 - [Overview](./stable-world/overview.md)
 
-# Project 13 — Boxes
-
-- [Overview](./boxes/overview.md)
-
 # Appendix
 
 - [Reading stdlib docs offline](./appendix-offline-docs.md)
