@@ -92,11 +92,17 @@ If `fetch_data()` returns `Pending`, the state machine saves where it is (still 
 
 Returning `Pending` is only useful if the future gets polled again at the right moment. That is what the `Waker` is for.
 
+Think of a pizza restaurant with a buzzer system. You order at the counter, the cashier hands you a small plastic buzzer, and you go sit wherever you like. The kitchen watches the oven. When your pizza is ready, the kitchen triggers your buzzer. You get up and collect your order.
+
+Notice what the restaurant did *not* do: they did not follow you around watching you. They did not send someone to find your table. They handed you the buzzer — and the buzzer is the only thing they need to reach you, no matter where you are sitting.
+
+The `Waker` is that buzzer. The future is you. The reactor is the kitchen.
+
 There are three parties involved:
 
-- **Runtime** — drives futures by calling `poll()`
-- **Future** — the state machine doing the work
-- **Reactor** — the part of the runtime that watches OS events (epoll/kqueue)
+- **Runtime** — the cashier, drives futures by calling `poll()`
+- **Future** — you, the state machine doing the work
+- **Reactor** — the kitchen, watches OS events (epoll/kqueue) and fires wakers when ready
 
 ```
    Runtime              Future              Reactor / OS
@@ -123,7 +129,9 @@ There are three parties involved:
 
 ### Why does the future store the waker?
 
-Here is the key insight: by the time data arrives on the socket, `poll()` has already returned and the runtime has moved on to other work. There is no thread sitting and waiting. The runtime has no memory of this particular future — it is just a struct on the heap.
+Back to the restaurant: the kitchen cannot come find you — they do not know your table. The only way they can reach you is through the buzzer in your hand. So when you sit down, you keep hold of it.
+
+The same logic applies here. By the time data arrives on the socket, `poll()` has already returned and the runtime has moved on to other work. The runtime has no memory of this particular future — it is just a struct on the heap somewhere.
 
 The reactor is the only thing that will notice when the socket is ready. But the reactor does not know which future to reschedule. The future solves this by handing its waker to the reactor when it registers the socket:
 
@@ -131,9 +139,9 @@ The reactor is the only thing that will notice when the socket is ready. But the
 future → reactor: "here is my waker. when socket 7 has data, call waker.wake()"
 ```
 
-When the OS fires, the reactor calls `waker.wake()`, which puts the future back on the runtime's queue to be polled. Without the stored waker, the reactor would have no way to reach the runtime on behalf of this specific future.
+When the OS fires, the reactor calls `waker.wake()`, which puts the future back on the runtime's queue to be polled. Without the stored waker, the reactor would have no way to reach the runtime on behalf of this specific future — the buzzer would be sitting on the counter with no one holding it.
 
-The `Context` passed into `poll()` carries the waker for the current task. The future clones it — `cx.waker().clone()` — because `poll()` only lends `cx` temporarily, but the reactor needs to hold onto the waker until the OS fires.
+The `Context` passed into `poll()` carries the waker for the current task. The future clones it — `cx.waker().clone()` — because `poll()` only lends `cx` temporarily, but the reactor needs to hold onto the waker until the OS fires. One buzzer per table; the kitchen keeps the trigger, you keep the receiver.
 
 No thread is parked between the `Pending` and the next `poll()`. The future is just a struct on the heap, waiting.
 
