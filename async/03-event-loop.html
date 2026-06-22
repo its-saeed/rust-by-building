@@ -1,0 +1,388 @@
+<!DOCTYPE HTML>
+<html lang="en" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Chapter 3 — The Event Loop - Rust by Building</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-0392ca55.css">
+        <link rel="stylesheet" href="../css/chrome-fc474251.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "ayu";
+            window.path_to_searchindex_js = "../searchindex-34a55974.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc-c78bbd51.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Rust by Building</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="chapter-3--the-event-loop"><a class="header" href="#chapter-3--the-event-loop">Chapter 3 — The Event Loop</a></h1>
+<p>Non-blocking I/O gives us the building block; the event loop is the structure that turns it into a server.</p>
+<hr>
+<h2 id="the-pattern"><a class="header" href="#the-pattern">The pattern</a></h2>
+<p>An event loop is a single <code>loop</code> with three steps, repeated forever:</p>
+<pre><code>┌─────────────────────────────────────────────────┐
+│                 event loop                      │
+│                                                 │
+│  ┌──────────────────────────────────────────┐   │
+│  │  1. ask OS: which sockets are ready?     │   │
+│  │     (block here until at least one is)   │   │
+│  └─────────────────────┬────────────────────┘   │
+│                        │                        │
+│  ┌─────────────────────▼────────────────────┐   │
+│  │  2. for each ready socket:               │   │
+│  │       run its handler                    │   │
+│  └─────────────────────┬────────────────────┘   │
+│                        │                        │
+│  ┌─────────────────────▼────────────────────┐   │
+│  │  3. go back to step 1                    │   │
+│  └──────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────┘
+</code></pre>
+<p>In pseudocode:</p>
+<pre><code>loop {
+    events = epoll_wait(watched_fds)   // block until something is ready
+    for event in events {
+        handle(event)                  // run the handler for that fd
+    }
+}
+</code></pre>
+<p>That is the entire pattern. Every async runtime — Tokio in Rust, libuv in Node.js, asyncio in Python — is a more sophisticated version of this loop.</p>
+<hr>
+<h2 id="you-already-know-this-pattern-javascript"><a class="header" href="#you-already-know-this-pattern-javascript">You already know this pattern: JavaScript</a></h2>
+<p>If you have used JavaScript in a browser or Node.js, you have used an event loop. When you write:</p>
+<pre><code class="language-js">fetch("https://example.com/data")
+  .then(response =&gt; response.json())
+  .then(data =&gt; console.log(data));
+</code></pre>
+<p>The <code>fetch</code> call registers interest in a network socket and immediately returns. The JavaScript engine goes back to its event loop. When the OS signals that the socket has data, the engine calls the first <code>.then</code> callback.</p>
+<p><code>setTimeout(fn, 1000)</code> is the same thing: register a timer, return immediately, let the event loop call <code>fn</code> when the timer fires.</p>
+<p>Node.js serves millions of connections using this exact mechanism on a single thread. There is no magic — it is one thread plus <code>epoll</code> plus the event loop pattern.</p>
+<hr>
+<h2 id="the-single-thread-handles-everything-interleaved"><a class="header" href="#the-single-thread-handles-everything-interleaved">The single thread handles everything, interleaved</a></h2>
+<p>Here is what the event loop looks like from the outside when handling multiple clients:</p>
+<pre><code>time ──▶
+
+thread:  ┌────────────┐   ┌───────────────┐   ┌──────────┐   ┌──────────────┐
+         │  epoll_wait│   │handle conn A  │   │handle B  │   │handle conn A │
+         │  (blocking)│──▶│ (read message)│──▶│(write ok)│──▶│(write reply) │──▶ ...
+         └────────────┘   └───────────────┘   └──────────┘   └──────────────┘
+              ↑                                                       │
+              └───────────────────────────────────────────────────────┘
+                                next epoll_wait
+
+connections A, B, C ... are all handled on this one thread's timeline,
+interleaved — not in parallel, but fast enough to feel simultaneous
+</code></pre>
+<p>This is <strong>concurrency without parallelism</strong> on a single thread. A hundred connections make progress, but the thread handles them one at a time, switching between them as their sockets become ready. Recall from the threading chapter: concurrency and parallelism are different things. The event loop gives you concurrency; it does not give you parallelism on multiple cores.</p>
+<hr>
+<h2 id="the-critical-rule-handlers-must-not-block"><a class="header" href="#the-critical-rule-handlers-must-not-block">The critical rule: handlers must not block</a></h2>
+<p>The event loop only works if every handler finishes quickly and returns.</p>
+<p>If a handler blocks — calls <code>thread::sleep</code>, performs a synchronous file read, or spins in a compute loop — the thread is stuck. The event loop cannot proceed to step 1. No other connection gets handled until the blocking handler returns. The whole server freezes.</p>
+<pre><code>GOOD — handler returns quickly:                BAD — handler blocks the loop:
+
+events = epoll_wait()  ← gets A, B            events = epoll_wait()  ← gets A
+handle(A)  ← reads socket, queues work        handle(A)  ← calls thread::sleep(10s)
+handle(B)  ← reads socket, queues work        ...
+events = epoll_wait()  ← back in 1 ms         ...
+                                               ...  (10 seconds pass)
+All connections served.                        events = epoll_wait()  ← finally
+                                               B has been waiting 10 seconds.
+</code></pre>
+<p>This is the hardest discipline of event-loop programming: <strong>every piece of code that runs on the event loop thread must be non-blocking</strong>. You cannot call any function that might wait for I/O or sleep.</p>
+<hr>
+<h2 id="what-counts-as-blocking"><a class="header" href="#what-counts-as-blocking">What counts as blocking?</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Operation</th><th>Blocks?</th><th>Effect on event loop</th></tr>
+</thead>
+<tbody>
+<tr><td><code>std::thread::sleep(Duration::from_secs(1))</code></td><td>Yes</td><td>Stalls loop for 1 second</td></tr>
+<tr><td>Reading a file with <code>std::fs::read()</code></td><td>Yes</td><td>Stalls loop until disk responds</td></tr>
+<tr><td>Calling <code>.recv()</code> on a channel with no message</td><td>Yes</td><td>Stalls loop until message arrives</td></tr>
+<tr><td>A long CPU computation (e.g., sorting 10M items)</td><td>Yes (uses CPU)</td><td>Stalls loop until done</td></tr>
+<tr><td><code>TcpStream::read()</code> on a non-blocking socket</td><td>No</td><td>Returns immediately</td></tr>
+<tr><td>Returning from a handler</td><td>No</td><td>Loop proceeds normally</td></tr>
+</tbody>
+</table>
+</div>
+<p>Even a computation that does not do I/O blocks the loop if it takes a long time. “Non-blocking” means “returns to the event loop quickly,” not just “does not call <code>read()</code>.”</p>
+<hr>
+<h2 id="the-limit-cpu-bound-work"><a class="header" href="#the-limit-cpu-bound-work">The limit: CPU-bound work</a></h2>
+<p>The event loop is well-matched to I/O-bound work — work that spends most of its time waiting for the network or disk. A web server, a chat server, a database client: these are I/O-bound. The handlers run briefly, the loop spends most of its time in <code>epoll_wait</code>, and a single thread can juggle thousands of connections.</p>
+<p>CPU-bound work is different. Consider the Mandelbrot renderer from the mandelbrot project. That code has no I/O — it is pure arithmetic on pixels. It will not stall waiting for a network socket. It will burn a CPU core for seconds. If you run that inside an event loop handler, the loop stalls.</p>
+<pre><code>┌─────────────────────────────────────────────────────┐
+│  I/O-bound work          │  CPU-bound work          │
+│  (good fit for async)    │  (bad fit for async)     │
+├──────────────────────────┼──────────────────────────┤
+│  Chat server             │  Image rendering         │
+│  HTTP requests           │  Physics simulation      │
+│  Database queries        │  Sorting large datasets  │
+│  File uploads/downloads  │  Cryptographic hashing   │
+└──────────────────────────┴──────────────────────────┘
+</code></pre>
+<p>For CPU-bound work, threads remain the right tool. You want multiple cores running in parallel; the event loop cannot give you that. In practice, Tokio provides <code>spawn_blocking</code> — a way to hand CPU-heavy work to a thread pool so it does not block the event loop. But that is a detail for later.</p>
+<hr>
+<h2 id="writing-handlers-without-blocking-is-painful"><a class="header" href="#writing-handlers-without-blocking-is-painful">Writing handlers without blocking is painful</a></h2>
+<p>The event loop pattern solves the scalability problem, but it creates a new programming problem.</p>
+<p>In the threaded chat server, a handler looked natural:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn handle_client(stream: TcpStream) {
+    let mut buf = [0u8; 1024];
+    loop {
+        let n = stream.read(&amp;mut buf)?;   // block here — that is fine, we own this thread
+        let msg = &amp;buf[..n];
+        broadcast(msg);
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>You write code the way you think about it: read a message, do something with it, loop. The blocking <code>read()</code> is fine because the thread is dedicated to this connection.</p>
+<p>In an event loop, you cannot write it that way. The <code>read()</code> must be non-blocking. But if <code>read()</code> returns <code>EAGAIN</code>, you need to stop, remember where you were, and let the loop continue. Next time the socket is ready, you pick up where you left off. You have to manually preserve state across handler invocations.</p>
+<p>For simple handlers this is manageable. For handlers that do several things in sequence — read a request, look something up, write a response — the code becomes a state machine where each step is a separate callback or enum variant. The logic is spread across many small functions. It is hard to follow.</p>
+<p>This is the problem that <code>async</code>/<code>await</code> solves. <code>async</code> functions let you write code that looks sequential and blocking, while the compiler rewrites it into a state machine that is compatible with the event loop. You write:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn handle_client(stream: TcpStream) {
+    let msg = stream.read().await;   // yields to the event loop, not blocks the thread
+    broadcast(msg);
+}
+<span class="boring">}</span></code></pre>
+<p>The <code>.await</code> yields control back to the event loop when there is nothing to do, and resumes where it left off when the socket is ready. The sequential logic stays intact. The compiler generates the state machine.</p>
+<p>The event loop is a great idea. The problem is that writing handlers without blocking is painful without language support. <code>async</code>/<code>await</code> is Rust’s solution to that.</p>
+<p>But there is one more piece to understand before we get to the syntax. The event loop needs a <em>type</em> that represents a handler mid-flight — paused at a wait point, not yet done, but not forgotten either. A value the runtime can hold onto and come back to when the socket is ready.</p>
+<p>That type is called a <strong><code>Future</code></strong>. It is what the compiler generates from every <code>async fn</code>. The next chapter explains exactly what it is and how the poll model works.</p>
+<hr>
+<h2 id="key-ideas"><a class="header" href="#key-ideas">Key ideas</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Concept</th><th>What it means</th></tr>
+</thead>
+<tbody>
+<tr><td>Event loop</td><td>A single loop: ask OS what is ready → handle each → repeat</td></tr>
+<tr><td>Readiness</td><td>The OS signals when a socket can be read or written without blocking</td></tr>
+<tr><td>Non-blocking handlers</td><td>Every handler must return quickly; blocking stalls the whole server</td></tr>
+<tr><td>I/O-bound vs CPU-bound</td><td>Event loops excel at I/O-bound work; CPU-bound work still needs threads</td></tr>
+<tr><td>State machine problem</td><td>Without language help, non-blocking handlers require manual state machines</td></tr>
+<tr><td><code>async</code>/<code>await</code></td><td>Rust’s language feature that generates those state machines automatically</td></tr>
+</tbody>
+</table>
+</div>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../async/02-nonblocking-io.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../async/04-futures.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../async/02-nonblocking-io.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../async/04-futures.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
+
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-c22b7243.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

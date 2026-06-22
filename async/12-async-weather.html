@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Overview - Rust by Building</title>
+        <title>Mini Project 1 — Async Weather - Rust by Building</title>
 
 
         <!-- Custom HTML head -->
@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "../searchindex-f5fe6ab5.js";
+            window.path_to_searchindex_js = "../searchindex-34a55974.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-27627e6e.js"></script>
+        <script src="../toc-c78bbd51.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -174,23 +174,274 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="project-8--boxes"><a class="header" href="#project-8--boxes">Project 8 — Boxes</a></h1>
-<blockquote>
-<p><strong>What you’ll build</strong>: Add rectangular shapes to the engine using the Separating Axis Theorem, giving you a full physics sandbox with circles and boxes.</p>
-<p><strong>Lessons</strong>: 7 lessons.</p>
-<p><strong>Rust concepts covered</strong>: traits, generics, <code>enum</code> for shape dispatch, <code>HashMap</code> broad phase, closures.</p>
-</blockquote>
-<p><em>Coming soon.</em></p>
+                        <h1 id="mini-project-1--async-weather"><a class="header" href="#mini-project-1--async-weather">Mini Project 1 — Async Weather</a></h1>
+<p>You built a parallel weather fetcher with threads in the threading chapter. Now rebuild it with async. The goal is not to do something new — it is to see exactly what changes, and what stays the same.</p>
+<pre><code class="language-toml">[dependencies]
+tokio    = { version = "1", features = ["full"] }
+reqwest  = { version = "0.12", features = ["json"] }
+serde_json = "1"
+</code></pre>
+<hr>
+<h2 id="what-we-built-before"><a class="header" href="#what-we-built-before">What we built before</a></h2>
+<p>The threaded version (from “Mini Project 1 — Parallel Weather”) did this:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// threaded version
+let (tx, rx) = mpsc::channel::&lt;(String, Result&lt;f64, String&gt;)&gt;();
+
+for (name, lat, lon) in cities {
+    let tx = tx.clone();
+    thread::spawn(move || {
+        let result = fetch_temp(name, lat, lon);   // blocking reqwest
+        tx.send((name.to_string(), result)).unwrap();
+    });
+}
+drop(tx);
+
+for (city, result) in rx { ... }
+<span class="boring">}</span></code></pre>
+<p>One OS thread per city. Six threads running simultaneously, each blocking on its HTTP request. Total time: as long as the slowest request.</p>
+<hr>
+<h2 id="what-changes-in-the-async-version"><a class="header" href="#what-changes-in-the-async-version">What changes in the async version</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th></th><th>Threaded</th><th>Async</th></tr>
+</thead>
+<tbody>
+<tr><td>Import</td><td><code>use std::thread</code></td><td><code>use tokio::...</code></td></tr>
+<tr><td>Spawn</td><td><code>thread::spawn(move || { ... })</code></td><td><code>tokio::spawn(async move { ... })</code></td></tr>
+<tr><td>Wait for result</td><td><code>handle.join().unwrap()</code></td><td><code>handle.await.unwrap()</code></td></tr>
+<tr><td>HTTP client</td><td><code>reqwest::blocking::Client</code></td><td><code>reqwest::Client</code> (async)</td></tr>
+<tr><td>Channel</td><td><code>std::sync::mpsc</code></td><td><code>tokio::sync::mpsc</code></td></tr>
+<tr><td>OS threads used</td><td>1 per city (6 total)</td><td>1 per CPU core (tokio’s pool)</td></tr>
+</tbody>
+</table>
+</div>
+<p>The structure is almost identical. The types change. The async version uses far fewer OS threads — all six fetches run on Tokio’s thread pool, typically one thread per core.</p>
+<hr>
+<h2 id="step-1--the-cities"><a class="header" href="#step-1--the-cities">Step 1 — The cities</a></h2>
+<p>Same six cities as the threading chapter:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let cities = vec![
+    ("Tehran",    35.6892,  51.3890),
+    ("London",    51.5074,  -0.1278),
+    ("New York",  40.7128, -74.0060),
+    ("Tokyo",     35.6762, 139.6503),
+    ("Sydney",   -33.8688, 151.2093),
+    ("Paris",     48.8566,   2.3522),
+];
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="step-2--the-async-fetch-function"><a class="header" href="#step-2--the-async-fetch-function">Step 2 — The async fetch function</a></h2>
+<p>The threaded version used <code>reqwest::blocking::Client</code>. Async code uses the non-blocking <code>reqwest::Client</code> instead — same API shape, different type:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use reqwest::Client;
+use serde_json::Value;
+
+async fn fetch_temp(
+    client: &amp;Client,
+    city: &amp;str,
+    lat: f64,
+    lon: f64,
+) -&gt; Result&lt;f64, String&gt; {
+    let url = format!(
+        "https://api.open-meteo.com/v1/forecast\
+         ?latitude={lat}&amp;longitude={lon}&amp;current_weather=true"
+    );
+
+    let resp: Value = client
+        .get(&amp;url)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?
+        .json()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    resp["current_weather"]["temperature"]
+        .as_f64()
+        .ok_or_else(|| "missing temperature field".to_string())
+}
+<span class="boring">}</span></code></pre>
+<p>Two differences from the threading version:</p>
+<ol>
+<li>The function is <code>async fn</code> — it returns a future.</li>
+<li>Both <code>.send()</code> and <code>.json()</code> need <code>.await</code> — they are async operations that yield to the runtime while waiting for the network.</li>
+</ol>
+<p><code>reqwest::Client</code> is cheap to clone and designed to be reused across many requests (it manages a connection pool internally). We create one client and pass a reference to each task.</p>
+<hr>
+<h2 id="step-3--spawn-one-task-per-city"><a class="header" href="#step-3--spawn-one-task-per-city">Step 3 — Spawn one task per city</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let client = Client::new();
+
+let handles: Vec&lt;_&gt; = cities.iter().map(|(name, lat, lon)| {
+    let client = client.clone();
+    let name = name.to_string();
+    tokio::spawn(async move {
+        let result = fetch_temp(&amp;client, &amp;name, *lat, *lon).await;
+        (name, result)
+    })
+}).collect();
+<span class="boring">}</span></code></pre>
+<p>Compare with the threaded version:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// threaded
+thread::spawn(move || {
+    let result = fetch_temp(name, lat, lon);   // blocking
+    tx.send((name.to_string(), result)).unwrap();
+});
+
+// async
+tokio::spawn(async move {
+    let result = fetch_temp(&amp;client, &amp;name, *lat, *lon).await;  // non-blocking
+    (name, result)
+})
+<span class="boring">}</span></code></pre>
+<p>The shape is the same. <code>move ||</code> becomes <code>async move</code>. The blocking call gets <code>.await</code>. The return type travels through the <code>JoinHandle</code> instead of a channel — we return the result directly from the task closure.</p>
+<hr>
+<h2 id="step-4--collect-results"><a class="header" href="#step-4--collect-results">Step 4 — Collect results</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>for handle in handles {
+    match handle.await.unwrap() {
+        (city, Ok(temp)) =&gt; println!("{city:&lt;12}  {temp:&gt;6.1}°C"),
+        (city, Err(e))   =&gt; println!("{city:&lt;12}  error: {e}"),
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>Compare with the threaded version, which iterated over <code>rx</code> (the channel). Here we iterate over <code>handles</code> and <code>.await</code> each one. The order is the submission order — we collect handles in city order and await them in that order, so results print city by city regardless of which fetch finished first.</p>
+<p>If you want results in arrival order (like the threaded version), use a channel here too — <code>tokio::sync::mpsc</code> with the same sender/receiver pattern.</p>
+<hr>
+<h2 id="full-program"><a class="header" href="#full-program">Full program</a></h2>
+<pre class="playground"><code class="language-rust">use reqwest::Client;
+use serde_json::Value;
+use std::time::Instant;
+
+async fn fetch_temp(
+    client: &amp;Client,
+    city: &amp;str,
+    lat: f64,
+    lon: f64,
+) -&gt; Result&lt;f64, String&gt; {
+    let url = format!(
+        "https://api.open-meteo.com/v1/forecast\
+         ?latitude={lat}&amp;longitude={lon}&amp;current_weather=true"
+    );
+
+    let resp: Value = client
+        .get(&amp;url)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?
+        .json()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    resp["current_weather"]["temperature"]
+        .as_f64()
+        .ok_or_else(|| "missing temperature field".to_string())
+}
+
+#[tokio::main]
+async fn main() {
+    let cities = vec![
+        ("Tehran",    35.6892,  51.3890),
+        ("London",    51.5074,  -0.1278),
+        ("New York",  40.7128, -74.0060),
+        ("Tokyo",     35.6762, 139.6503),
+        ("Sydney",   -33.8688, 151.2093),
+        ("Paris",     48.8566,   2.3522),
+    ];
+
+    let client = Client::new();
+    let t0 = Instant::now();
+
+    let handles: Vec&lt;_&gt; = cities.iter().map(|(name, lat, lon)| {
+        let client = client.clone();
+        let name = name.to_string();
+        let (lat, lon) = (*lat, *lon);
+        tokio::spawn(async move {
+            let result = fetch_temp(&amp;client, &amp;name, lat, lon).await;
+            (name, result)
+        })
+    }).collect();
+
+    println!("{:&lt;12}  {}", "City", "Temperature");
+    println!("{}", "─".repeat(24));
+
+    for handle in handles {
+        match handle.await.unwrap() {
+            (city, Ok(temp)) =&gt; println!("{city:&lt;12}  {temp:&gt;6.1}°C"),
+            (city, Err(e))   =&gt; println!("{city:&lt;12}  error: {e}"),
+        }
+    }
+
+    println!("\nfetched in {:.2?}", t0.elapsed());
+}</code></pre>
+<hr>
+<h2 id="the-thread-count-difference"><a class="header" href="#the-thread-count-difference">The thread count difference</a></h2>
+<p>Run both versions and check the thread count (on macOS: <code>ps -M &lt;pid&gt;</code>; on Linux: <code>ls /proc/&lt;pid&gt;/task | wc -l</code>).</p>
+<pre><code>threaded version:   ~8 threads  (main + 6 fetch threads + 1 tokio internal)
+async version:      ~4 threads  (tokio's pool: one per core, on a 4-core machine)
+</code></pre>
+<p>With six cities the difference is small. Repeat the list 100 times (600 cities) and the async version still uses ~4 threads while the threaded version tries to spawn 600. The async version does not slow down as the number of tasks grows; the threaded version does.</p>
+<hr>
+<h2 id="discussion-questions"><a class="header" href="#discussion-questions">Discussion questions</a></h2>
+<p>These are worth thinking through — there is no single right answer.</p>
+<p><strong>What happens if you await each handle one at a time in a for loop instead of collecting first?</strong></p>
+<p>All six tasks are still spawned immediately (in the <code>map(...).collect()</code> step), so they run concurrently. Awaiting handles one by one only affects the order you see the results — it does not serialise the fetches. The total time is still dominated by the slowest single request.</p>
+<p><strong>How would you add a 3-second timeout to each fetch?</strong></p>
+<p>Wrap the <code>fetch_temp</code> call in <code>tokio::time::timeout</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use tokio::time::{timeout, Duration};
+
+let result = timeout(
+    Duration::from_secs(3),
+    fetch_temp(&amp;client, &amp;name, lat, lon),
+).await;
+
+match result {
+    Ok(inner)  =&gt; inner,             // fetch_temp's Result&lt;f64, String&gt;
+    Err(_)     =&gt; Err("timed out".to_string()),
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Could you use <code>tokio::join!</code> directly instead of spawning tasks? What is the trade-off?</strong></p>
+<p>Yes. <code>join!</code> runs futures concurrently inside a single task. <code>tokio::spawn</code> puts each future in its own task, allowing the runtime to schedule them across threads.</p>
+<p>For six HTTP requests, <code>join!</code> is fine — the bottleneck is network latency, not CPU, so running on one thread is not a problem. The practical difference only matters when the work is CPU-intensive, or when you want one failure to not affect the others (spawned tasks can fail independently; <code>join!</code> propagates panics).</p>
+<hr>
+<h2 id="key-apis"><a class="header" href="#key-apis">Key APIs</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>API</th><th>What it does</th></tr>
+</thead>
+<tbody>
+<tr><td><code>reqwest::Client::new()</code></td><td>Async HTTP client — clone cheaply, reuse across tasks</td></tr>
+<tr><td><code>.send().await</code></td><td>Send the request; yields while waiting for the response</td></tr>
+<tr><td><code>.json::&lt;Value&gt;().await</code></td><td>Deserialise response body as JSON; yields while reading</td></tr>
+<tr><td><code>resp["key"].as_f64()</code></td><td>Extract a JSON number field</td></tr>
+<tr><td><code>tokio::spawn(async move { ... })</code></td><td>Spawn a task; returns a <code>JoinHandle</code></td></tr>
+<tr><td><code>handle.await.unwrap()</code></td><td>Wait for a spawned task to finish and get its return value</td></tr>
+<tr><td><code>Instant::now()</code> / <code>.elapsed()</code></td><td>Measure wall-clock time</td></tr>
+</tbody>
+</table>
+</div>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../stable-world/overview.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../async/11-join-select.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="../appendix-offline-docs.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../async/13-async-file-search.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -200,11 +451,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../stable-world/overview.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../async/11-join-select.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="../appendix-offline-docs.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../async/13-async-file-search.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>
