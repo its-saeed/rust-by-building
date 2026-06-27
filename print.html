@@ -237,7 +237,7 @@ Y → B
 Z → C
 </code></pre>
 <p>So the message <code>Hello</code> becomes <code>Khoor</code>.</p>
-<p><img src="images/caesar-shift.png" alt="The alphabet shifted by key 3, 0, and 27"></p>
+<p><img src="images/caesar/caesar-shift.png" alt="The alphabet shifted by key 3, 0, and 27"></p>
 <p>To decrypt, you shift back by the same amount: <code>Khoor</code> with key <code>3</code> → <code>Hello</code>.</p>
 <p>Non-alphabetic characters (spaces, punctuation, digits) are left unchanged.</p>
 <h2 id="what-youll-build-lesson-by-lesson"><a class="header" href="#what-youll-build-lesson-by-lesson">What you’ll build, lesson by lesson</a></h2>
@@ -920,7 +920,7 @@ Encrypted : Khoor, Zruog!
 <h2 id="the-problem-with-the-current-cipher"><a class="header" href="#the-problem-with-the-current-cipher">The problem with the current cipher</a></h2>
 <p>From lesson 4, shifting <code>'Z'</code> by 3 gives <code>']'</code> — wrong. The alphabet has 26 letters and must wrap around: <code>'Z' + 3 = 'C'</code>.</p>
 <p>We also haven’t handled uppercase and lowercase differently. <code>'H'</code> and <code>'h'</code> need separate treatment because they live in different ASCII ranges.</p>
-<p><img src="images/caesar-edge-case.png" alt="Wrap-around: Z shifted by 3 becomes C using modulo arithmetic on byte values"></p>
+<p><img src="images/caesar/caesar-edge-case.png" alt="Wrap-around: Z shifted by 3 becomes C using modulo arithmetic on byte values"></p>
 <p>This lesson fixes both problems using control flow.</p>
 <hr>
 <h2 id="if--else-if--else"><a class="header" href="#if--else-if--else"><code>if</code> / <code>else if</code> / <code>else</code></a></h2>
