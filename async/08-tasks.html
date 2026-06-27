@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "../searchindex-34a55974.js";
+            window.path_to_searchindex_js = "../searchindex-eb2beea3.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-c78bbd51.js"></script>
@@ -178,7 +178,7 @@
 <blockquote>
 <p><strong>Goal</strong>: Spawn independent async tasks the way threading used <code>thread::spawn</code>.</p>
 </blockquote>
-<p>The previous lesson ran multiple futures concurrently using <code>tokio::join!</code>. <code>join!</code> is convenient when you know all the futures up front and want to wait for all of them together. Tasks are different — they are independent units of work that run in the background, like threads, but far cheaper.</p>
+<p>The previous lesson used <code>tokio::spawn</code> to run two futures concurrently — the same shape as <code>thread::spawn</code>, but without the OS thread cost. This lesson goes deeper: what exactly is a task, what rules apply when spawning, and when does a task matter beyond raw concurrency?</p>
 <hr>
 <h2 id="step-1--tokiospawn"><a class="header" href="#step-1--tokiospawn">Step 1 — <code>tokio::spawn</code></a></h2>
 <p><code>tokio::spawn</code> is to async what <code>thread::spawn</code> is to threads:</p>
@@ -237,18 +237,14 @@ let a = fetch("api",  500).await;
 let b = fetch("db",   500).await;
 // total: ~1000 ms
 
-// Option B: concurrent with join!
-let (a, b) = tokio::join!(fetch("api", 500), fetch("db", 500));
-// total: ~500 ms
-
-// Option C: tasks — also concurrent
+// Option B: tasks — concurrent
 let ha = tokio::spawn(fetch("api", 500));
 let hb = tokio::spawn(fetch("db",  500));
 let a = ha.await.unwrap();
 let b = hb.await.unwrap();
 // total: ~500 ms
 <span class="boring">}</span></code></pre>
-<p>Options B and C both run concurrently. The difference: <code>join!</code> keeps both futures on the same task; <code>spawn</code> creates two separate tasks that can be scheduled independently. For most use-cases the timing is the same. Tasks become important when you want the work to keep running even if the caller stops waiting — for example, when handling a client connection in a server.</p>
+<p>Option B runs both futures concurrently. <code>spawn</code> creates two separate tasks that can be scheduled independently. Tasks become important when you want the work to keep running even if the caller stops waiting — for example, when handling a client connection in a server. (A third option, <code>tokio::join!</code>, keeps both futures on the same task without spawning — you will see it in Lesson 5.)</p>
 <hr>
 <h2 id="step-4--tasks-are-cheap"><a class="header" href="#step-4--tasks-are-cheap">Step 4 — Tasks are cheap</a></h2>
 <p>OS threads cost ~2 MB of stack each. Tokio tasks cost kilobytes. You can spawn tens of thousands without issue:</p>
