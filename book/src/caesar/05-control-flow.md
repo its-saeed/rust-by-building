@@ -12,7 +12,7 @@ From lesson 4, shifting `'Z'` by 3 gives `']'` — wrong. The alphabet has 26 le
 
 We also haven't handled uppercase and lowercase differently. `'H'` and `'h'` need separate treatment because they live in different ASCII ranges.
 
-![Wrap-around: Z shifted by 3 becomes C using modulo arithmetic on byte values](../images/caesar-edge-case.png)
+![Wrap-around: Z shifted by 3 becomes C using modulo arithmetic on byte values](../images/caesar/caesar-edge-case.png)
 
 This lesson fixes both problems using control flow.
 
