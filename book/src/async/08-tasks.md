@@ -2,7 +2,7 @@
 
 > **Goal**: Spawn independent async tasks the way threading used `thread::spawn`.
 
-The previous lesson ran multiple futures concurrently using `tokio::join!`. `join!` is convenient when you know all the futures up front and want to wait for all of them together. Tasks are different — they are independent units of work that run in the background, like threads, but far cheaper.
+The previous lesson used `tokio::spawn` to run two futures concurrently — the same shape as `thread::spawn`, but without the OS thread cost. This lesson goes deeper: what exactly is a task, what rules apply when spawning, and when does a task matter beyond raw concurrency?
 
 ---
 
@@ -76,11 +76,7 @@ let a = fetch("api",  500).await;
 let b = fetch("db",   500).await;
 // total: ~1000 ms
 
-// Option B: concurrent with join!
-let (a, b) = tokio::join!(fetch("api", 500), fetch("db", 500));
-// total: ~500 ms
-
-// Option C: tasks — also concurrent
+// Option B: tasks — concurrent
 let ha = tokio::spawn(fetch("api", 500));
 let hb = tokio::spawn(fetch("db",  500));
 let a = ha.await.unwrap();
@@ -88,7 +84,7 @@ let b = hb.await.unwrap();
 // total: ~500 ms
 ```
 
-Options B and C both run concurrently. The difference: `join!` keeps both futures on the same task; `spawn` creates two separate tasks that can be scheduled independently. For most use-cases the timing is the same. Tasks become important when you want the work to keep running even if the caller stops waiting — for example, when handling a client connection in a server.
+Option B runs both futures concurrently. `spawn` creates two separate tasks that can be scheduled independently. Tasks become important when you want the work to keep running even if the caller stops waiting — for example, when handling a client connection in a server. (A third option, `tokio::join!`, keeps both futures on the same task without spawning — you will see it in Lesson 5.)
 
 ---
 

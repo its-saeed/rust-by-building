@@ -26,6 +26,8 @@ Z → C
 
 So the message `Hello` becomes `Khoor`.
 
+![The alphabet shifted by key 3, 0, and 27](../images/caesar-shift.png)
+
 To decrypt, you shift back by the same amount: `Khoor` with key `3` → `Hello`.
 
 Non-alphabetic characters (spaces, punctuation, digits) are left unchanged.
