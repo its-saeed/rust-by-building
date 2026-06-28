@@ -94,6 +94,38 @@ A multi-turn conversation looks like this — you send the whole history every t
 
 There is no server-side session. You are reconstructing the full context on every request.
 
+You can send this exact request right now with curl — no SDK, no code:
+
+```sh
+curl https://api.openai.com/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [
+      { "role": "system", "content": "You are a helpful assistant." },
+      { "role": "user",   "content": "What is 2 + 2?" }
+    ]
+  }'
+```
+
+The response comes back as raw JSON:
+
+```json
+{
+  "choices": [{
+    "message": {
+      "role": "assistant",
+      "content": "2 + 2 = 4."
+    },
+    "finish_reason": "stop"
+  }],
+  "usage": { "prompt_tokens": 24, "completion_tokens": 8, "total_tokens": 32 }
+}
+```
+
+This is the whole interface. Everything rig.rs does — tool calling, agent loops, streaming — is built on top of this one HTTP endpoint.
+
 ---
 
 ## What a token is
