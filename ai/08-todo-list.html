@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "../searchindex-1bae8bf5.js";
+            window.path_to_searchindex_js = "../searchindex-ea9cd686.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-41e41280.js"></script>
@@ -542,6 +542,7 @@ let agent = client
     .tool(ListTodos { list: list.clone() })
     .build();
 <span class="boring">}</span></code></pre>
+<p><code>.max_turns(10)</code> sets how many tool-call rounds the agent is allowed per prompt. Each round is: LLM decides to call a tool → tool runs → result goes back to LLM. Completing a todo by name requires two rounds — <code>list_todos</code> then <code>complete_todo</code> — so without this, rig hits the default limit of 0 and returns a <code>MaxTurnError</code> before it can act. Ten rounds is plenty for any realistic todo operation.</p>
 <p>The preamble tells the LLM to call <code>list_todos</code> when it needs to resolve item names to ids. Without this instruction the model might hallucinate ids. This is prompt engineering — the right instruction makes the agent reliable without any extra code.</p>
 <hr>
 <h2 id="the-main-loop"><a class="header" href="#the-main-loop">The Main Loop</a></h2>
@@ -851,6 +852,7 @@ async fn main() -&gt; Result&lt;()&gt; {
         .tool(UncompleteTodo { list: list.clone() })
         .tool(ClearDone { list: list.clone() })
         .tool(ListTodos { list: list.clone() })
+        .max_turns(10)
         .build();
 
     println!("AI Todo List — type 'quit' to exit\n");
