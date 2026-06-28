@@ -194,6 +194,20 @@
 
 - [Overview](./stable-world/overview.md)
 
+# How AI Works
+
+- [Chapter 1 — What LLMs Are](./ai/01-what-are-llms.md)
+- [Chapter 2 — APIs and Tokens](./ai/02-apis-tokens.md)
+- [Chapter 3 — Tool Calling](./ai/03-tool-calling.md)
+- [Chapter 4 — The Agent Loop](./ai/04-agent-loop.md)
+
+# AI in Rust
+
+- [Lesson 1 — First LLM Call](./ai/05-first-llm-call.md)
+- [Lesson 2 — Defining a Tool](./ai/06-first-tool.md)
+- [Lesson 3 — Multiple Tools](./ai/07-multiple-tools.md)
+- [Mini Project — AI Todo List](./ai/08-todo-list.md)
+
 # Appendix
 
 - [Reading stdlib docs offline](./appendix-offline-docs.md)
