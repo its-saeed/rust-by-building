@@ -23,6 +23,7 @@ Add `serde` to `Cargo.toml`:
 ```toml
 [dependencies]
 rig = "0.38.2"
+thiserror = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -47,6 +48,7 @@ struct CalculatorArgs {
 Then the tool struct itself:
 
 ```rust
+#[derive(Deserialize, Serialize)]
 struct Calculator;
 ```
 
@@ -60,10 +62,14 @@ No fields — this tool is stateless. It just does arithmetic.
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde_json::json;
 
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+struct ToolError(String);
+
 impl Tool for Calculator {
     const NAME: &'static str = "calculator";
 
-    type Error = String;
+    type Error = ToolError;
     type Args = CalculatorArgs;
     type Output = String;
 
@@ -99,11 +105,11 @@ impl Tool for Calculator {
             "multiply" => args.a * args.b,
             "divide" => {
                 if args.b == 0.0 {
-                    return Err("division by zero".to_string());
+                    return Err(ToolError("division by zero".to_string()));
                 }
                 args.a / args.b
             }
-            op => return Err(format!("unknown operation: {op}")),
+            op => return Err(ToolError(format!("unknown operation: {op}"))),
         };
         Ok(result.to_string())
     }
@@ -209,12 +215,17 @@ struct CalculatorArgs {
     operation: String,
 }
 
+#[derive(Deserialize, Serialize)]
 struct Calculator;
+
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+struct ToolError(String);
 
 impl Tool for Calculator {
     const NAME: &'static str = "calculator";
 
-    type Error = String;
+    type Error = ToolError;
     type Args = CalculatorArgs;
     type Output = String;
 
@@ -250,11 +261,11 @@ impl Tool for Calculator {
             "multiply" => args.a * args.b,
             "divide" => {
                 if args.b == 0.0 {
-                    return Err("division by zero".to_string());
+                    return Err(ToolError("division by zero".to_string()));
                 }
                 args.a / args.b
             }
-            op => return Err(format!("unknown operation: {op}")),
+            op => return Err(ToolError(format!("unknown operation: {op}"))),
         };
         Ok(result.to_string())
     }

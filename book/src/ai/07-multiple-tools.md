@@ -44,14 +44,19 @@ struct AddNoteArgs {
     text: String,
 }
 
+#[derive(Deserialize, Serialize)]
 struct AddNote {
     notes: Notes,
 }
 
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+struct ToolError(String);
+
 impl Tool for AddNote {
     const NAME: &'static str = "add_note";
 
-    type Error = String;
+    type Error = ToolError;
     type Args = AddNoteArgs;
     type Output = String;
 
@@ -86,6 +91,7 @@ impl Tool for AddNote {
 #[derive(Deserialize)]
 struct ListNotesArgs {}
 
+#[derive(Deserialize, Serialize)]
 struct ListNotes {
     notes: Notes,
 }
@@ -93,7 +99,7 @@ struct ListNotes {
 impl Tool for ListNotes {
     const NAME: &'static str = "list_notes";
 
-    type Error = String;
+    type Error = ToolError;
     type Args = ListNotesArgs;
     type Output = String;
 
@@ -129,6 +135,7 @@ struct DeleteNoteArgs {
     index: usize,
 }
 
+#[derive(Deserialize, Serialize)]
 struct DeleteNote {
     notes: Notes,
 }
@@ -136,7 +143,7 @@ struct DeleteNote {
 impl Tool for DeleteNote {
     const NAME: &'static str = "delete_note";
 
-    type Error = String;
+    type Error = ToolError;
     type Args = DeleteNoteArgs;
     type Output = String;
 
@@ -253,7 +260,7 @@ This is the interesting case. The LLM does not know the index. It calls `list_no
 
 ## Step 6 — Error handling from tools
 
-Return `Err(String)` from `call()` when something is wrong. Rig feeds the error message back to the LLM as a tool result:
+Return `Err(ToolError)` from `call()` when something is wrong. Rig feeds the error message back to the LLM as a tool result:
 
 ```
 > delete note 99
@@ -297,14 +304,19 @@ struct AddNoteArgs {
     text: String,
 }
 
+#[derive(Deserialize, Serialize)]
 struct AddNote {
     notes: Notes,
 }
 
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+struct ToolError(String);
+
 impl Tool for AddNote {
     const NAME: &'static str = "add_note";
 
-    type Error = String;
+    type Error = ToolError;
     type Args = AddNoteArgs;
     type Output = String;
 
@@ -339,6 +351,7 @@ impl Tool for AddNote {
 #[derive(Deserialize)]
 struct ListNotesArgs {}
 
+#[derive(Deserialize, Serialize)]
 struct ListNotes {
     notes: Notes,
 }
@@ -346,7 +359,7 @@ struct ListNotes {
 impl Tool for ListNotes {
     const NAME: &'static str = "list_notes";
 
-    type Error = String;
+    type Error = ToolError;
     type Args = ListNotesArgs;
     type Output = String;
 
@@ -382,6 +395,7 @@ struct DeleteNoteArgs {
     index: usize,
 }
 
+#[derive(Deserialize, Serialize)]
 struct DeleteNote {
     notes: Notes,
 }
@@ -389,7 +403,7 @@ struct DeleteNote {
 impl Tool for DeleteNote {
     const NAME: &'static str = "delete_note";
 
-    type Error = String;
+    type Error = ToolError;
     type Args = DeleteNoteArgs;
     type Output = String;
 
@@ -485,4 +499,4 @@ async fn main() -> anyhow::Result<()> {
 | `mutex.lock().unwrap()` | Acquires the lock; panics if the mutex is poisoned |
 | `vec.remove(i)` | Removes and returns the element at index `i`; panics if out of bounds |
 | Multiple `.tool(t)` calls | Registers multiple tools on one agent; the LLM sees all descriptions |
-| `Err(String)` from `call()` | Rig feeds the error string back to the LLM as a tool result |
+| `Err(ToolError)` from `call()` | Rig feeds the error string back to the LLM as a tool result |
