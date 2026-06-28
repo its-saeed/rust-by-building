@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-44feb14b.js";
+            window.path_to_searchindex_js = "searchindex-c03bb1d2.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-41e41280.js"></script>
@@ -18077,6 +18077,7 @@ anyhow = "1"
 <hr>
 <h2 id="step-2--hello-llm"><a class="header" href="#step-2--hello-llm">Step 2 — Hello LLM</a></h2>
 <pre class="playground"><code class="language-rust">use rig::client::{CompletionClient, ProviderClient};
+use rig::completion::Prompt;
 use rig::providers::openai::Client;
 
 #[tokio::main]
@@ -18135,6 +18136,7 @@ println!("{}", specialist.prompt(prompt).await?);
 <h2 id="step-5--a-simple-repl"><a class="header" href="#step-5--a-simple-repl">Step 5 — A simple REPL</a></h2>
 <p>A single prompt is useful for testing. A REPL is the foundation of everything in the following lessons.</p>
 <pre class="playground"><code class="language-rust">use rig::client::{CompletionClient, ProviderClient};
+use rig::completion::Prompt;
 use rig::providers::openai::Client;
 use std::io::{self, BufRead, Write};
 
@@ -18172,6 +18174,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <hr>
 <h2 id="full-code-6"><a class="header" href="#full-code-6">Full code</a></h2>
 <pre class="playground"><code class="language-rust">use rig::client::{CompletionClient, ProviderClient};
+use rig::completion::Prompt;
 use rig::providers::openai::Client;
 use std::io::{self, BufRead, Write};
 
@@ -18386,6 +18389,7 @@ impl Tool for Calculator {
 <hr>
 <h2 id="step-5--add-the-tool-to-the-agent"><a class="header" href="#step-5--add-the-tool-to-the-agent">Step 5 — Add the tool to the agent</a></h2>
 <pre class="playground"><code class="language-rust">use rig::client::{CompletionClient, ProviderClient};
+use rig::completion::Prompt;
 use rig::providers::openai::Client;
 
 #[tokio::main]
@@ -18424,6 +18428,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <hr>
 <h2 id="full-code-7"><a class="header" href="#full-code-7">Full code</a></h2>
 <pre class="playground"><code class="language-rust">use rig::client::{CompletionClient, ProviderClient};
+use rig::completion::Prompt;
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde::{Deserialize, Serialize};
@@ -18708,6 +18713,7 @@ impl Tool for DeleteNote {
 <hr>
 <h2 id="step-4--wire-them-up"><a class="header" href="#step-4--wire-them-up">Step 4 — Wire them up</a></h2>
 <pre class="playground"><code class="language-rust">use rig::client::{CompletionClient, ProviderClient};
+use rig::completion::Prompt;
 use rig::providers::openai::Client;
 
 #[tokio::main]
@@ -18779,6 +18785,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <hr>
 <h2 id="full-code-8"><a class="header" href="#full-code-8">Full code</a></h2>
 <pre class="playground"><code class="language-rust">use rig::client::{CompletionClient, ProviderClient};
+use rig::completion::Prompt;
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde::Deserialize;
@@ -19341,6 +19348,7 @@ impl Tool for ListTodos {
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use rig::client::{CompletionClient, ProviderClient};
+use rig::completion::Prompt;
 use rig::providers::openai::Client;
 
 let client = Client::from_env()?;
@@ -19387,6 +19395,7 @@ use std::io::Write;
 
 use anyhow::Result;
 use rig::client::{CompletionClient, ProviderClient};
+use rig::completion::Prompt;
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde::Deserialize;
