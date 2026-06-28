@@ -38,8 +38,10 @@ You might wonder: if tools are never called concurrently, can we use `Rc<RefCell
 
 ## Step 3 — Define all three tools
 
+Notice that the args structs derive `Deserialize` (the LLM's JSON must deserialize into them) but the tool structs themselves do not — because `Arc<Mutex<Vec<String>>>` cannot be serialized. The tool struct just holds a handle; only the args need serde.
+
 ```rust
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde_json::json;
 
@@ -50,7 +52,6 @@ struct AddNoteArgs {
     text: String,
 }
 
-#[derive(Deserialize, Serialize)]
 struct AddNote {
     notes: Notes,
 }
@@ -97,7 +98,6 @@ impl Tool for AddNote {
 #[derive(Deserialize)]
 struct ListNotesArgs {}
 
-#[derive(Deserialize, Serialize)]
 struct ListNotes {
     notes: Notes,
 }
@@ -141,7 +141,6 @@ struct DeleteNoteArgs {
     index: usize,
 }
 
-#[derive(Deserialize, Serialize)]
 struct DeleteNote {
     notes: Notes,
 }
@@ -193,7 +192,7 @@ Each struct holds a clone of `Notes`. They all point to the same `Vec<String>`. 
 ## Step 4 — Wire them up
 
 ```rust
-use rig::client::ProviderClient;
+use rig::client::CompletionClient;
 use rig::providers::openai::Client;
 
 #[tokio::main]
@@ -293,10 +292,10 @@ The key: write error messages for the LLM to read, not for a human reading a sta
 ## Full code
 
 ```rust
-use rig::client::ProviderClient;
+use rig::client::CompletionClient;
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::json;
 use std::io::{self, BufRead, Write};
 use std::sync::{Arc, Mutex};
@@ -310,7 +309,6 @@ struct AddNoteArgs {
     text: String,
 }
 
-#[derive(Deserialize, Serialize)]
 struct AddNote {
     notes: Notes,
 }
@@ -357,7 +355,6 @@ impl Tool for AddNote {
 #[derive(Deserialize)]
 struct ListNotesArgs {}
 
-#[derive(Deserialize, Serialize)]
 struct ListNotes {
     notes: Notes,
 }
@@ -401,7 +398,6 @@ struct DeleteNoteArgs {
     index: usize,
 }
 
-#[derive(Deserialize, Serialize)]
 struct DeleteNote {
     notes: Notes,
 }

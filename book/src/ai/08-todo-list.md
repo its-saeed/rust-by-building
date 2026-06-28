@@ -114,7 +114,7 @@ Adds a single item. Use this when the user mentions one thing.
 ```rust
 use std::sync::{Arc, Mutex};
 use rig::{completion::ToolDefinition, tool::Tool};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::json;
 
 #[derive(Deserialize)]
@@ -122,7 +122,6 @@ struct AddTodoArgs {
     text: String,
 }
 
-#[derive(Deserialize, Serialize)]
 struct AddTodo {
     list: Arc<Mutex<TodoList>>,
 }
@@ -171,7 +170,6 @@ struct AddManyArgs {
     items: Vec<String>,
 }
 
-#[derive(Deserialize, Serialize)]
 struct AddMany {
     list: Arc<Mutex<TodoList>>,
 }
@@ -232,7 +230,6 @@ struct TodoIdArgs {
     id: u32,
 }
 
-#[derive(Deserialize, Serialize)]
 struct CompleteTodo {
     list: Arc<Mutex<TodoList>>,
 }
@@ -268,7 +265,6 @@ impl Tool for CompleteTodo {
     }
 }
 
-#[derive(Deserialize, Serialize)]
 struct UncompleteTodo {
     list: Arc<Mutex<TodoList>>,
 }
@@ -309,7 +305,6 @@ Removes all completed items. Takes no arguments — the schema is an empty objec
 #[derive(Deserialize)]
 struct NoArgs {}
 
-#[derive(Deserialize, Serialize)]
 struct ClearDone {
     list: Arc<Mutex<TodoList>>,
 }
@@ -345,7 +340,6 @@ impl Tool for ClearDone {
 Returns the current list as a formatted string. This is a read-only query tool — the LLM calls it to see what's there before deciding what to do.
 
 ```rust
-#[derive(Deserialize, Serialize)]
 struct ListTodos {
     list: Arc<Mutex<TodoList>>,
 }
@@ -382,7 +376,7 @@ impl Tool for ListTodos {
 Create one `Arc<Mutex<TodoList>>` and clone it into each tool:
 
 ```rust
-use rig::client::ProviderClient;
+use rig::client::CompletionClient;
 use rig::providers::openai::Client;
 
 let client = Client::from_env()?;
@@ -434,10 +428,10 @@ use std::sync::{Arc, Mutex};
 use std::io::Write;
 
 use anyhow::Result;
-use rig::client::ProviderClient;
+use rig::client::CompletionClient;
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::json;
 
 struct Todo {
@@ -503,7 +497,6 @@ struct AddTodoArgs {
     text: String,
 }
 
-#[derive(Deserialize, Serialize)]
 struct AddTodo {
     list: Arc<Mutex<TodoList>>,
 }
@@ -544,7 +537,6 @@ struct AddManyArgs {
     items: Vec<String>,
 }
 
-#[derive(Deserialize, Serialize)]
 struct AddMany {
     list: Arc<Mutex<TodoList>>,
 }
@@ -589,7 +581,6 @@ struct TodoIdArgs {
     id: u32,
 }
 
-#[derive(Deserialize, Serialize)]
 struct CompleteTodo {
     list: Arc<Mutex<TodoList>>,
 }
@@ -621,7 +612,6 @@ impl Tool for CompleteTodo {
     }
 }
 
-#[derive(Deserialize, Serialize)]
 struct UncompleteTodo {
     list: Arc<Mutex<TodoList>>,
 }
@@ -656,7 +646,6 @@ impl Tool for UncompleteTodo {
 #[derive(Deserialize)]
 struct NoArgs {}
 
-#[derive(Deserialize, Serialize)]
 struct ClearDone {
     list: Arc<Mutex<TodoList>>,
 }
@@ -682,7 +671,6 @@ impl Tool for ClearDone {
     }
 }
 
-#[derive(Deserialize, Serialize)]
 struct ListTodos {
     list: Arc<Mutex<TodoList>>,
 }

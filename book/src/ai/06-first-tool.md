@@ -33,7 +33,7 @@ anyhow = "1"
 A tool is a struct that implements the `Tool` trait. Start with the args type — the data the LLM will send when it calls the tool:
 
 ```rust
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 struct CalculatorArgs {
@@ -186,7 +186,7 @@ The `description` on each property is what the LLM actually reads to understand 
 ## Step 5 — Add the tool to the agent
 
 ```rust
-use rig::client::ProviderClient;
+use rig::client::CompletionClient;
 use rig::providers::openai::Client;
 
 #[tokio::main]
@@ -234,10 +234,10 @@ This is what the agent loop chapter described. Steps 2–5 can repeat multiple t
 ## Full code
 
 ```rust
-use rig::client::ProviderClient;
+use rig::client::CompletionClient;
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 #[derive(Deserialize)]
