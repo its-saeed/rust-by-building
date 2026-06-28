@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "../searchindex-764de516.js";
+            window.path_to_searchindex_js = "../searchindex-3adc5e38.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-41e41280.js"></script>
@@ -189,6 +189,7 @@
 <p>Add <code>serde</code> to <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
 rig = "0.38.2"
+thiserror = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -210,7 +211,8 @@ struct CalculatorArgs {
 <p>Then the tool struct itself:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>struct Calculator;
+</span>#[derive(Deserialize, Serialize)]
+struct Calculator;
 <span class="boring">}</span></code></pre>
 <p>No fields — this tool is stateless. It just does arithmetic.</p>
 <hr>
@@ -220,10 +222,14 @@ struct CalculatorArgs {
 </span>use rig::{completion::ToolDefinition, tool::Tool};
 use serde_json::json;
 
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+struct ToolError(String);
+
 impl Tool for Calculator {
     const NAME: &amp;'static str = "calculator";
 
-    type Error = String;
+    type Error = ToolError;
     type Args = CalculatorArgs;
     type Output = String;
 
@@ -259,11 +265,11 @@ impl Tool for Calculator {
             "multiply" =&gt; args.a * args.b,
             "divide" =&gt; {
                 if args.b == 0.0 {
-                    return Err("division by zero".to_string());
+                    return Err(ToolError("division by zero".to_string()));
                 }
                 args.a / args.b
             }
-            op =&gt; return Err(format!("unknown operation: {op}")),
+            op =&gt; return Err(ToolError(format!("unknown operation: {op}"))),
         };
         Ok(result.to_string())
     }
@@ -346,12 +352,17 @@ struct CalculatorArgs {
     operation: String,
 }
 
+#[derive(Deserialize, Serialize)]
 struct Calculator;
+
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+struct ToolError(String);
 
 impl Tool for Calculator {
     const NAME: &amp;'static str = "calculator";
 
-    type Error = String;
+    type Error = ToolError;
     type Args = CalculatorArgs;
     type Output = String;
 
@@ -387,11 +398,11 @@ impl Tool for Calculator {
             "multiply" =&gt; args.a * args.b,
             "divide" =&gt; {
                 if args.b == 0.0 {
-                    return Err("division by zero".to_string());
+                    return Err(ToolError("division by zero".to_string()));
                 }
                 args.a / args.b
             }
-            op =&gt; return Err(format!("unknown operation: {op}")),
+            op =&gt; return Err(ToolError(format!("unknown operation: {op}"))),
         };
         Ok(result.to_string())
     }

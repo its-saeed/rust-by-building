@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "../searchindex-764de516.js";
+            window.path_to_searchindex_js = "../searchindex-3adc5e38.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-41e41280.js"></script>
@@ -284,13 +284,18 @@ struct AddTodoArgs {
     text: String,
 }
 
+#[derive(Deserialize, Serialize)]
 struct AddTodo {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
 
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+struct ToolError(String);
+
 impl Tool for AddTodo {
     const NAME: &amp;'static str = "add_todo";
-    type Error = String;
+    type Error = ToolError;
     type Args = AddTodoArgs;
     type Output = String;
 
@@ -325,13 +330,18 @@ struct AddManyArgs {
     items: Vec&lt;String&gt;,
 }
 
+#[derive(Deserialize, Serialize)]
 struct AddMany {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
 
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+struct ToolError(String);
+
 impl Tool for AddMany {
     const NAME: &amp;'static str = "add_many";
-    type Error = String;
+    type Error = ToolError;
     type Args = AddManyArgs;
     type Output = String;
 
@@ -373,13 +383,18 @@ struct TodoIdArgs {
     id: u32,
 }
 
+#[derive(Deserialize, Serialize)]
 struct CompleteTodo {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
 
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+struct ToolError(String);
+
 impl Tool for CompleteTodo {
     const NAME: &amp;'static str = "complete_todo";
-    type Error = String;
+    type Error = ToolError;
     type Args = TodoIdArgs;
     type Output = String;
 
@@ -404,13 +419,14 @@ impl Tool for CompleteTodo {
     }
 }
 
+#[derive(Deserialize, Serialize)]
 struct UncompleteTodo {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
 
 impl Tool for UncompleteTodo {
     const NAME: &amp;'static str = "uncomplete_todo";
-    type Error = String;
+    type Error = ToolError;
     type Args = TodoIdArgs;
     type Output = String;
 
@@ -442,13 +458,18 @@ impl Tool for UncompleteTodo {
 </span>#[derive(Deserialize)]
 struct NoArgs {}
 
+#[derive(Deserialize, Serialize)]
 struct ClearDone {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
 
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+struct ToolError(String);
+
 impl Tool for ClearDone {
     const NAME: &amp;'static str = "clear_done";
-    type Error = String;
+    type Error = ToolError;
     type Args = NoArgs;
     type Output = String;
 
@@ -471,13 +492,18 @@ impl Tool for ClearDone {
 <p>Returns the current list as a formatted string. This is a read-only query tool — the LLM calls it to see what’s there before deciding what to do.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>struct ListTodos {
+</span>#[derive(Deserialize, Serialize)]
+struct ListTodos {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
 
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+struct ToolError(String);
+
 impl Tool for ListTodos {
     const NAME: &amp;'static str = "list_todos";
-    type Error = String;
+    type Error = ToolError;
     type Args = NoArgs;
     type Output = String;
 
@@ -614,13 +640,18 @@ struct AddTodoArgs {
     text: String,
 }
 
+#[derive(Deserialize, Serialize)]
 struct AddTodo {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
 
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+struct ToolError(String);
+
 impl Tool for AddTodo {
     const NAME: &amp;'static str = "add_todo";
-    type Error = String;
+    type Error = ToolError;
     type Args = AddTodoArgs;
     type Output = String;
 
@@ -650,13 +681,14 @@ struct AddManyArgs {
     items: Vec&lt;String&gt;,
 }
 
+#[derive(Deserialize, Serialize)]
 struct AddMany {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
 
 impl Tool for AddMany {
     const NAME: &amp;'static str = "add_many";
-    type Error = String;
+    type Error = ToolError;
     type Args = AddManyArgs;
     type Output = String;
 
@@ -694,13 +726,14 @@ struct TodoIdArgs {
     id: u32,
 }
 
+#[derive(Deserialize, Serialize)]
 struct CompleteTodo {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
 
 impl Tool for CompleteTodo {
     const NAME: &amp;'static str = "complete_todo";
-    type Error = String;
+    type Error = ToolError;
     type Args = TodoIdArgs;
     type Output = String;
 
@@ -725,13 +758,14 @@ impl Tool for CompleteTodo {
     }
 }
 
+#[derive(Deserialize, Serialize)]
 struct UncompleteTodo {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
 
 impl Tool for UncompleteTodo {
     const NAME: &amp;'static str = "uncomplete_todo";
-    type Error = String;
+    type Error = ToolError;
     type Args = TodoIdArgs;
     type Output = String;
 
@@ -759,13 +793,14 @@ impl Tool for UncompleteTodo {
 #[derive(Deserialize)]
 struct NoArgs {}
 
+#[derive(Deserialize, Serialize)]
 struct ClearDone {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
 
 impl Tool for ClearDone {
     const NAME: &amp;'static str = "clear_done";
-    type Error = String;
+    type Error = ToolError;
     type Args = NoArgs;
     type Output = String;
 
@@ -784,13 +819,14 @@ impl Tool for ClearDone {
     }
 }
 
+#[derive(Deserialize, Serialize)]
 struct ListTodos {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
 
 impl Tool for ListTodos {
     const NAME: &amp;'static str = "list_todos";
-    type Error = String;
+    type Error = ToolError;
     type Args = NoArgs;
     type Output = String;
 
@@ -851,6 +887,7 @@ edition = "2021"
 
 [dependencies]
 rig = "0.38.2"
+thiserror = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
