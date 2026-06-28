@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-13fc7bcc.js";
+            window.path_to_searchindex_js = "searchindex-a69c7a7b.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-41e41280.js"></script>
@@ -18076,7 +18076,7 @@ anyhow = "1"
 </code></pre>
 <hr>
 <h2 id="step-2--hello-llm"><a class="header" href="#step-2--hello-llm">Step 2 — Hello LLM</a></h2>
-<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+<pre class="playground"><code class="language-rust">use rig::client::CompletionClient;
 use rig::providers::openai::Client;
 
 #[tokio::main]
@@ -18134,7 +18134,7 @@ println!("{}", specialist.prompt(prompt).await?);
 <hr>
 <h2 id="step-5--a-simple-repl"><a class="header" href="#step-5--a-simple-repl">Step 5 — A simple REPL</a></h2>
 <p>A single prompt is useful for testing. A REPL is the foundation of everything in the following lessons.</p>
-<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+<pre class="playground"><code class="language-rust">use rig::client::CompletionClient;
 use rig::providers::openai::Client;
 use std::io::{self, BufRead, Write};
 
@@ -18171,7 +18171,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <p>Note the <code>count</code> variable — it tracks how many messages have been sent and prints the number in the prompt. This becomes useful for debugging in later lessons.</p>
 <hr>
 <h2 id="full-code-6"><a class="header" href="#full-code-6">Full code</a></h2>
-<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+<pre class="playground"><code class="language-rust">use rig::client::CompletionClient;
 use rig::providers::openai::Client;
 use std::io::{self, BufRead, Write};
 
@@ -18253,7 +18253,7 @@ anyhow = "1"
 <p>A tool is a struct that implements the <code>Tool</code> trait. Start with the args type — the data the LLM will send when it calls the tool:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use serde::Deserialize;
+</span>use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 struct CalculatorArgs {
@@ -18385,7 +18385,7 @@ impl Tool for Calculator {
 <p>The <code>description</code> on each property is what the LLM actually reads to understand how to fill it. Make it precise. “The first operand” is fine. “A number” is not — the LLM already knows it is a number from <code>type</code>.</p>
 <hr>
 <h2 id="step-5--add-the-tool-to-the-agent"><a class="header" href="#step-5--add-the-tool-to-the-agent">Step 5 — Add the tool to the agent</a></h2>
-<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+<pre class="playground"><code class="language-rust">use rig::client::CompletionClient;
 use rig::providers::openai::Client;
 
 #[tokio::main]
@@ -18423,10 +18423,10 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <p>This is what the agent loop chapter described. Steps 2–5 can repeat multiple times in a single <code>.prompt()</code> call if the LLM needs to chain several tool calls.</p>
 <hr>
 <h2 id="full-code-7"><a class="header" href="#full-code-7">Full code</a></h2>
-<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+<pre class="playground"><code class="language-rust">use rig::client::CompletionClient;
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 #[derive(Deserialize)]
@@ -18558,9 +18558,10 @@ type Notes = Arc&lt;Mutex&lt;Vec&lt;String&gt;&gt;&gt;;
 <p>You might wonder: if tools are never called concurrently, can we use <code>Rc&lt;RefCell&lt;T&gt;&gt;</code> instead of <code>Arc&lt;Mutex&lt;T&gt;&gt;</code>? No — and the reason is the <code>Send</code> bound, not concurrent access. The <code>Tool</code> trait requires <code>Send + Sync</code> on tool structs because the agent future must be <code>Send</code> to run on tokio’s multi-threaded executor (<code>rt-multi-thread</code>). <code>Rc</code> does not implement <code>Send</code>, so the compiler rejects it regardless of whether two threads ever race. <code>Arc</code> is required to satisfy the trait bound, not because of concurrent tool calls.</p>
 <hr>
 <h2 id="step-3--define-all-three-tools"><a class="header" href="#step-3--define-all-three-tools">Step 3 — Define all three tools</a></h2>
+<p>Notice that the args structs derive <code>Deserialize</code> (the LLM’s JSON must deserialize into them) but the tool structs themselves do not — because <code>Arc&lt;Mutex&lt;Vec&lt;String&gt;&gt;&gt;</code> cannot be serialized. The tool struct just holds a handle; only the args need serde.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use serde::{Deserialize, Serialize};
+</span>use serde::Deserialize;
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde_json::json;
 
@@ -18571,7 +18572,6 @@ struct AddNoteArgs {
     text: String,
 }
 
-#[derive(Deserialize, Serialize)]
 struct AddNote {
     notes: Notes,
 }
@@ -18618,7 +18618,6 @@ impl Tool for AddNote {
 #[derive(Deserialize)]
 struct ListNotesArgs {}
 
-#[derive(Deserialize, Serialize)]
 struct ListNotes {
     notes: Notes,
 }
@@ -18662,7 +18661,6 @@ struct DeleteNoteArgs {
     index: usize,
 }
 
-#[derive(Deserialize, Serialize)]
 struct DeleteNote {
     notes: Notes,
 }
@@ -18709,7 +18707,7 @@ impl Tool for DeleteNote {
 <p>Each struct holds a clone of <code>Notes</code>. They all point to the same <code>Vec&lt;String&gt;</code>. <code>AddNote::call</code> pushes; <code>ListNotes::call</code> reads; <code>DeleteNote::call</code> removes by index.</p>
 <hr>
 <h2 id="step-4--wire-them-up"><a class="header" href="#step-4--wire-them-up">Step 4 — Wire them up</a></h2>
-<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+<pre class="playground"><code class="language-rust">use rig::client::CompletionClient;
 use rig::providers::openai::Client;
 
 #[tokio::main]
@@ -18780,10 +18778,10 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <p>The key: write error messages for the LLM to read, not for a human reading a stack trace. Complete sentences work better than codes.</p>
 <hr>
 <h2 id="full-code-8"><a class="header" href="#full-code-8">Full code</a></h2>
-<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+<pre class="playground"><code class="language-rust">use rig::client::CompletionClient;
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::json;
 use std::io::{self, BufRead, Write};
 use std::sync::{Arc, Mutex};
@@ -18797,7 +18795,6 @@ struct AddNoteArgs {
     text: String,
 }
 
-#[derive(Deserialize, Serialize)]
 struct AddNote {
     notes: Notes,
 }
@@ -18844,7 +18841,6 @@ impl Tool for AddNote {
 #[derive(Deserialize)]
 struct ListNotesArgs {}
 
-#[derive(Deserialize, Serialize)]
 struct ListNotes {
     notes: Notes,
 }
@@ -18888,7 +18884,6 @@ struct DeleteNoteArgs {
     index: usize,
 }
 
-#[derive(Deserialize, Serialize)]
 struct DeleteNote {
     notes: Notes,
 }
@@ -19096,7 +19091,7 @@ struct TodoList {
 </span><span class="boring">fn main() {
 </span>use std::sync::{Arc, Mutex};
 use rig::{completion::ToolDefinition, tool::Tool};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::json;
 
 #[derive(Deserialize)]
@@ -19104,7 +19099,6 @@ struct AddTodoArgs {
     text: String,
 }
 
-#[derive(Deserialize, Serialize)]
 struct AddTodo {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
@@ -19150,7 +19144,6 @@ struct AddManyArgs {
     items: Vec&lt;String&gt;,
 }
 
-#[derive(Deserialize, Serialize)]
 struct AddMany {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
@@ -19208,7 +19201,6 @@ struct TodoIdArgs {
     id: u32,
 }
 
-#[derive(Deserialize, Serialize)]
 struct CompleteTodo {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
@@ -19244,7 +19236,6 @@ impl Tool for CompleteTodo {
     }
 }
 
-#[derive(Deserialize, Serialize)]
 struct UncompleteTodo {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
@@ -19283,7 +19274,6 @@ impl Tool for UncompleteTodo {
 </span>#[derive(Deserialize)]
 struct NoArgs {}
 
-#[derive(Deserialize, Serialize)]
 struct ClearDone {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
@@ -19317,8 +19307,7 @@ impl Tool for ClearDone {
 <p>Returns the current list as a formatted string. This is a read-only query tool — the LLM calls it to see what’s there before deciding what to do.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[derive(Deserialize, Serialize)]
-struct ListTodos {
+</span>struct ListTodos {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
 
@@ -19351,7 +19340,7 @@ impl Tool for ListTodos {
 <p>Create one <code>Arc&lt;Mutex&lt;TodoList&gt;&gt;</code> and clone it into each tool:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use rig::client::ProviderClient;
+</span>use rig::client::CompletionClient;
 use rig::providers::openai::Client;
 
 let client = Client::from_env()?;
@@ -19396,10 +19385,10 @@ loop {
 use std::io::Write;
 
 use anyhow::Result;
-use rig::client::ProviderClient;
+use rig::client::CompletionClient;
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::json;
 
 struct Todo {
@@ -19465,7 +19454,6 @@ struct AddTodoArgs {
     text: String,
 }
 
-#[derive(Deserialize, Serialize)]
 struct AddTodo {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
@@ -19506,7 +19494,6 @@ struct AddManyArgs {
     items: Vec&lt;String&gt;,
 }
 
-#[derive(Deserialize, Serialize)]
 struct AddMany {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
@@ -19551,7 +19538,6 @@ struct TodoIdArgs {
     id: u32,
 }
 
-#[derive(Deserialize, Serialize)]
 struct CompleteTodo {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
@@ -19583,7 +19569,6 @@ impl Tool for CompleteTodo {
     }
 }
 
-#[derive(Deserialize, Serialize)]
 struct UncompleteTodo {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
@@ -19618,7 +19603,6 @@ impl Tool for UncompleteTodo {
 #[derive(Deserialize)]
 struct NoArgs {}
 
-#[derive(Deserialize, Serialize)]
 struct ClearDone {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
@@ -19644,7 +19628,6 @@ impl Tool for ClearDone {
     }
 }
 
-#[derive(Deserialize, Serialize)]
 struct ListTodos {
     list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
 }
