@@ -152,6 +152,8 @@ Step by step:
 
 The parentheses around `letter as u8 + 3` matter — they make sure the addition happens before the final cast to `char`.
 
+![Shifting 'A' by key 3: cast to u8 gives 65, add 3 gives 68, cast back to char gives 'D'](../images/caesar/caesar-for-a.png)
+
 ---
 
 ## What about `'Z' + 3`?
