@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-720ed4d4.js";
+            window.path_to_searchindex_js = "searchindex-1bae8bf5.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-41e41280.js"></script>
@@ -19705,6 +19705,43 @@ anyhow = "1"
 <pre><code class="language-sh">export OPENAI_API_KEY=sk-...
 cargo run
 </code></pre>
+<hr>
+<h2 id="try-these-prompts"><a class="header" href="#try-these-prompts">Try these prompts</a></h2>
+<p>Run the agent and paste these one by one. Each one exercises a different part of the system.</p>
+<p><strong>Bulk add from a sentence:</strong></p>
+<pre><code>I need to buy milk, eggs, and bread, and also call the dentist
+</code></pre>
+<p>The LLM should call <code>add_many</code> with all four items in one shot instead of four separate <code>add_todo</code> calls. If it does, your schema description was clear enough.</p>
+<p><strong>Partial completion by name:</strong></p>
+<pre><code>I got the milk and bread
+</code></pre>
+<p>The LLM doesn’t know the ids. It calls <code>list_todos</code> first to find them, then calls <code>complete_todo</code> twice. Three tool calls, one sentence, no code from you.</p>
+<p><strong>Ambiguous reference:</strong></p>
+<pre><code>mark the dentist thing as done
+</code></pre>
+<p>“Dentist thing” is vague. The LLM still finds it because it reads the list and matches by meaning, not exact text. Try spelling it differently: “dentist appointment”, “call dentist” — the match still works.</p>
+<p><strong>Undo:</strong></p>
+<pre><code>actually I didn't get the bread yet
+</code></pre>
+<p>The LLM calls <code>list_todos</code> (to find the id of the completed bread item), then <code>uncomplete_todo</code>. Watch it navigate: it has to query before it can act.</p>
+<p><strong>Clear and restart:</strong></p>
+<pre><code>I finished everything, clean up the done items
+</code></pre>
+<p>Should call <code>clear_done</code>. Follow up with:</p>
+<pre><code>what's left?
+</code></pre>
+<p>If <code>clear_done</code> worked, only the uncompleted items remain.</p>
+<p><strong>Multi-step planning:</strong></p>
+<pre><code>Add a todo for each day of the weekend: clean the kitchen on Saturday and do laundry on Sunday
+</code></pre>
+<p>Two items, one prompt. Then:</p>
+<pre><code>Saturday is done
+</code></pre>
+<p>The LLM figures out which item “Saturday” refers to and completes it without you writing any string matching.</p>
+<p><strong>Stress test the list tool:</strong></p>
+<pre><code>give me a summary of everything on my list, what's done and what isn't
+</code></pre>
+<p>The LLM calls <code>list_todos</code>, then formats the result as a readable summary. You returned structured data; the LLM turns it into prose.</p>
 <hr>
 <h2 id="what-to-notice"><a class="header" href="#what-to-notice">What to notice</a></h2>
 <p>“I got the milk and eggs” produced three tool calls from one sentence: <code>list_todos()</code> to find the ids, then <code>complete_todo(1)</code> and <code>complete_todo(2)</code>. The agent loop ran inside rig, invisibly. The code you wrote didn’t parse the sentence or figure out the ids — the LLM did.</p>
