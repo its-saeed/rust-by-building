@@ -58,6 +58,38 @@ No fields — this tool is stateless. It just does arithmetic.
 
 ## Step 3 — Implement the Tool trait
 
+The `Tool` trait requires an associated `Error` type. That type must implement `std::error::Error` — Rust's standard trait for anything that represents an error. The trait has two required supertraits (`Debug` and `Display`) and no required methods of its own, but implementing it manually means writing `impl Display` and `impl Error` boilerplate for every error type you create.
+
+**`thiserror`** is a crate that generates that boilerplate from a derive macro:
+
+```rust
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+struct ToolError(String);
+```
+
+- `#[derive(thiserror::Error)]` — generates the `impl std::error::Error for ToolError` block.
+- `#[derive(Debug)]` — satisfies the `Debug` supertrait requirement.
+- `#[error("{0}")]` — generates `impl Display for ToolError` using the format string. `{0}` refers to the first field, so `ToolError("division by zero".to_string())` displays as `division by zero`.
+
+Without `thiserror`, you would write this manually every time:
+
+```rust
+use std::fmt;
+
+struct ToolError(String);
+
+impl fmt::Display for ToolError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for ToolError {}
+```
+
+`thiserror` collapses all of that into two lines. You will see it in almost every Rust project that defines custom error types.
+
 ```rust
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde_json::json;
@@ -118,7 +150,7 @@ impl Tool for Calculator {
 
 The four associated types tell rig what flows through this tool:
 
-- `Error` — returned when `call` fails
+- `Error` — the error type returned when `call` fails; must implement `std::error::Error`
 - `Args` — the struct that `Deserialize` populates from the LLM's JSON
 - `Output` — what `call` returns on success
 
