@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-3adc5e38.js";
+            window.path_to_searchindex_js = "searchindex-ae25a40f.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-41e41280.js"></script>
@@ -18272,6 +18272,35 @@ struct Calculator;
 <p>No fields — this tool is stateless. It just does arithmetic.</p>
 <hr>
 <h2 id="step-3--implement-the-tool-trait"><a class="header" href="#step-3--implement-the-tool-trait">Step 3 — Implement the Tool trait</a></h2>
+<p>The <code>Tool</code> trait requires an associated <code>Error</code> type. That type must implement <code>std::error::Error</code> — Rust’s standard trait for anything that represents an error. The trait has two required supertraits (<code>Debug</code> and <code>Display</code>) and no required methods of its own, but implementing it manually means writing <code>impl Display</code> and <code>impl Error</code> boilerplate for every error type you create.</p>
+<p><strong><code>thiserror</code></strong> is a crate that generates that boilerplate from a derive macro:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+struct ToolError(String);
+<span class="boring">}</span></code></pre>
+<ul>
+<li><code>#[derive(thiserror::Error)]</code> — generates the <code>impl std::error::Error for ToolError</code> block.</li>
+<li><code>#[derive(Debug)]</code> — satisfies the <code>Debug</code> supertrait requirement.</li>
+<li><code>#[error("{0}")]</code> — generates <code>impl Display for ToolError</code> using the format string. <code>{0}</code> refers to the first field, so <code>ToolError("division by zero".to_string())</code> displays as <code>division by zero</code>.</li>
+</ul>
+<p>Without <code>thiserror</code>, you would write this manually every time:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::fmt;
+
+struct ToolError(String);
+
+impl fmt::Display for ToolError {
+    fn fmt(&amp;self, f: &amp;mut fmt::Formatter) -&gt; fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for ToolError {}
+<span class="boring">}</span></code></pre>
+<p><code>thiserror</code> collapses all of that into two lines. You will see it in almost every Rust project that defines custom error types.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use rig::{completion::ToolDefinition, tool::Tool};
@@ -18332,7 +18361,7 @@ impl Tool for Calculator {
 <span class="boring">}</span></code></pre>
 <p>The four associated types tell rig what flows through this tool:</p>
 <ul>
-<li><code>Error</code> — returned when <code>call</code> fails</li>
+<li><code>Error</code> — the error type returned when <code>call</code> fails; must implement <code>std::error::Error</code></li>
 <li><code>Args</code> — the struct that <code>Deserialize</code> populates from the LLM’s JSON</li>
 <li><code>Output</code> — what <code>call</code> returns on success</li>
 </ul>
