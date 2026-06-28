@@ -394,6 +394,8 @@ let agent = client
     .build();
 ```
 
+`.max_turns(10)` sets how many tool-call rounds the agent is allowed per prompt. Each round is: LLM decides to call a tool → tool runs → result goes back to LLM. Completing a todo by name requires two rounds — `list_todos` then `complete_todo` — so without this, rig hits the default limit of 0 and returns a `MaxTurnError` before it can act. Ten rounds is plenty for any realistic todo operation.
+
 The preamble tells the LLM to call `list_todos` when it needs to resolve item names to ids. Without this instruction the model might hallucinate ids. This is prompt engineering — the right instruction makes the agent reliable without any extra code.
 
 ---
@@ -709,6 +711,7 @@ async fn main() -> Result<()> {
         .tool(UncompleteTodo { list: list.clone() })
         .tool(ClearDone { list: list.clone() })
         .tool(ListTodos { list: list.clone() })
+        .max_turns(10)
         .build();
 
     println!("AI Todo List — type 'quit' to exit\n");
