@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "../searchindex-cd0a7e5a.js";
+            window.path_to_searchindex_js = "../searchindex-764de516.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-41e41280.js"></script>
@@ -340,11 +340,12 @@ impl Tool for DeleteNote {
 <p>Each struct holds a clone of <code>Notes</code>. They all point to the same <code>Vec&lt;String&gt;</code>. <code>AddNote::call</code> pushes; <code>ListNotes::call</code> reads; <code>DeleteNote::call</code> removes by index.</p>
 <hr>
 <h2 id="step-4--wire-them-up"><a class="header" href="#step-4--wire-them-up">Step 4 — Wire them up</a></h2>
-<pre class="playground"><code class="language-rust">use rig::providers::openai;
+<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 
 #[tokio::main]
 async fn main() -&gt; anyhow::Result&lt;()&gt; {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
     let notes: Notes = Arc::new(Mutex::new(Vec::new()));
 
     let agent = client
@@ -410,7 +411,8 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <p>The key: write error messages for the LLM to read, not for a human reading a stack trace. Complete sentences work better than codes.</p>
 <hr>
 <h2 id="full-code"><a class="header" href="#full-code">Full code</a></h2>
-<pre class="playground"><code class="language-rust">use rig::providers::openai;
+<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde::Deserialize;
 use serde_json::json;
@@ -558,7 +560,7 @@ impl Tool for DeleteNote {
 
 #[tokio::main]
 async fn main() -&gt; anyhow::Result&lt;()&gt; {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
     let notes: Notes = Arc::new(Mutex::new(Vec::new()));
 
     let agent = client

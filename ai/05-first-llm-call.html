@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "../searchindex-cd0a7e5a.js";
+            window.path_to_searchindex_js = "../searchindex-764de516.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-41e41280.js"></script>
@@ -185,7 +185,7 @@
 <p>Create a new binary project and add these dependencies to <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
 rig = "0.38.2"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 anyhow = "1"
 </code></pre>
 <p>You also need an API key from <a href="https://platform.openai.com">platform.openai.com</a>. The key identifies your account — every API request is billed to it. Never put it in source code.</p>
@@ -197,11 +197,12 @@ anyhow = "1"
 </code></pre>
 <hr>
 <h2 id="step-2--hello-llm"><a class="header" href="#step-2--hello-llm">Step 2 — Hello LLM</a></h2>
-<pre class="playground"><code class="language-rust">use rig::providers::openai;
+<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 
 #[tokio::main]
 async fn main() -&gt; anyhow::Result&lt;()&gt; {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
 
     let agent = client
         .agent(openai::GPT_4O_MINI)
@@ -213,7 +214,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 
     Ok(())
 }</code></pre>
-<p><code>openai::Client::from_env()</code> reads <code>OPENAI_API_KEY</code> from the environment. If the variable is missing it panics with a clear message.</p>
+<p><code>Client::from_env()?</code> reads <code>OPENAI_API_KEY</code> from the environment. If the variable is missing it panics with a clear message.</p>
 <p><code>agent.prompt(text).await</code> makes an HTTP POST to <code>https://api.openai.com/v1/chat/completions</code>, waits for the response, and returns the assistant’s reply as a <code>String</code>. Everything else — headers, JSON encoding, retries on transient errors — is handled by rig.</p>
 <hr>
 <h2 id="step-3--the-system-prompt"><a class="header" href="#step-3--the-system-prompt">Step 3 — The system prompt</a></h2>
@@ -254,12 +255,13 @@ println!("{}", specialist.prompt(prompt).await?);
 <hr>
 <h2 id="step-5--a-simple-repl"><a class="header" href="#step-5--a-simple-repl">Step 5 — A simple REPL</a></h2>
 <p>A single prompt is useful for testing. A REPL is the foundation of everything in the following lessons.</p>
-<pre class="playground"><code class="language-rust">use rig::providers::openai;
+<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 use std::io::{self, BufRead, Write};
 
 #[tokio::main]
 async fn main() -&gt; anyhow::Result&lt;()&gt; {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
 
     let agent = client
         .agent(openai::GPT_4O_MINI)
@@ -290,12 +292,13 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <p>Note the <code>count</code> variable — it tracks how many messages have been sent and prints the number in the prompt. This becomes useful for debugging in later lessons.</p>
 <hr>
 <h2 id="full-code"><a class="header" href="#full-code">Full code</a></h2>
-<pre class="playground"><code class="language-rust">use rig::providers::openai;
+<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 use std::io::{self, BufRead, Write};
 
 #[tokio::main]
 async fn main() -&gt; anyhow::Result&lt;()&gt; {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
 
     let agent = client
         .agent(openai::GPT_4O_MINI)
@@ -337,7 +340,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <tr><th>API</th><th>What it does</th></tr>
 </thead>
 <tbody>
-<tr><td><code>openai::Client::from_env()</code></td><td>Creates a client using <code>OPENAI_API_KEY</code> from the environment</td></tr>
+<tr><td><code>Client::from_env()?</code></td><td>Creates a client using <code>OPENAI_API_KEY</code> from the environment</td></tr>
 <tr><td><code>client.agent(model)</code></td><td>Starts an agent builder for the given model</td></tr>
 <tr><td><code>.preamble(text)</code></td><td>Sets the system prompt — sent before every user message</td></tr>
 <tr><td><code>.build()</code></td><td>Finalises the agent</td></tr>

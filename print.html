@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-cd0a7e5a.js";
+            window.path_to_searchindex_js = "searchindex-764de516.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-41e41280.js"></script>
@@ -18064,7 +18064,7 @@ loop {
 <p>Create a new binary project and add these dependencies to <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
 rig = "0.38.2"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 anyhow = "1"
 </code></pre>
 <p>You also need an API key from <a href="https://platform.openai.com">platform.openai.com</a>. The key identifies your account — every API request is billed to it. Never put it in source code.</p>
@@ -18076,11 +18076,12 @@ anyhow = "1"
 </code></pre>
 <hr>
 <h2 id="step-2--hello-llm"><a class="header" href="#step-2--hello-llm">Step 2 — Hello LLM</a></h2>
-<pre class="playground"><code class="language-rust">use rig::providers::openai;
+<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 
 #[tokio::main]
 async fn main() -&gt; anyhow::Result&lt;()&gt; {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
 
     let agent = client
         .agent(openai::GPT_4O_MINI)
@@ -18092,7 +18093,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 
     Ok(())
 }</code></pre>
-<p><code>openai::Client::from_env()</code> reads <code>OPENAI_API_KEY</code> from the environment. If the variable is missing it panics with a clear message.</p>
+<p><code>Client::from_env()?</code> reads <code>OPENAI_API_KEY</code> from the environment. If the variable is missing it panics with a clear message.</p>
 <p><code>agent.prompt(text).await</code> makes an HTTP POST to <code>https://api.openai.com/v1/chat/completions</code>, waits for the response, and returns the assistant’s reply as a <code>String</code>. Everything else — headers, JSON encoding, retries on transient errors — is handled by rig.</p>
 <hr>
 <h2 id="step-3--the-system-prompt"><a class="header" href="#step-3--the-system-prompt">Step 3 — The system prompt</a></h2>
@@ -18133,12 +18134,13 @@ println!("{}", specialist.prompt(prompt).await?);
 <hr>
 <h2 id="step-5--a-simple-repl"><a class="header" href="#step-5--a-simple-repl">Step 5 — A simple REPL</a></h2>
 <p>A single prompt is useful for testing. A REPL is the foundation of everything in the following lessons.</p>
-<pre class="playground"><code class="language-rust">use rig::providers::openai;
+<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 use std::io::{self, BufRead, Write};
 
 #[tokio::main]
 async fn main() -&gt; anyhow::Result&lt;()&gt; {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
 
     let agent = client
         .agent(openai::GPT_4O_MINI)
@@ -18169,12 +18171,13 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <p>Note the <code>count</code> variable — it tracks how many messages have been sent and prints the number in the prompt. This becomes useful for debugging in later lessons.</p>
 <hr>
 <h2 id="full-code-6"><a class="header" href="#full-code-6">Full code</a></h2>
-<pre class="playground"><code class="language-rust">use rig::providers::openai;
+<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 use std::io::{self, BufRead, Write};
 
 #[tokio::main]
 async fn main() -&gt; anyhow::Result&lt;()&gt; {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
 
     let agent = client
         .agent(openai::GPT_4O_MINI)
@@ -18216,7 +18219,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <tr><th>API</th><th>What it does</th></tr>
 </thead>
 <tbody>
-<tr><td><code>openai::Client::from_env()</code></td><td>Creates a client using <code>OPENAI_API_KEY</code> from the environment</td></tr>
+<tr><td><code>Client::from_env()?</code></td><td>Creates a client using <code>OPENAI_API_KEY</code> from the environment</td></tr>
 <tr><td><code>client.agent(model)</code></td><td>Starts an agent builder for the given model</td></tr>
 <tr><td><code>.preamble(text)</code></td><td>Sets the system prompt — sent before every user message</td></tr>
 <tr><td><code>.build()</code></td><td>Finalises the agent</td></tr>
@@ -18241,7 +18244,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <p>Add <code>serde</code> to <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
 rig = "0.38.2"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 anyhow = "1"
@@ -18347,11 +18350,12 @@ impl Tool for Calculator {
 <p>The <code>description</code> on each property is what the LLM actually reads to understand how to fill it. Make it precise. “The first operand” is fine. “A number” is not — the LLM already knows it is a number from <code>type</code>.</p>
 <hr>
 <h2 id="step-5--add-the-tool-to-the-agent"><a class="header" href="#step-5--add-the-tool-to-the-agent">Step 5 — Add the tool to the agent</a></h2>
-<pre class="playground"><code class="language-rust">use rig::providers::openai;
+<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 
 #[tokio::main]
 async fn main() -&gt; anyhow::Result&lt;()&gt; {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
 
     let agent = client
         .agent(openai::GPT_4O_MINI)
@@ -18384,7 +18388,8 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <p>This is what the agent loop chapter described. Steps 2–5 can repeat multiple times in a single <code>.prompt()</code> call if the LLM needs to chain several tool calls.</p>
 <hr>
 <h2 id="full-code-7"><a class="header" href="#full-code-7">Full code</a></h2>
-<pre class="playground"><code class="language-rust">use rig::providers::openai;
+<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde::Deserialize;
 use serde_json::json;
@@ -18449,7 +18454,7 @@ impl Tool for Calculator {
 
 #[tokio::main]
 async fn main() -&gt; anyhow::Result&lt;()&gt; {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
 
     let agent = client
         .agent(openai::GPT_4O_MINI)
@@ -18654,11 +18659,12 @@ impl Tool for DeleteNote {
 <p>Each struct holds a clone of <code>Notes</code>. They all point to the same <code>Vec&lt;String&gt;</code>. <code>AddNote::call</code> pushes; <code>ListNotes::call</code> reads; <code>DeleteNote::call</code> removes by index.</p>
 <hr>
 <h2 id="step-4--wire-them-up"><a class="header" href="#step-4--wire-them-up">Step 4 — Wire them up</a></h2>
-<pre class="playground"><code class="language-rust">use rig::providers::openai;
+<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 
 #[tokio::main]
 async fn main() -&gt; anyhow::Result&lt;()&gt; {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
     let notes: Notes = Arc::new(Mutex::new(Vec::new()));
 
     let agent = client
@@ -18724,7 +18730,8 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <p>The key: write error messages for the LLM to read, not for a human reading a stack trace. Complete sentences work better than codes.</p>
 <hr>
 <h2 id="full-code-8"><a class="header" href="#full-code-8">Full code</a></h2>
-<pre class="playground"><code class="language-rust">use rig::providers::openai;
+<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde::Deserialize;
 use serde_json::json;
@@ -18872,7 +18879,7 @@ impl Tool for DeleteNote {
 
 #[tokio::main]
 async fn main() -&gt; anyhow::Result&lt;()&gt; {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
     let notes: Notes = Arc::new(Mutex::new(Vec::new()));
 
     let agent = client
@@ -19256,9 +19263,10 @@ impl Tool for ListTodos {
 <p>Create one <code>Arc&lt;Mutex&lt;TodoList&gt;&gt;</code> and clone it into each tool:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use rig::providers::openai;
+</span>use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 
-let client = openai::Client::from_env();
+let client = Client::from_env()?;
 let list = Arc::new(Mutex::new(TodoList::new()));
 
 let agent = client
@@ -19300,7 +19308,9 @@ loop {
 use std::io::Write;
 
 use anyhow::Result;
-use rig::{completion::ToolDefinition, providers::openai, tool::Tool};
+use rig::client::ProviderClient;
+use rig::providers::openai::Client;
+use rig::{completion::ToolDefinition, tool::Tool};
 use serde::Deserialize;
 use serde_json::json;
 
@@ -19563,7 +19573,7 @@ impl Tool for ListTodos {
 
 #[tokio::main]
 async fn main() -&gt; Result&lt;()&gt; {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
     let list = Arc::new(Mutex::new(TodoList::new()));
 
     let agent = client
@@ -19604,7 +19614,7 @@ edition = "2021"
 
 [dependencies]
 rig = "0.38.2"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 anyhow = "1"

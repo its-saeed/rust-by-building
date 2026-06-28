@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "../searchindex-cd0a7e5a.js";
+            window.path_to_searchindex_js = "../searchindex-764de516.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-41e41280.js"></script>
@@ -500,9 +500,10 @@ impl Tool for ListTodos {
 <p>Create one <code>Arc&lt;Mutex&lt;TodoList&gt;&gt;</code> and clone it into each tool:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use rig::providers::openai;
+</span>use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 
-let client = openai::Client::from_env();
+let client = Client::from_env()?;
 let list = Arc::new(Mutex::new(TodoList::new()));
 
 let agent = client
@@ -544,7 +545,9 @@ loop {
 use std::io::Write;
 
 use anyhow::Result;
-use rig::{completion::ToolDefinition, providers::openai, tool::Tool};
+use rig::client::ProviderClient;
+use rig::providers::openai::Client;
+use rig::{completion::ToolDefinition, tool::Tool};
 use serde::Deserialize;
 use serde_json::json;
 
@@ -807,7 +810,7 @@ impl Tool for ListTodos {
 
 #[tokio::main]
 async fn main() -&gt; Result&lt;()&gt; {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
     let list = Arc::new(Mutex::new(TodoList::new()));
 
     let agent = client
@@ -848,7 +851,7 @@ edition = "2021"
 
 [dependencies]
 rig = "0.38.2"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 anyhow = "1"

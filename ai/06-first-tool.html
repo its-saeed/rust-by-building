@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "../searchindex-cd0a7e5a.js";
+            window.path_to_searchindex_js = "../searchindex-764de516.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-41e41280.js"></script>
@@ -189,7 +189,7 @@
 <p>Add <code>serde</code> to <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
 rig = "0.38.2"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 anyhow = "1"
@@ -295,11 +295,12 @@ impl Tool for Calculator {
 <p>The <code>description</code> on each property is what the LLM actually reads to understand how to fill it. Make it precise. “The first operand” is fine. “A number” is not — the LLM already knows it is a number from <code>type</code>.</p>
 <hr>
 <h2 id="step-5--add-the-tool-to-the-agent"><a class="header" href="#step-5--add-the-tool-to-the-agent">Step 5 — Add the tool to the agent</a></h2>
-<pre class="playground"><code class="language-rust">use rig::providers::openai;
+<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 
 #[tokio::main]
 async fn main() -&gt; anyhow::Result&lt;()&gt; {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
 
     let agent = client
         .agent(openai::GPT_4O_MINI)
@@ -332,7 +333,8 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <p>This is what the agent loop chapter described. Steps 2–5 can repeat multiple times in a single <code>.prompt()</code> call if the LLM needs to chain several tool calls.</p>
 <hr>
 <h2 id="full-code"><a class="header" href="#full-code">Full code</a></h2>
-<pre class="playground"><code class="language-rust">use rig::providers::openai;
+<pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde::Deserialize;
 use serde_json::json;
@@ -397,7 +399,7 @@ impl Tool for Calculator {
 
 #[tokio::main]
 async fn main() -&gt; anyhow::Result&lt;()&gt; {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
 
     let agent = client
         .agent(openai::GPT_4O_MINI)
