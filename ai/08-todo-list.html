@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "../searchindex-999ba42c.js";
+            window.path_to_searchindex_js = "../searchindex-13fc7bcc.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-41e41280.js"></script>
@@ -276,7 +276,7 @@ struct TodoList {
 </span><span class="boring">fn main() {
 </span>use std::sync::{Arc, Mutex};
 use rig::{completion::ToolDefinition, tool::Tool};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 #[derive(Deserialize)]
@@ -375,7 +375,12 @@ impl Tool for AddMany {
 }
 <span class="boring">}</span></code></pre>
 <h3 id="complete_todo-and-uncomplete_todo"><a class="header" href="#complete_todo-and-uncomplete_todo"><code>complete_todo</code> and <code>uncomplete_todo</code></a></h3>
-<p>Mark items done or undone by id.</p>
+<p>Mark items done or undone by id. The <code>call()</code> method uses <code>.map_err(ToolError)</code> to convert the <code>String</code> error from <code>TodoList::complete</code> into a <code>ToolError</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>list.complete(args.id).map_err(ToolError)?;
+<span class="boring">}</span></code></pre>
+<p><code>TodoList::complete</code> returns <code>Result&lt;(), String&gt;</code>. The tool’s <code>call</code> must return <code>Result&lt;Self::Output, Self::Error&gt;</code> — that is, <code>Result&lt;String, ToolError&gt;</code>. The two error types are different, so <code>?</code> alone cannot convert them. <code>.map_err(f)</code> applies <code>f</code> to the error variant before propagating: <code>map_err(ToolError)</code> wraps the <code>String</code> in <code>ToolError(...)</code>, making the types match.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[derive(Deserialize)]
@@ -414,7 +419,7 @@ impl Tool for CompleteTodo {
 
     async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
         let mut list = self.list.lock().unwrap();
-        list.complete(args.id)?;
+        list.complete(args.id).map_err(ToolError)?;
         Ok(format!("Marked item {} as complete.", args.id))
     }
 }
@@ -446,7 +451,7 @@ impl Tool for UncompleteTodo {
 
     async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
         let mut list = self.list.lock().unwrap();
-        list.uncomplete(args.id)?;
+        list.uncomplete(args.id).map_err(ToolError)?;
         Ok(format!("Marked item {} as incomplete.", args.id))
     }
 }
@@ -533,7 +538,7 @@ let client = Client::from_env()?;
 let list = Arc::new(Mutex::new(TodoList::new()));
 
 let agent = client
-    .agent(openai::GPT_4O_MINI)
+    .agent("gpt-4o-mini")
     .preamble("You manage a todo list. Use the available tools to add, complete, and remove items. When the user mentions completing items by name, first call list_todos to find their ids.")
     .tool(AddTodo { list: list.clone() })
     .tool(AddMany { list: list.clone() })
@@ -574,7 +579,7 @@ use anyhow::Result;
 use rig::client::ProviderClient;
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 struct Todo {
@@ -753,7 +758,7 @@ impl Tool for CompleteTodo {
 
     async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
         let mut list = self.list.lock().unwrap();
-        list.complete(args.id)?;
+        list.complete(args.id).map_err(ToolError)?;
         Ok(format!("Marked item {} as complete.", args.id))
     }
 }
@@ -785,7 +790,7 @@ impl Tool for UncompleteTodo {
 
     async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
         let mut list = self.list.lock().unwrap();
-        list.uncomplete(args.id)?;
+        list.uncomplete(args.id).map_err(ToolError)?;
         Ok(format!("Marked item {} as incomplete.", args.id))
     }
 }
@@ -850,7 +855,7 @@ async fn main() -&gt; Result&lt;()&gt; {
     let list = Arc::new(Mutex::new(TodoList::new()));
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You manage a todo list. Use the available tools to add, complete, and remove items. When the user mentions completing items by name, first call list_todos to find their ids.")
         .tool(AddTodo { list: list.clone() })
         .tool(AddMany { list: list.clone() })

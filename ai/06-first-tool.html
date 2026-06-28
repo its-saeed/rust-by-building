@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "../searchindex-999ba42c.js";
+            window.path_to_searchindex_js = "../searchindex-13fc7bcc.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-41e41280.js"></script>
@@ -338,7 +338,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
     let client = Client::from_env()?;
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You are a calculator assistant. Use the calculator tool for all arithmetic.")
         .tool(Calculator)
         .build();
@@ -442,7 +442,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
     let client = Client::from_env()?;
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You are a calculator assistant. Use the calculator tool for all arithmetic.")
         .tool(Calculator)
         .build();

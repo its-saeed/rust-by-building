@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-999ba42c.js";
+            window.path_to_searchindex_js = "searchindex-13fc7bcc.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-41e41280.js"></script>
@@ -18084,7 +18084,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
     let client = Client::from_env()?;
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You are a helpful assistant.")
         .build();
 
@@ -18102,12 +18102,12 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let generic = client
-    .agent(openai::GPT_4O_MINI)
+    .agent("gpt-4o-mini")
     .preamble("You are a helpful assistant.")
     .build();
 
 let specialist = client
-    .agent(openai::GPT_4O_MINI)
+    .agent("gpt-4o-mini")
     .preamble("You are a Rust expert. Answer every question with Rust code examples.")
     .build();
 
@@ -18143,7 +18143,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
     let client = Client::from_env()?;
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You are a helpful assistant.")
         .build();
 
@@ -18180,7 +18180,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
     let client = Client::from_env()?;
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You are a helpful assistant.")
         .build();
 
@@ -18224,7 +18224,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <tr><td><code>.preamble(text)</code></td><td>Sets the system prompt — sent before every user message</td></tr>
 <tr><td><code>.build()</code></td><td>Finalises the agent</td></tr>
 <tr><td><code>agent.prompt(text).await</code></td><td>Sends a user message and returns the assistant’s reply as a <code>String</code></td></tr>
-<tr><td><code>openai::GPT_4O_MINI</code></td><td>Constant for the <code>"gpt-4o-mini"</code> model identifier</td></tr>
+<tr><td><code>"gpt-4o-mini"</code></td><td>Constant for the <code>"gpt-4o-mini"</code> model identifier</td></tr>
 </tbody>
 </table>
 </div>
@@ -18393,7 +18393,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
     let client = Client::from_env()?;
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You are a calculator assistant. Use the calculator tool for all arithmetic.")
         .tool(Calculator)
         .build();
@@ -18497,7 +18497,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
     let client = Client::from_env()?;
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You are a calculator assistant. Use the calculator tool for all arithmetic.")
         .tool(Calculator)
         .build();
@@ -18560,7 +18560,7 @@ type Notes = Arc&lt;Mutex&lt;Vec&lt;String&gt;&gt;&gt;;
 <h2 id="step-3--define-all-three-tools"><a class="header" href="#step-3--define-all-three-tools">Step 3 — Define all three tools</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use serde::Deserialize;
+</span>use serde::{Deserialize, Serialize};
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde_json::json;
 
@@ -18718,7 +18718,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
     let notes: Notes = Arc::new(Mutex::new(Vec::new()));
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble(
             "You are a note-taking assistant. \
              Use the provided tools to add, list, and delete notes. \
@@ -18783,7 +18783,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <pre class="playground"><code class="language-rust">use rig::client::ProviderClient;
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::io::{self, BufRead, Write};
 use std::sync::{Arc, Mutex};
@@ -18940,7 +18940,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
     let notes: Notes = Arc::new(Mutex::new(Vec::new()));
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble(
             "You are a note-taking assistant. \
              Use the provided tools to add, list, and delete notes. \
@@ -19096,7 +19096,7 @@ struct TodoList {
 </span><span class="boring">fn main() {
 </span>use std::sync::{Arc, Mutex};
 use rig::{completion::ToolDefinition, tool::Tool};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 #[derive(Deserialize)]
@@ -19195,7 +19195,12 @@ impl Tool for AddMany {
 }
 <span class="boring">}</span></code></pre>
 <h3 id="complete_todo-and-uncomplete_todo"><a class="header" href="#complete_todo-and-uncomplete_todo"><code>complete_todo</code> and <code>uncomplete_todo</code></a></h3>
-<p>Mark items done or undone by id.</p>
+<p>Mark items done or undone by id. The <code>call()</code> method uses <code>.map_err(ToolError)</code> to convert the <code>String</code> error from <code>TodoList::complete</code> into a <code>ToolError</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>list.complete(args.id).map_err(ToolError)?;
+<span class="boring">}</span></code></pre>
+<p><code>TodoList::complete</code> returns <code>Result&lt;(), String&gt;</code>. The tool’s <code>call</code> must return <code>Result&lt;Self::Output, Self::Error&gt;</code> — that is, <code>Result&lt;String, ToolError&gt;</code>. The two error types are different, so <code>?</code> alone cannot convert them. <code>.map_err(f)</code> applies <code>f</code> to the error variant before propagating: <code>map_err(ToolError)</code> wraps the <code>String</code> in <code>ToolError(...)</code>, making the types match.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[derive(Deserialize)]
@@ -19234,7 +19239,7 @@ impl Tool for CompleteTodo {
 
     async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
         let mut list = self.list.lock().unwrap();
-        list.complete(args.id)?;
+        list.complete(args.id).map_err(ToolError)?;
         Ok(format!("Marked item {} as complete.", args.id))
     }
 }
@@ -19266,7 +19271,7 @@ impl Tool for UncompleteTodo {
 
     async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
         let mut list = self.list.lock().unwrap();
-        list.uncomplete(args.id)?;
+        list.uncomplete(args.id).map_err(ToolError)?;
         Ok(format!("Marked item {} as incomplete.", args.id))
     }
 }
@@ -19353,7 +19358,7 @@ let client = Client::from_env()?;
 let list = Arc::new(Mutex::new(TodoList::new()));
 
 let agent = client
-    .agent(openai::GPT_4O_MINI)
+    .agent("gpt-4o-mini")
     .preamble("You manage a todo list. Use the available tools to add, complete, and remove items. When the user mentions completing items by name, first call list_todos to find their ids.")
     .tool(AddTodo { list: list.clone() })
     .tool(AddMany { list: list.clone() })
@@ -19394,7 +19399,7 @@ use anyhow::Result;
 use rig::client::ProviderClient;
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 struct Todo {
@@ -19573,7 +19578,7 @@ impl Tool for CompleteTodo {
 
     async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
         let mut list = self.list.lock().unwrap();
-        list.complete(args.id)?;
+        list.complete(args.id).map_err(ToolError)?;
         Ok(format!("Marked item {} as complete.", args.id))
     }
 }
@@ -19605,7 +19610,7 @@ impl Tool for UncompleteTodo {
 
     async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
         let mut list = self.list.lock().unwrap();
-        list.uncomplete(args.id)?;
+        list.uncomplete(args.id).map_err(ToolError)?;
         Ok(format!("Marked item {} as incomplete.", args.id))
     }
 }
@@ -19670,7 +19675,7 @@ async fn main() -&gt; Result&lt;()&gt; {
     let list = Arc::new(Mutex::new(TodoList::new()));
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You manage a todo list. Use the available tools to add, complete, and remove items. When the user mentions completing items by name, first call list_todos to find their ids.")
         .tool(AddTodo { list: list.clone() })
         .tool(AddMany { list: list.clone() })

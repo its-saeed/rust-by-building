@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "../searchindex-999ba42c.js";
+            window.path_to_searchindex_js = "../searchindex-13fc7bcc.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-41e41280.js"></script>
@@ -205,7 +205,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
     let client = Client::from_env()?;
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You are a helpful assistant.")
         .build();
 
@@ -223,12 +223,12 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let generic = client
-    .agent(openai::GPT_4O_MINI)
+    .agent("gpt-4o-mini")
     .preamble("You are a helpful assistant.")
     .build();
 
 let specialist = client
-    .agent(openai::GPT_4O_MINI)
+    .agent("gpt-4o-mini")
     .preamble("You are a Rust expert. Answer every question with Rust code examples.")
     .build();
 
@@ -264,7 +264,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
     let client = Client::from_env()?;
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You are a helpful assistant.")
         .build();
 
@@ -301,7 +301,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
     let client = Client::from_env()?;
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You are a helpful assistant.")
         .build();
 
@@ -345,7 +345,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <tr><td><code>.preamble(text)</code></td><td>Sets the system prompt — sent before every user message</td></tr>
 <tr><td><code>.build()</code></td><td>Finalises the agent</td></tr>
 <tr><td><code>agent.prompt(text).await</code></td><td>Sends a user message and returns the assistant’s reply as a <code>String</code></td></tr>
-<tr><td><code>openai::GPT_4O_MINI</code></td><td>Constant for the <code>"gpt-4o-mini"</code> model identifier</td></tr>
+<tr><td><code>"gpt-4o-mini"</code></td><td>Constant for the <code>"gpt-4o-mini"</code> model identifier</td></tr>
 </tbody>
 </table>
 </div>
