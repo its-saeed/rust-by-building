@@ -180,11 +180,12 @@ Each struct holds a clone of `Notes`. They all point to the same `Vec<String>`. 
 ## Step 4 — Wire them up
 
 ```rust
-use rig::providers::openai;
+use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
     let notes: Notes = Arc::new(Mutex::new(Vec::new()));
 
     let agent = client
@@ -279,7 +280,8 @@ The key: write error messages for the LLM to read, not for a human reading a sta
 ## Full code
 
 ```rust
-use rig::providers::openai;
+use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde::Deserialize;
 use serde_json::json;
@@ -427,7 +429,7 @@ impl Tool for DeleteNote {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
     let notes: Notes = Arc::new(Mutex::new(Vec::new()));
 
     let agent = client

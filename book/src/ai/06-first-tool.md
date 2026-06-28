@@ -23,7 +23,7 @@ Add `serde` to `Cargo.toml`:
 ```toml
 [dependencies]
 rig = "0.38.2"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 anyhow = "1"
@@ -148,11 +148,12 @@ The `description` on each property is what the LLM actually reads to understand 
 ## Step 5 — Add the tool to the agent
 
 ```rust
-use rig::providers::openai;
+use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
 
     let agent = client
         .agent(openai::GPT_4O_MINI)
@@ -195,7 +196,8 @@ This is what the agent loop chapter described. Steps 2–5 can repeat multiple t
 ## Full code
 
 ```rust
-use rig::providers::openai;
+use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde::Deserialize;
 use serde_json::json;
@@ -260,7 +262,7 @@ impl Tool for Calculator {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
 
     let agent = client
         .agent(openai::GPT_4O_MINI)

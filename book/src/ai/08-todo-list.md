@@ -350,9 +350,10 @@ impl Tool for ListTodos {
 Create one `Arc<Mutex<TodoList>>` and clone it into each tool:
 
 ```rust
-use rig::providers::openai;
+use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 
-let client = openai::Client::from_env();
+let client = Client::from_env()?;
 let list = Arc::new(Mutex::new(TodoList::new()));
 
 let agent = client
@@ -401,7 +402,9 @@ use std::sync::{Arc, Mutex};
 use std::io::Write;
 
 use anyhow::Result;
-use rig::{completion::ToolDefinition, providers::openai, tool::Tool};
+use rig::client::ProviderClient;
+use rig::providers::openai::Client;
+use rig::{completion::ToolDefinition, tool::Tool};
 use serde::Deserialize;
 use serde_json::json;
 
@@ -664,7 +667,7 @@ impl Tool for ListTodos {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
     let list = Arc::new(Mutex::new(TodoList::new()));
 
     let agent = client
@@ -709,7 +712,7 @@ edition = "2021"
 
 [dependencies]
 rig = "0.38.2"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 anyhow = "1"

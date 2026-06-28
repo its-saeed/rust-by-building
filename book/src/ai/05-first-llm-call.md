@@ -15,7 +15,7 @@ Create a new binary project and add these dependencies to `Cargo.toml`:
 ```toml
 [dependencies]
 rig = "0.38.2"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 anyhow = "1"
 ```
 
@@ -38,11 +38,12 @@ OPENAI_API_KEY="sk-..." cargo run
 ## Step 2 — Hello LLM
 
 ```rust
-use rig::providers::openai;
+use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
 
     let agent = client
         .agent(openai::GPT_4O_MINI)
@@ -56,7 +57,7 @@ async fn main() -> anyhow::Result<()> {
 }
 ```
 
-`openai::Client::from_env()` reads `OPENAI_API_KEY` from the environment. If the variable is missing it panics with a clear message.
+`Client::from_env()?` reads `OPENAI_API_KEY` from the environment. If the variable is missing it panics with a clear message.
 
 `agent.prompt(text).await` makes an HTTP POST to `https://api.openai.com/v1/chat/completions`, waits for the response, and returns the assistant's reply as a `String`. Everything else — headers, JSON encoding, retries on transient errors — is handled by rig.
 
@@ -115,12 +116,13 @@ You learned about this endpoint in the APIs and tokens chapter. Rig constructs t
 A single prompt is useful for testing. A REPL is the foundation of everything in the following lessons.
 
 ```rust
-use rig::providers::openai;
+use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 use std::io::{self, BufRead, Write};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
 
     let agent = client
         .agent(openai::GPT_4O_MINI)
@@ -158,12 +160,13 @@ Note the `count` variable — it tracks how many messages have been sent and pri
 ## Full code
 
 ```rust
-use rig::providers::openai;
+use rig::client::ProviderClient;
+use rig::providers::openai::Client;
 use std::io::{self, BufRead, Write};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let client = openai::Client::from_env();
+    let client = Client::from_env()?;
 
     let agent = client
         .agent(openai::GPT_4O_MINI)
@@ -208,7 +211,7 @@ async fn main() -> anyhow::Result<()> {
 
 | API | What it does |
 |-----|-------------|
-| `openai::Client::from_env()` | Creates a client using `OPENAI_API_KEY` from the environment |
+| `Client::from_env()?` | Creates a client using `OPENAI_API_KEY` from the environment |
 | `client.agent(model)` | Starts an agent builder for the given model |
 | `.preamble(text)` | Sets the system prompt — sent before every user message |
 | `.build()` | Finalises the agent |
