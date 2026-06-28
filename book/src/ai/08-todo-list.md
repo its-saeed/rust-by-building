@@ -396,7 +396,7 @@ let agent = client
 
 `.max_turns(10)` sets how many tool-call rounds the agent is allowed per prompt. Each round is: LLM decides to call a tool → tool runs → result goes back to LLM. Completing a todo by name requires two rounds — `list_todos` then `complete_todo` — so without this, rig hits the default limit of 0 and returns a `MaxTurnError` before it can act. Ten rounds is plenty for any realistic todo operation.
 
-The preamble tells the LLM to call `list_todos` when it needs to resolve item names to ids. Without this instruction the model might hallucinate ids. This is prompt engineering — the right instruction makes the agent reliable without any extra code.
+The preamble does two jobs. First, it prevents the most common mistake: "I got milk" is ambiguous — it could mean "add a milk item" or "I already bought milk". Without explicit rules the LLM defaults to adding, so you end up with duplicate items. The rules tell it to treat "I got X" as completion, not creation. Second, it enforces the query-before-act pattern: always call `list_todos` before completing or deleting by name, because the LLM has no memory of previous turns and cannot invent ids. This is prompt engineering — no code changes, just instructions, but the difference in behavior is large.
 
 ---
 
@@ -704,7 +704,13 @@ async fn main() -> Result<()> {
 
     let agent = client
         .agent("gpt-4o-mini")
-        .preamble("You manage a todo list. Use the available tools to add, complete, and remove items. When the user mentions completing items by name, first call list_todos to find their ids.")
+        .preamble(
+            "You manage a todo list. Rules:\n\
+             - ADDING: only add a new item when the user explicitly asks to (e.g. 'add', 'remind me to', 'I need to').\n\
+             - COMPLETING: when the user says they did something (e.g. 'I got X', 'I bought X', 'done with X', 'finished X', 'mark X done'), call list_todos first, find the matching item, then complete it. Never add a new item in this case.\n\
+             - AMBIGUOUS: if unsure whether to add or complete, ask one clarifying question.\n\
+             Always call list_todos before completing or deleting by name."
+        )
         .tool(AddTodo { list: list.clone() })
         .tool(AddMany { list: list.clone() })
         .tool(CompleteTodo { list: list.clone() })
