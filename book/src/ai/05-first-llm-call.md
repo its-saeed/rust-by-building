@@ -2,7 +2,7 @@
 
 > **Goal**: Send a prompt to an LLM and print the response.
 >
-> **Concepts**: rig-core setup, `OPENAI_API_KEY`, `Client`, `Agent`, `.prompt().await`.
+> **Concepts**: rig setup, `OPENAI_API_KEY`, `Client`, `Agent`, `.prompt().await`.
 
 The theory chapters explained what LLMs are, how the API works over HTTP, and what tokens cost. Now you write the code that does it.
 
@@ -14,7 +14,7 @@ Create a new binary project and add these dependencies to `Cargo.toml`:
 
 ```toml
 [dependencies]
-rig-core = "0.6"
+rig = "0.38.2"
 tokio = { version = "1", features = ["full"] }
 anyhow = "1"
 ```

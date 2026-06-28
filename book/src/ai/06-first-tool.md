@@ -22,7 +22,7 @@ Add `serde` to `Cargo.toml`:
 
 ```toml
 [dependencies]
-rig-core = "0.6"
+rig = "0.38.2"
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
