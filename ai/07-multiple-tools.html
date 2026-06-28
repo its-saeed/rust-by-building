@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "../searchindex-a69c7a7b.js";
+            window.path_to_searchindex_js = "../searchindex-720ed4d4.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-41e41280.js"></script>
@@ -348,7 +348,7 @@ impl Tool for DeleteNote {
 <p>Each struct holds a clone of <code>Notes</code>. They all point to the same <code>Vec&lt;String&gt;</code>. <code>AddNote::call</code> pushes; <code>ListNotes::call</code> reads; <code>DeleteNote::call</code> removes by index.</p>
 <hr>
 <h2 id="step-4--wire-them-up"><a class="header" href="#step-4--wire-them-up">Step 4 — Wire them up</a></h2>
-<pre class="playground"><code class="language-rust">use rig::client::CompletionClient;
+<pre class="playground"><code class="language-rust">use rig::client::{CompletionClient, ProviderClient};
 use rig::providers::openai::Client;
 
 #[tokio::main]
@@ -419,7 +419,7 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 <p>The key: write error messages for the LLM to read, not for a human reading a stack trace. Complete sentences work better than codes.</p>
 <hr>
 <h2 id="full-code"><a class="header" href="#full-code">Full code</a></h2>
-<pre class="playground"><code class="language-rust">use rig::client::CompletionClient;
+<pre class="playground"><code class="language-rust">use rig::client::{CompletionClient, ProviderClient};
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde::Deserialize;
