@@ -758,6 +758,62 @@ cargo run
 
 ---
 
+## Try these prompts
+
+Run the agent and paste these one by one. Each one exercises a different part of the system.
+
+**Bulk add from a sentence:**
+```
+I need to buy milk, eggs, and bread, and also call the dentist
+```
+The LLM should call `add_many` with all four items in one shot instead of four separate `add_todo` calls. If it does, your schema description was clear enough.
+
+**Partial completion by name:**
+```
+I got the milk and bread
+```
+The LLM doesn't know the ids. It calls `list_todos` first to find them, then calls `complete_todo` twice. Three tool calls, one sentence, no code from you.
+
+**Ambiguous reference:**
+```
+mark the dentist thing as done
+```
+"Dentist thing" is vague. The LLM still finds it because it reads the list and matches by meaning, not exact text. Try spelling it differently: "dentist appointment", "call dentist" — the match still works.
+
+**Undo:**
+```
+actually I didn't get the bread yet
+```
+The LLM calls `list_todos` (to find the id of the completed bread item), then `uncomplete_todo`. Watch it navigate: it has to query before it can act.
+
+**Clear and restart:**
+```
+I finished everything, clean up the done items
+```
+Should call `clear_done`. Follow up with:
+```
+what's left?
+```
+If `clear_done` worked, only the uncompleted items remain.
+
+**Multi-step planning:**
+```
+Add a todo for each day of the weekend: clean the kitchen on Saturday and do laundry on Sunday
+```
+Two items, one prompt. Then:
+```
+Saturday is done
+```
+The LLM figures out which item "Saturday" refers to and completes it without you writing any string matching.
+
+**Stress test the list tool:**
+```
+give me a summary of everything on my list, what's done and what isn't
+```
+The LLM calls `list_todos`, then formats the result as a readable summary. You returned structured data; the LLM turns it into prose.
+
+---
+
 ## What to notice
 
 "I got the milk and eggs" produced three tool calls from one sentence: `list_todos()` to find the ids, then `complete_todo(1)` and `complete_todo(2)`. The agent loop ran inside rig, invisibly. The code you wrote didn't parse the sentence or figure out the ids — the LLM did.
