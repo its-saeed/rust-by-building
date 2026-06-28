@@ -186,7 +186,7 @@ The `description` on each property is what the LLM actually reads to understand 
 ## Step 5 — Add the tool to the agent
 
 ```rust
-use rig::client::CompletionClient;
+use rig::client::{CompletionClient, ProviderClient};
 use rig::providers::openai::Client;
 
 #[tokio::main]
@@ -234,7 +234,7 @@ This is what the agent loop chapter described. Steps 2–5 can repeat multiple t
 ## Full code
 
 ```rust
-use rig::client::CompletionClient;
+use rig::client::{CompletionClient, ProviderClient};
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde::{Deserialize, Serialize};

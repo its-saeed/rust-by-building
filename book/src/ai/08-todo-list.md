@@ -376,7 +376,7 @@ impl Tool for ListTodos {
 Create one `Arc<Mutex<TodoList>>` and clone it into each tool:
 
 ```rust
-use rig::client::CompletionClient;
+use rig::client::{CompletionClient, ProviderClient};
 use rig::providers::openai::Client;
 
 let client = Client::from_env()?;
@@ -428,7 +428,7 @@ use std::sync::{Arc, Mutex};
 use std::io::Write;
 
 use anyhow::Result;
-use rig::client::CompletionClient;
+use rig::client::{CompletionClient, ProviderClient};
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde::Deserialize;

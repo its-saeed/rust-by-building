@@ -38,7 +38,7 @@ OPENAI_API_KEY="sk-..." cargo run
 ## Step 2 — Hello LLM
 
 ```rust
-use rig::client::CompletionClient;
+use rig::client::{CompletionClient, ProviderClient};
 use rig::providers::openai::Client;
 
 #[tokio::main]
@@ -116,7 +116,7 @@ You learned about this endpoint in the APIs and tokens chapter. Rig constructs t
 A single prompt is useful for testing. A REPL is the foundation of everything in the following lessons.
 
 ```rust
-use rig::client::CompletionClient;
+use rig::client::{CompletionClient, ProviderClient};
 use rig::providers::openai::Client;
 use std::io::{self, BufRead, Write};
 
@@ -160,7 +160,7 @@ Note the `count` variable — it tracks how many messages have been sent and pri
 ## Full code
 
 ```rust
-use rig::client::CompletionClient;
+use rig::client::{CompletionClient, ProviderClient};
 use rig::providers::openai::Client;
 use std::io::{self, BufRead, Write};
 

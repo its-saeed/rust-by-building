@@ -192,7 +192,7 @@ Each struct holds a clone of `Notes`. They all point to the same `Vec<String>`. 
 ## Step 4 — Wire them up
 
 ```rust
-use rig::client::CompletionClient;
+use rig::client::{CompletionClient, ProviderClient};
 use rig::providers::openai::Client;
 
 #[tokio::main]
@@ -292,7 +292,7 @@ The key: write error messages for the LLM to read, not for a human reading a sta
 ## Full code
 
 ```rust
-use rig::client::CompletionClient;
+use rig::client::{CompletionClient, ProviderClient};
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde::Deserialize;
