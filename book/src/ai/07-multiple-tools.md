@@ -22,6 +22,10 @@ use std::sync::{Arc, Mutex};
 type Notes = Arc<Mutex<Vec<String>>>;
 ```
 
+`type Notes = ...` is a **type alias**. It gives a new name to an existing type — nothing more. After this line, writing `Notes` anywhere is exactly the same as writing `Arc<Mutex<Vec<String>>>`. The compiler treats them as identical; there is no wrapping or conversion.
+
+Type aliases exist purely for readability. `Arc<Mutex<Vec<String>>>` appears in three struct definitions, the function signature, and several `Arc::clone` calls. Writing `Notes` each time is shorter and makes the intent clear: this is the shared note storage, not some incidental use of Arc.
+
 You used `Arc<Mutex<T>>` in the threading chapter for the same reason: multiple owners, one piece of mutable data. The pattern is identical here — the only difference is that the "threads" are tool calls arriving from the LLM rather than OS threads you spawned yourself.
 
 `Arc` lets you clone the handle cheaply. Each tool struct holds one clone. They all point to the same allocation.
