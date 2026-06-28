@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-eb2beea3.js";
+            window.path_to_searchindex_js = "searchindex-280f791f.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-c78bbd51.js"></script>
+        <script src="toc-41e41280.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -17507,6 +17507,2118 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 <p><strong>Rust concepts covered</strong>: <code>Result&lt;T, E&gt;</code>, custom error enums, <code>?</code> operator, iterators, closures, <code>enum</code> as type-state.</p>
 </blockquote>
 <p><em>Coming soon.</em></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="chapter-1--what-llms-are"><a class="header" href="#chapter-1--what-llms-are">Chapter 1 — What LLMs Are</a></h1>
+<p>An LLM is a function that takes text in and produces text out. Everything else — the sense that it understands you, the feeling that it reasons — emerges from that one mechanical operation done at scale.</p>
+<hr>
+<h2 id="not-magic"><a class="header" href="#not-magic">Not magic</a></h2>
+<p>“Large language model” sounds technical and opaque. Strip the jargon and it is this: a very large mathematical function, trained on a very large amount of text, that predicts what word comes next.</p>
+<p>That is the whole thing. Not a database. Not a reasoner. Not a mind. A next-word predictor, run in a loop.</p>
+<p>This framing is not reductive — it is accurate, and it keeps you from being surprised when LLMs fail in specific, predictable ways. Understanding the mechanism makes the tool more useful, not less.</p>
+<hr>
+<h2 id="what-training-means"><a class="header" href="#what-training-means">What training means</a></h2>
+<p>An LLM is trained on an enormous corpus of text: web pages, books, code repositories, academic papers, forum posts, documentation. Hundreds of billions of words.</p>
+<p>During training, the model is shown a sequence of text and asked a single question: <em>given everything that came before, what token comes next?</em> It makes a guess, checks against the actual next token, and adjusts its internal parameters to do better next time. This happens billions of times across the corpus until the model’s predictions stop improving much.</p>
+<p>The result is a file of numbers — billions of floating-point weights — that encode statistical relationships between tokens across all that text. Not facts. Not knowledge. Statistical patterns. The model has learned that certain sequences of tokens tend to follow other sequences.</p>
+<hr>
+<h2 id="prediction-not-understanding"><a class="header" href="#prediction-not-understanding">Prediction, not understanding</a></h2>
+<p>Think of the autocomplete on your phone. Type “I’ll be there” and it suggests “soon” or “at 5” based on what you usually type next. It is not thinking. It is pattern-matching on your message history.</p>
+<p>An LLM is autocomplete trained on all of human writing, able to predict paragraphs at a time instead of words. The output looks like understanding because human text contains human understanding, and the model has learned to reproduce those patterns faithfully.</p>
+<pre><code>┌──────────────────────────────────────────────────────────────┐
+│  prompt:  "The capital of France is"                         │
+│                                                              │
+│  model sees:   [The] [capital] [of] [France] [is]           │
+│                                                              │
+│  question asked internally:  what token comes next?          │
+│                                                              │
+│  high probability:  " Paris"                                 │
+│  lower probability: " Lyon"                                  │
+│  very low probability: " a city"                             │
+│                                                              │
+│  output:  "Paris"   ← the highest-probability continuation  │
+└──────────────────────────────────────────────────────────────┘
+</code></pre>
+<p>It produced “Paris” not because it knows Paris is the capital of France, but because in billions of sentences about France, “Paris” followed this pattern more than anything else.</p>
+<hr>
+<h2 id="what-a-token-is"><a class="header" href="#what-a-token-is">What a token is</a></h2>
+<p>The model does not operate on characters or words — it operates on <strong>tokens</strong>. A token is roughly a word-piece: somewhere between a syllable and a short word. “tokenization” splits text into these chunks before the model ever sees it.</p>
+<p>For example: <code>"unhappy"</code> might become <code>["un", "happy"]</code>, and <code>"println!"</code> might become <code>["print", "ln", "!"]</code>.</p>
+<p>Tokens are the atomic unit of everything the model reads and writes. Chapter 2 covers tokens in detail — how they are counted, what they cost, and why the size of the model’s context window is measured in them.</p>
+<hr>
+<h2 id="why-this-produces-useful-behavior"><a class="header" href="#why-this-produces-useful-behavior">Why this produces useful behavior</a></h2>
+<p>Human knowledge is embedded in human text. Every tutorial, every Stack Overflow answer, every textbook, every paper — the model trained on all of it.</p>
+<p>A model trained on thousands of Rust programming tutorials has seen how to explain ownership, borrowing, and lifetimes thousands of times. When you ask it to explain ownership, it synthesises a response that statistically resembles the best explanations in its training data. It does not understand ownership. But the output is often indistinguishable from output produced by someone who does.</p>
+<p>This is genuinely useful. The model is, in a real sense, distilling patterns from an enormous amount of human expertise. That the mechanism is statistical rather than cognitive does not make the output less valuable.</p>
+<hr>
+<h2 id="what-llms-are-not"><a class="header" href="#what-llms-are-not">What LLMs are not</a></h2>
+<p>Three things LLMs are commonly mistaken for:</p>
+<p><strong>Not a database.</strong> An LLM does not look facts up. There is no index, no key-value store, no query engine. When you ask it who wrote a poem, it produces the most statistically likely answer based on patterns in training data. It might be wrong.</p>
+<p><strong>Not deterministic.</strong> The same prompt can produce different outputs on different runs. The model samples from a probability distribution over tokens — there is randomness in the selection. You can tune how random (via a parameter called <em>temperature</em>), but the output is not fixed.</p>
+<p><strong>Not always right.</strong> The model will produce confident-sounding text about things it is wrong about. This is called <strong>hallucination</strong> — the model generated a plausible-looking token sequence that happens to be false. It cannot tell the difference between a true statement and a false one that fits the statistical pattern. Verify outputs that matter.</p>
+<pre><code>┌──────────────────────────────────────────────────────────────┐
+│  what LLMs are not                                           │
+│                                                              │
+│  ✗ database        — it does not "look things up"           │
+│  ✗ deterministic   — same prompt, different outputs possible │
+│  ✗ always correct  — hallucination is real and common        │
+│                                                              │
+│  ✓ next-token predictor                                      │
+│  ✓ distilled from human text                                 │
+│  ✓ useful when you know the limits                           │
+└──────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr>
+<h2 id="the-context-window"><a class="header" href="#the-context-window">The context window</a></h2>
+<p>Every request to an LLM is stateless. The model only sees what you send it in that one request — there is no persistent memory between requests.</p>
+<p>If you have a conversation with an LLM across ten messages, the client is sending all ten messages every time. The model does not remember your previous request. It reads the entire conversation history from the payload you submit.</p>
+<p>This maps directly to something you built in the networking chapter. An LLM API endpoint behaves like a stateless HTTP handler:</p>
+<pre><code>┌───────────────────────────────────────────────────────────────┐
+│  async fn handle_request(req: Request) -&gt; Response            │
+│                                                               │
+│  ← request arrives with full conversation history in body    │
+│                                                               │
+│  handler:  reads prompt, generates next tokens, returns them  │
+│                                                               │
+│  → response leaves                                            │
+│                                                               │
+│  handler forgets everything  ←  no state persists            │
+└───────────────────────────────────────────────────────────────┘
+</code></pre>
+<p>The maximum amount of text the model can see in one request — all the history you send plus the response it generates — is called the <strong>context window</strong>. It is measured in tokens and has a fixed upper limit that depends on the model. Chapter 2 has numbers.</p>
+<p>Statelessness has an important implication: memory is your responsibility. If you want the model to remember something across sessions, you have to re-send it. If the conversation grows longer than the context window, something has to be dropped or summarised. There is no background persistence happening for you.</p>
+<hr>
+<h2 id="why-this-is-relevant-to-rust"><a class="header" href="#why-this-is-relevant-to-rust">Why this is relevant to Rust</a></h2>
+<p>In this section, you will give an LLM a set of Rust functions and let it decide which ones to call. You will write functions like <code>apply_force(body_id, direction, magnitude)</code> and <code>get_position(body_id)</code>. The LLM will read the names and descriptions of those functions, understand from the pattern what they do, and emit structured calls to them.</p>
+<p>The “understanding” is the same statistical pattern-matching described above. But it works — reliably — because function names and documentation strings in code follow consistent patterns across all the code the model was trained on. It has seen thousands of physics APIs, thousands of game engine APIs, thousands of Rust APIs. The patterns are strong.</p>
+<p>What you are building is not a chatbot. It is a system where natural language instructions get translated into real function calls on a live physics simulation. The LLM is the translator. The physics engine does the actual work.</p>
+<hr>
+<h2 id="key-ideas-13"><a class="header" href="#key-ideas-13">Key ideas</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Concept</th><th>What it means</th></tr>
+</thead>
+<tbody>
+<tr><td>Next-token prediction</td><td>The one operation LLMs perform — predict what token comes next, given all previous tokens</td></tr>
+<tr><td>Training</td><td>Adjusting billions of weights by repeatedly predicting next tokens across an enormous text corpus</td></tr>
+<tr><td>Token</td><td>The unit the model reads and writes — roughly a word-piece, not a full word</td></tr>
+<tr><td>Statistical patterns</td><td>The model learned that certain token sequences follow others; it has no explicit knowledge store</td></tr>
+<tr><td>Hallucination</td><td>The model generating confident-sounding text that is factually wrong</td></tr>
+<tr><td>Stateless</td><td>The model has no memory between requests; you must send the full context each time</td></tr>
+<tr><td>Context window</td><td>The maximum tokens the model can see in one request — input plus output combined</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="chapter-2--apis-and-tokens"><a class="header" href="#chapter-2--apis-and-tokens">Chapter 2 — APIs and Tokens</a></h1>
+<p>Talking to an LLM from code is HTTP. That is the entire interface: you send a POST request with a JSON body, you get a JSON response. If you did the networking chapter, you already know the protocol.</p>
+<hr>
+<h2 id="how-you-talk-to-an-llm"><a class="header" href="#how-you-talk-to-an-llm">How you talk to an LLM</a></h2>
+<p>Every major LLM provider — OpenAI, Anthropic, Mistral, all of them — exposes an HTTP API. There is no special protocol, no SDK required to get started, no proprietary format. It is the same HTTP you used to build the TCP server and the download manager.</p>
+<pre><code>┌──────────────────────────────────────────────────────────────────┐
+│  your Rust program                       LLM provider API        │
+│                                                                  │
+│  POST /v1/chat/completions  ──────────────────────────────────▶  │
+│  Content-Type: application/json                                  │
+│  Authorization: Bearer sk-...                                    │
+│  { "model": "...", "messages": [...] }                           │
+│                                                                  │
+│  ◀──────────────────────────────────────────────────────────────  │
+│  200 OK                                                          │
+│  { "choices": [{ "message": { "content": "..." } }] }           │
+└──────────────────────────────────────────────────────────────────┘
+</code></pre>
+<p>The networking chapter had you send raw HTTP requests and parse raw HTTP responses. The LLM API is exactly that, with a well-defined JSON schema on both ends.</p>
+<hr>
+<h2 id="what-an-api-key-is"><a class="header" href="#what-an-api-key-is">What an API key is</a></h2>
+<p>The <code>Authorization</code> header carries an API key — a long random string that identifies your account. It functions as a password. Whoever holds the key can make requests billed to your account.</p>
+<p><strong>Never hardcode an API key in source code.</strong> Not even in a private repo. Keys end up in git history, get leaked in screenshots, get committed by accident. The standard practice is to load them from environment variables.</p>
+<p>Set one in your shell:</p>
+<pre><code class="language-sh">export OPENAI_API_KEY="sk-..."
+</code></pre>
+<p>Read it in Rust:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let api_key = std::env::var("OPENAI_API_KEY")
+    .expect("OPENAI_API_KEY not set");
+<span class="boring">}</span></code></pre>
+<p>If the variable is missing, this panics with a readable message. Better to fail fast at startup than to get a confusing authentication error from the API later.</p>
+<p>For local development, many projects use a <code>.env</code> file loaded by the <code>dotenvy</code> crate. The important thing is that the key never appears in source code.</p>
+<hr>
+<h2 id="the-request-structure"><a class="header" href="#the-request-structure">The request structure</a></h2>
+<p>A chat completion request has three required pieces:</p>
+<p><strong>Model</strong> — which model to use. Different models have different capabilities, context window sizes, and costs.</p>
+<p><strong>Messages</strong> — the conversation history as an array. Each message has a <code>role</code> and <code>content</code>. There are three roles: <code>system</code> (instructions to the model), <code>user</code> (what the user said), and <code>assistant</code> (what the model said in previous turns).</p>
+<p><strong>System prompt</strong> — technically just the first message with <code>"role": "system"</code>. This is where you tell the model what it is, what it should do, and how it should behave. It is instructions, not conversation.</p>
+<pre><code class="language-json">{
+  "model": "gpt-4o-mini",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a helpful assistant."
+    },
+    {
+      "role": "user",
+      "content": "What is 2 + 2?"
+    }
+  ]
+}
+</code></pre>
+<p>A multi-turn conversation looks like this — you send the whole history every time:</p>
+<pre><code class="language-json">{
+  "model": "gpt-4o-mini",
+  "messages": [
+    { "role": "system",    "content": "You are a helpful assistant." },
+    { "role": "user",      "content": "What is 2 + 2?" },
+    { "role": "assistant", "content": "2 + 2 = 4." },
+    { "role": "user",      "content": "And 4 + 4?" }
+  ]
+}
+</code></pre>
+<p>There is no server-side session. You are reconstructing the full context on every request.</p>
+<hr>
+<h2 id="what-a-token-is-1"><a class="header" href="#what-a-token-is-1">What a token is</a></h2>
+<p>The model does not read characters or words. It reads <strong>tokens</strong>.</p>
+<p>A tokeniser splits input text into chunks before the model sees it. The chunks do not align with word boundaries — they are optimised for compression and consistency across different languages and writing styles. In English, a token is roughly 3–4 characters, or about 0.75 words.</p>
+<pre><code>"Hello"       →  1 token
+"tokenize"    →  2 tokens:  "token"  +  "ize"
+"Rust"        →  1 token
+"println!"    →  2–3 tokens: "print"  +  "ln"  +  "!"
+"unhappy"     →  2 tokens:  "un"  +  "happy"
+</code></pre>
+<p>The exact split depends on the tokeniser the model uses. OpenAI models use a tokeniser called tiktoken. You can test any string at <a href="https://platform.openai.com/tokenizer">platform.openai.com/tokenizer</a>.</p>
+<p>Why does this matter? Two reasons:</p>
+<ol>
+<li><strong>You pay per token.</strong> Pricing is per million tokens, split between input and output. Every word you send costs tokens. Every word you receive costs tokens.</li>
+<li><strong>The context window is measured in tokens.</strong> There is a hard limit on how many tokens the model can process in one request. Send too much and the request fails, or the model truncates your history.</li>
+</ol>
+<pre><code>┌──────────────────────────────────────────────────────────────────┐
+│  rough token counts                                              │
+│                                                                  │
+│  1 token      ≈  4 characters  ≈  0.75 English words            │
+│  100 tokens   ≈  75 words      ≈  a short paragraph             │
+│  1,000 tokens ≈  750 words     ≈  two pages of text             │
+│  1M tokens    ≈  750,000 words ≈  a full novel                   │
+└──────────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr>
+<h2 id="context-window"><a class="header" href="#context-window">Context window</a></h2>
+<p>The context window is the maximum number of tokens the model can see in a single request — input tokens plus output tokens combined.</p>
+<p>For <code>gpt-4o-mini</code>, the context window is <strong>128,000 tokens</strong>, which is roughly 100,000 words, roughly the length of a novel. For most uses — conversations, code generation, tool calling — you will not come close to this limit. A typical tool-calling session for the AI physics sandbox is a few hundred to a few thousand tokens total.</p>
+<p>Context window size matters for use cases like: analysing large codebases, processing long documents, maintaining long conversation histories. For this project, it is not a constraint you will run into.</p>
+<hr>
+<h2 id="cost-model"><a class="header" href="#cost-model">Cost model</a></h2>
+<p>Providers charge separately for input tokens (what you send) and output tokens (what the model generates). Output costs more — generating tokens requires running the full model; reading tokens is cheaper.</p>
+<p>For <code>gpt-4o-mini</code> as of mid-2025:</p>
+<pre><code>┌──────────────────────────────────────────────────────────────────┐
+│  gpt-4o-mini pricing                                             │
+│                                                                  │
+│  input tokens:   $0.15  per million tokens                       │
+│  output tokens:  $0.60  per million tokens                       │
+│                                                                  │
+│  a typical request in this course:                               │
+│    ~700 input tokens   = $0.000105                               │
+│    ~300 output tokens  = $0.000180                               │
+│    total per request   ≈ $0.0003                                 │
+│                                                                  │
+│  100 requests (a full day of experiments) ≈ $0.03               │
+└──────────────────────────────────────────────────────────────────┘
+</code></pre>
+<p>For educational use, the cost of running all the examples in this section is fractions of a cent per session. It is not a meaningful expense.</p>
+<p>That said, it is good practice to track <code>usage</code> in every response (covered below) so you know what requests actually cost. Runaway loops or very large prompts can add up if you are not paying attention.</p>
+<hr>
+<h2 id="the-response-structure"><a class="header" href="#the-response-structure">The response structure</a></h2>
+<p>The API returns JSON. The structure looks like this:</p>
+<pre><code class="language-json">{
+  "id": "chatcmpl-abc123",
+  "object": "chat.completion",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "2 + 2 = 4."
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 24,
+    "completion_tokens": 10,
+    "total_tokens": 34
+  }
+}
+</code></pre>
+<p>The parts you actually use:</p>
+<ul>
+<li><code>choices[0].message.content</code> — the model’s reply</li>
+<li><code>choices[0].finish_reason</code> — why the model stopped: <code>"stop"</code> means it finished naturally, <code>"length"</code> means it hit the token limit, <code>"tool_calls"</code> means it wants to call a function (next chapter)</li>
+<li><code>usage.prompt_tokens</code> and <code>usage.completion_tokens</code> — how many tokens this request consumed</li>
+</ul>
+<p>The response is the message you append to the conversation history before sending the next request. You build the running context manually.</p>
+<hr>
+<h2 id="why-we-use-rigrs"><a class="header" href="#why-we-use-rigrs">Why we use rig.rs</a></h2>
+<p>You could do all of this by hand with <code>reqwest</code>. After the networking chapter you have the skills — serialize the request with <code>serde_json</code>, POST it, deserialize the response, extract <code>choices[0].message.content</code>. It is maybe 50 lines.</p>
+<p>But that approach breaks down quickly as soon as you need <strong>tool calling</strong> — the ability for the LLM to call your Rust functions. Tool calling requires serialising your function signatures into JSON schemas, parsing tool call responses, routing them to the right Rust function, collecting results, re-sending to the model. Writing that correctly by hand is several hundred lines of careful, tedious code.</p>
+<p><strong><code>rig.rs</code></strong> is a Rust library that wraps all of this:</p>
+<pre><code>┌──────────────────────────────────────────────────────────────────┐
+│  what rig.rs handles for you                                     │
+│                                                                  │
+│  ✓ HTTP auth and request formatting                              │
+│  ✓ JSON serialisation / deserialisation                          │
+│  ✓ Tool registration — describing your functions to the model    │
+│  ✓ Tool call parsing — reading what function the model picked    │
+│  ✓ The agent loop — calling tools and feeding results back       │
+│  ✓ Multiple providers — swap OpenAI for Anthropic in one line    │
+└──────────────────────────────────────────────────────────────────┘
+</code></pre>
+<p>The relationship is the same as <code>tokio</code> to raw <code>epoll</code>: you could write the event loop yourself, but the library is better-tested, handles edge cases you have not thought of yet, and lets you focus on what you are actually building.</p>
+<p>The next chapter covers tool calling — what it is, how the model uses it, and how you wire up Rust functions so the model can invoke them.</p>
+<hr>
+<h2 id="key-ideas-14"><a class="header" href="#key-ideas-14">Key ideas</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Concept</th><th>What it means</th></tr>
+</thead>
+<tbody>
+<tr><td>LLM API</td><td>HTTP endpoint — POST JSON in, JSON back; the same protocol from the networking chapter</td></tr>
+<tr><td>API key</td><td>Authentication token; always load from environment variables, never hardcode</td></tr>
+<tr><td>System prompt</td><td>The first <code>"role": "system"</code> message — instructions that frame how the model behaves</td></tr>
+<tr><td>Messages array</td><td>Full conversation history sent on every request; the API is stateless</td></tr>
+<tr><td>Token</td><td>The unit the model reads and writes — roughly 0.75 English words or 4 characters</td></tr>
+<tr><td>Context window</td><td>Maximum tokens in one request (input + output); 128k for gpt-4o-mini</td></tr>
+<tr><td>Usage field</td><td>The response field that tells you how many tokens the request consumed</td></tr>
+<tr><td>rig.rs</td><td>Rust library that wraps LLM HTTP APIs and implements tool calling — tokio for AI</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="chapter-3--tool-calling"><a class="header" href="#chapter-3--tool-calling">Chapter 3 — Tool Calling</a></h1>
+<p>An LLM can only generate text. It cannot open a file, make a network request, or write to a database. It lives entirely inside a text bubble: text goes in, text comes out. Tool calling is the mechanism that breaks that limitation.</p>
+<hr>
+<h2 id="the-problem-text-in-text-out"><a class="header" href="#the-problem-text-in-text-out">The problem: text in, text out</a></h2>
+<p>Send an LLM “what files are in the current directory?” and it will produce a fluent, confident-sounding response. But that response is not the real file list — it is a <em>guess</em> based on training data. The model has no connection to your filesystem. It cannot run <code>ls</code>. It cannot read a socket. It cannot check the time.</p>
+<p>This matters the moment you want an AI assistant to do anything real: check a sensor reading, query a database, call an API, write to disk. Pure text generation cannot do any of those things.</p>
+<p>The gap is not intelligence — it is execution. The LLM can reason about what to do. It just has no way to actually do it.</p>
+<hr>
+<h2 id="the-solution-structured-output"><a class="header" href="#the-solution-structured-output">The solution: structured output</a></h2>
+<p>Instead of generating a freeform response, the LLM can output a <em>structured</em> response that describes an action:</p>
+<pre><code class="language-json">{
+  "name": "list_files",
+  "arguments": { "path": "." }
+}
+</code></pre>
+<p>Your code receives that JSON, executes <code>std::fs::read_dir(".")</code>, and feeds the result back to the LLM as a new message. The LLM reads the real output and continues from there.</p>
+<p>The LLM did not execute anything. It produced a description of what to execute. You ran it. The result went back. The LLM kept going.</p>
+<p>That is the entire mechanism. Everything else is details.</p>
+<hr>
+<h2 id="the-sequence"><a class="header" href="#the-sequence">The sequence</a></h2>
+<p>Three parties are involved: the user, the LLM, and your code.</p>
+<pre><code>User          LLM                        Your Code
+  │             │                            │
+  │─ "what      │                            │
+  │   files     │                            │
+  │   are here?"│                            │
+  │────────────▶│                            │
+  │             │                            │
+  │             │  decides to call           │
+  │             │  list_files(".")           │
+  │             │───────────────────────────▶│
+  │             │                            │ executes
+  │             │                            │ std::fs::read_dir(".")
+  │             │◀── ["main.rs",             │
+  │             │     "Cargo.toml"]          │
+  │             │                            │
+  │             │  generates final response  │
+  │◀────────────│                            │
+  │  "You have  │                            │
+  │   2 files:  │                            │
+  │   main.rs,  │                            │
+  │   Cargo.toml"                            │
+</code></pre>
+<p>The LLM never touches the filesystem. Your code does. The LLM only reads the result and decides what to say next.</p>
+<hr>
+<h2 id="how-the-llm-knows-what-tools-exist"><a class="header" href="#how-the-llm-knows-what-tools-exist">How the LLM knows what tools exist</a></h2>
+<p>Before the conversation begins, you send a list of available tools as part of the system prompt or the API request. Each tool has three things:</p>
+<ul>
+<li><strong>Name</strong> — what to call it (<code>list_files</code>)</li>
+<li><strong>Description</strong> — plain English explanation of what it does and when to use it</li>
+<li><strong>Parameters</strong> — a JSON schema describing the arguments it accepts</li>
+</ul>
+<p>The LLM reads these descriptions and uses them the same way a programmer reads documentation. When a user’s message matches what a tool does, the LLM decides to call it. When nothing matches, it generates a regular text response.</p>
+<p>The quality of your descriptions matters. A vague description produces wrong decisions. A clear one — “lists files in a directory, returns names only, not recursive” — tells the model exactly when to reach for this tool and what to expect back.</p>
+<hr>
+<h2 id="the-llm-does-not-execute-anything"><a class="header" href="#the-llm-does-not-execute-anything">The LLM does not execute anything</a></h2>
+<p>This is worth repeating because it is easy to misread the mechanism.</p>
+<p>When the LLM “calls” a tool, it outputs JSON that <em>describes</em> the call. Nothing runs. No function is invoked. No system call is made. The LLM has produced a structured piece of text, the same way it might produce a JSON response in any other context.</p>
+<p>Your code receives that JSON, parses it, dispatches to the real function, and sends the result back as another message.</p>
+<pre><code>LLM output ──▶  { "name": "list_files", "arguments": { "path": "." } }
+                          │
+                          │  your code reads this
+                          ▼
+                  call real Rust function
+                  std::fs::read_dir(".")
+                          │
+                          ▼
+                  send result back to LLM
+                  ["main.rs", "Cargo.toml"]
+</code></pre>
+<p>The LLM is a <strong>decision-maker</strong>, not an executor. You write the functions. You decide which ones are available. You run them when asked. The LLM connects natural language to function calls.</p>
+<hr>
+<h2 id="why-this-is-powerful-1"><a class="header" href="#why-this-is-powerful-1">Why this is powerful</a></h2>
+<p>Natural language is imprecise. Function calls are precise. Tool calling is the bridge.</p>
+<p>A user might say “show me the big files.” That could mean files over 1 MB, files over 10 MB, the top 10 by size — it is ambiguous. But the LLM can interpret the intent and translate it into a precise sequence: call <code>list_files(".")</code>, get the names, call <code>get_file_size(name)</code> for each, sort the results, return the top ones.</p>
+<p>You write ordinary Rust functions that each do one thing well. The LLM figures out which ones to call and in what order. Your functions know nothing about AI — they just read directories and return sizes. The intelligence is in the orchestration.</p>
+<p>This separation is also what keeps the system maintainable. Adding a new capability means writing a new function and adding a description. The LLM learns to use it automatically.</p>
+<hr>
+<h2 id="the-rust-connection-the-tool-trait"><a class="header" href="#the-rust-connection-the-tool-trait">The Rust connection: the <code>Tool</code> trait</a></h2>
+<p>In rig.rs — the Rust library you will use — each tool is a struct that implements the <code>Tool</code> trait. The trait has two required methods:</p>
+<ul>
+<li><code>definition()</code> — returns the JSON description of the tool (name, description, parameter schema). This is what gets sent to the LLM before the conversation starts.</li>
+<li><code>call()</code> — executes the actual logic and returns the result. This is what runs when the LLM decides to use the tool.</li>
+</ul>
+<p>If you have read the async chapters, this structure should feel familiar. A trait with required methods — the same pattern as <code>Iterator</code> or <code>Future</code>. The runtime (in this case rig.rs) drives things by calling your methods at the right time.</p>
+<pre><code>Tool trait
+  │
+  ├── definition()  →  sent to LLM before conversation
+  │                    "here is what I can do and how to call me"
+  │
+  └── call()        →  run when LLM decides to use the tool
+                       "the LLM chose me; now do the real work"
+</code></pre>
+<p>The full code for writing a tool comes in Lesson 2. For now, just notice that the pattern matches what you already know: a trait defines the contract, your struct provides the implementation.</p>
+<hr>
+<h2 id="safety-you-are-always-in-control"><a class="header" href="#safety-you-are-always-in-control">Safety: you are always in control</a></h2>
+<p>Because the LLM only outputs JSON describing what to call, your code runs between the decision and the execution. That gap is where you can add:</p>
+<ul>
+<li><strong>Confirmation prompts</strong> — “The agent wants to delete 47 files. Allow? [y/N]”</li>
+<li><strong>Logging</strong> — record every tool call and its result for auditing</li>
+<li><strong>Rate limiting</strong> — prevent the LLM from calling expensive tools too frequently</li>
+<li><strong>Filtering</strong> — block certain arguments entirely (e.g., reject paths outside the project directory)</li>
+</ul>
+<p>The LLM cannot bypass these checks. It has no direct access to your system — only to the JSON it can output and the results you choose to send back.</p>
+<p>This is the correct mental model: the LLM is an advisor that proposes actions. You are the system that decides whether to carry them out.</p>
+<hr>
+<h2 id="key-ideas-15"><a class="header" href="#key-ideas-15">Key ideas</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Concept</th><th>What it means</th></tr>
+</thead>
+<tbody>
+<tr><td>Text bubble</td><td>LLMs can only read and produce text — they cannot run code or access systems directly</td></tr>
+<tr><td>Tool call</td><td>A structured JSON response the LLM outputs to request a function call</td></tr>
+<tr><td>Tool description</td><td>Name, plain-English purpose, and parameter schema sent to the LLM before the conversation</td></tr>
+<tr><td>Execution gap</td><td>Your code sits between the LLM decision and the real function — you stay in control</td></tr>
+<tr><td><code>Tool</code> trait</td><td>rig.rs interface: <code>definition()</code> describes the tool, <code>call()</code> runs the logic</td></tr>
+<tr><td>Decision vs execution</td><td>The LLM decides what to call; your code decides whether and how to run it</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="chapter-4--the-agent-loop"><a class="header" href="#chapter-4--the-agent-loop">Chapter 4 — The Agent Loop</a></h1>
+<p>Tool calling (chapter 3) is one round-trip: LLM decides, your code runs, result goes back. An agent is that round-trip running in a loop until the work is done.</p>
+<hr>
+<h2 id="one-tool-call-is-not-enough"><a class="header" href="#one-tool-call-is-not-enough">One tool call is not enough</a></h2>
+<p>Most real requests require several steps. “Rename all .txt files to .md” is not a single action. It is a sequence:</p>
+<ol>
+<li>List the files in the directory</li>
+<li>Filter for names ending in <code>.txt</code></li>
+<li>Rename each one</li>
+</ol>
+<p>No single tool call can do this. The LLM needs to see the file list before it knows what to rename. It needs to see the result of the first rename before it runs the next one. Each step depends on information from the previous step.</p>
+<p>This is why the single round-trip from chapter 3 is not enough on its own. Real tasks need multiple turns, and something needs to manage those turns. That something is the agent loop.</p>
+<hr>
+<h2 id="the-agent-loop"><a class="header" href="#the-agent-loop">The agent loop</a></h2>
+<p>The loop has one rule: keep calling the LLM until it stops requesting tools.</p>
+<pre><code>┌─────────────────────────────────────────────────────┐
+│                   agent loop                        │
+│                                                     │
+│   ┌─ LLM receives: prompt + tool results so far ─┐  │
+│   │                                              │  │
+│   │  Does LLM want to call a tool?               │  │
+│   │                                              │  │
+│   │   YES → execute tool → append result → loop  │  │
+│   │                                              │  │
+│   │   NO  → generate final response → done       │  │
+│   └──────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────┘
+</code></pre>
+<p>On each iteration, the LLM sees everything: the original user message, every tool call it made, and every result that came back. It uses this growing history to decide what to do next. When it has enough information to answer, it produces a regular text response with no tool call — and the loop ends.</p>
+<hr>
+<h2 id="a-concrete-example"><a class="header" href="#a-concrete-example">A concrete example</a></h2>
+<p>“Add milk, eggs, and bread to my todo list.”</p>
+<p>Three separate items. The LLM does not add them all in one call — <code>add_todo</code> takes one item at a time. So it loops:</p>
+<pre><code>Turn 1:  LLM calls add_todo("milk")
+         → result: "added"
+
+Turn 2:  LLM calls add_todo("eggs")
+         → result: "added"
+
+Turn 3:  LLM calls add_todo("bread")
+         → result: "added"
+
+Turn 4:  LLM sees all three succeeded
+         → "Added 3 items to your list."
+         no tool call — loop ends
+</code></pre>
+<p>From the user’s perspective, they typed one sentence and got one reply. From the inside, the loop ran four times over four async HTTP requests.</p>
+<hr>
+<h2 id="observation-before-action"><a class="header" href="#observation-before-action">Observation before action</a></h2>
+<p>A useful agent behavior: call a query tool <em>before</em> deciding what to do.</p>
+<p>“What’s running slow in my simulation?” — the LLM cannot answer that without data. So it calls <code>get_world_stats()</code> first, reads the result (frame time: 48 ms, active bodies: 3,200), and then decides to call <code>set_time_scale(0.5)</code> to slow the simulation down.</p>
+<p>The query-then-act pattern shows up constantly in well-designed agents. It means you need two kinds of tools:</p>
+<ul>
+<li><strong>Query tools</strong> — read state, return information, change nothing</li>
+<li><strong>Action tools</strong> — modify state, produce effects in the world</li>
+</ul>
+<p>When a user says something ambiguous or context-dependent, the agent can call a query tool to orient itself before committing to an action. The LLM decides when to do this on its own — you just make sure the right query tools are available.</p>
+<hr>
+<h2 id="when-does-the-loop-end"><a class="header" href="#when-does-the-loop-end">When does the loop end?</a></h2>
+<p>There are three exit conditions:</p>
+<ul>
+<li><strong>No tool call in the response</strong> — the LLM produced a regular text reply. Work is done.</li>
+<li><strong>Unrecoverable tool error</strong> — a tool returned an error the LLM cannot work around. The error propagates up to your code.</li>
+<li><strong>Maximum iteration limit</strong> — a safety cutoff to prevent infinite loops. rig.rs enforces this automatically.</li>
+</ul>
+<p>The third case matters in practice. A poorly described tool or an ambiguous request can put the LLM in a loop where it keeps trying the same tool with slightly different arguments and never converges. The iteration limit is a guardrail, not an edge case.</p>
+<hr>
+<h2 id="why-agent-feels-autonomous"><a class="header" href="#why-agent-feels-autonomous">Why “agent” feels autonomous</a></h2>
+<p>From the outside, the agent appears to be thinking — reading your files, making decisions, taking actions, responding to what it finds. It feels like a program with its own judgment.</p>
+<p>From the inside: it is a <code>while</code> loop calling an HTTP endpoint.</p>
+<p>The LLM does not run continuously in the background. It does not have memory between calls beyond what you send it. Each call to the LLM is stateless — it sees only what is in the current message history. The agent <em>feels</em> persistent because the loop accumulates results and includes them in every subsequent call. The appearance of memory is constructed by your code, not built into the model.</p>
+<p>Understanding this makes the system easier to debug. If the agent does something wrong, you can look at the exact message history it was given at each turn. The decision that produced the bad output is right there in the JSON.</p>
+<hr>
+<h2 id="the-connection-to-async"><a class="header" href="#the-connection-to-async">The connection to async</a></h2>
+<p>You already know all the mechanics needed to implement this.</p>
+<p>Each call to the LLM is an async HTTP request — the same kind you used in the download manager. Each tool execution is an async function. The agent loop is an async loop. Conceptually, it looks like this:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// conceptually, the agent loop looks like this
+loop {
+    let response = llm.call(messages).await?;
+
+    match response {
+        Response::ToolCall(call) =&gt; {
+            let result = execute_tool(call).await?;
+            messages.push(result);
+        }
+        Response::Done(text) =&gt; {
+            println!("{text}");
+            break;
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>The <code>llm.call(messages).await?</code> is an HTTP request, just like <code>client.get(url).send().await?</code>. The <code>.await</code> yields to the Tokio runtime while the network is busy — exactly the same as every other async operation you have written.</p>
+<p>You do not have to write this loop yourself. rig.rs implements it. But knowing what is inside tells you exactly what is happening when the agent runs.</p>
+<hr>
+<h2 id="what-rigrs-gives-you"><a class="header" href="#what-rigrs-gives-you">What rig.rs gives you</a></h2>
+<p>Three things:</p>
+<ul>
+<li><strong>Client</strong> — manages authentication and HTTP. Wraps the API key, constructs requests, handles retries. You create it once and hand it to the agent.</li>
+<li><strong>Agent</strong> — holds your tools, your system prompt, and runs the loop. You give it tools and a prompt; it handles everything else.</li>
+<li><strong><code>Tool</code> trait</strong> — the interface you implement. <code>definition()</code> describes your tool to the LLM; <code>call()</code> runs the real logic when the LLM chooses it.</li>
+</ul>
+<pre><code>rig.rs
+  │
+  ├── Client      manages auth + HTTP + retries
+  │
+  ├── Agent       holds tools + prompt + runs the loop
+  │                 └── calls Tool::definition() once at startup
+  │                 └── calls Tool::call() each time LLM requests it
+  │
+  └── Tool trait  you implement this
+                    ├── definition() → JSON description for the LLM
+                    └── call()       → your actual Rust logic
+</code></pre>
+<p>The next lesson shows the first real code: a client, an agent, and a tool that interacts with the physics sandbox.</p>
+<hr>
+<h2 id="key-ideas-16"><a class="header" href="#key-ideas-16">Key ideas</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Concept</th><th>What it means</th></tr>
+</thead>
+<tbody>
+<tr><td>Agent loop</td><td>Repeatedly call the LLM until it produces a response with no tool call</td></tr>
+<tr><td>Message history</td><td>Every tool call and result is appended and sent on the next turn — this is the agent’s “memory”</td></tr>
+<tr><td>Query tools</td><td>Tools that read state without changing it — let the agent observe before acting</td></tr>
+<tr><td>Action tools</td><td>Tools that modify state — the agent calls these once it has enough information</td></tr>
+<tr><td>Iteration limit</td><td>A maximum number of loop turns; prevents runaway agents</td></tr>
+<tr><td>Stateless LLM</td><td>The model has no memory between calls — the loop constructs continuity by accumulating history</td></tr>
+<tr><td><code>Client</code> / <code>Agent</code> / <code>Tool</code></td><td>The three rig.rs primitives you build with</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="lesson-1--first-llm-call"><a class="header" href="#lesson-1--first-llm-call">Lesson 1 — First LLM Call</a></h1>
+<blockquote>
+<p><strong>Goal</strong>: Send a prompt to an LLM and print the response.</p>
+<p><strong>Concepts</strong>: rig-core setup, <code>OPENAI_API_KEY</code>, <code>Client</code>, <code>Agent</code>, <code>.prompt().await</code>.</p>
+</blockquote>
+<p>The theory chapters explained what LLMs are, how the API works over HTTP, and what tokens cost. Now you write the code that does it.</p>
+<hr>
+<h2 id="step-1--setup"><a class="header" href="#step-1--setup">Step 1 — Setup</a></h2>
+<p>Create a new binary project and add these dependencies to <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+rig-core = "0.6"
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+</code></pre>
+<p>You also need an API key from <a href="https://platform.openai.com">platform.openai.com</a>. The key identifies your account — every API request is billed to it. Never put it in source code.</p>
+<p>Set it as an environment variable before running your program:</p>
+<pre><code class="language-sh">export OPENAI_API_KEY="sk-..."
+</code></pre>
+<p>Or for a single run:</p>
+<pre><code class="language-sh">OPENAI_API_KEY="sk-..." cargo run
+</code></pre>
+<hr>
+<h2 id="step-2--hello-llm"><a class="header" href="#step-2--hello-llm">Step 2 — Hello LLM</a></h2>
+<pre class="playground"><code class="language-rust">use rig::providers::openai;
+
+#[tokio::main]
+async fn main() -&gt; anyhow::Result&lt;()&gt; {
+    let client = openai::Client::from_env();
+
+    let agent = client
+        .agent(openai::GPT_4O_MINI)
+        .preamble("You are a helpful assistant.")
+        .build();
+
+    let response = agent.prompt("What is the capital of France?").await?;
+    println!("{response}");
+
+    Ok(())
+}</code></pre>
+<p><code>openai::Client::from_env()</code> reads <code>OPENAI_API_KEY</code> from the environment. If the variable is missing it panics with a clear message.</p>
+<p><code>agent.prompt(text).await</code> makes an HTTP POST to <code>https://api.openai.com/v1/chat/completions</code>, waits for the response, and returns the assistant’s reply as a <code>String</code>. Everything else — headers, JSON encoding, retries on transient errors — is handled by rig.</p>
+<hr>
+<h2 id="step-3--the-system-prompt"><a class="header" href="#step-3--the-system-prompt">Step 3 — The system prompt</a></h2>
+<p>The string passed to <code>.preamble()</code> is the system prompt. It is the first message the LLM reads, before every user message you send. It sets the agent’s behaviour for the entire conversation.</p>
+<p>Compare these two agents:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let generic = client
+    .agent(openai::GPT_4O_MINI)
+    .preamble("You are a helpful assistant.")
+    .build();
+
+let specialist = client
+    .agent(openai::GPT_4O_MINI)
+    .preamble("You are a Rust expert. Answer every question with Rust code examples.")
+    .build();
+
+let prompt = "How do I reverse a list?";
+
+println!("{}", generic.prompt(prompt).await?);
+println!("---");
+println!("{}", specialist.prompt(prompt).await?);
+<span class="boring">}</span></code></pre>
+<p>Same question. Very different answers. The preamble is the primary lever for shaping what the model does.</p>
+<hr>
+<h2 id="step-4--what-prompt-is-doing"><a class="header" href="#step-4--what-prompt-is-doing">Step 4 — What .prompt() is doing</a></h2>
+<p><code>.prompt()</code> returns a <code>String</code>. That is the entire public interface — rig handles everything underneath.</p>
+<p>Under the hood it posts a JSON body like:</p>
+<pre><code class="language-json">{
+  "model": "gpt-4o-mini",
+  "messages": [
+    { "role": "system",    "content": "You are a helpful assistant." },
+    { "role": "user",      "content": "What is the capital of France?" }
+  ]
+}
+</code></pre>
+<p>You learned about this endpoint in the APIs and tokens chapter. Rig constructs this JSON, sends the request over HTTPS, parses the response, and extracts the <code>content</code> field from the first choice. The <code>String</code> you receive is that content.</p>
+<hr>
+<h2 id="step-5--a-simple-repl"><a class="header" href="#step-5--a-simple-repl">Step 5 — A simple REPL</a></h2>
+<p>A single prompt is useful for testing. A REPL is the foundation of everything in the following lessons.</p>
+<pre class="playground"><code class="language-rust">use rig::providers::openai;
+use std::io::{self, BufRead, Write};
+
+#[tokio::main]
+async fn main() -&gt; anyhow::Result&lt;()&gt; {
+    let client = openai::Client::from_env();
+
+    let agent = client
+        .agent(openai::GPT_4O_MINI)
+        .preamble("You are a helpful assistant.")
+        .build();
+
+    let stdin = io::stdin();
+    let mut count = 0u32;
+
+    loop {
+        count += 1;
+        print!("[{count}] &gt; ");
+        io::stdout().flush()?;
+
+        let mut line = String::new();
+        stdin.lock().read_line(&amp;mut line)?;
+        let input = line.trim();
+
+        if input.is_empty() {
+            continue;
+        }
+
+        let response = agent.prompt(input).await?;
+        println!("{response}\n");
+    }
+}</code></pre>
+<p><code>stdin.lock().read_line(&amp;mut line)</code> blocks until the user presses Enter. The program then sends that line to the LLM and prints the response. The loop repeats until the process is killed.</p>
+<p>Note the <code>count</code> variable — it tracks how many messages have been sent and prints the number in the prompt. This becomes useful for debugging in later lessons.</p>
+<hr>
+<h2 id="full-code-6"><a class="header" href="#full-code-6">Full code</a></h2>
+<pre class="playground"><code class="language-rust">use rig::providers::openai;
+use std::io::{self, BufRead, Write};
+
+#[tokio::main]
+async fn main() -&gt; anyhow::Result&lt;()&gt; {
+    let client = openai::Client::from_env();
+
+    let agent = client
+        .agent(openai::GPT_4O_MINI)
+        .preamble("You are a helpful assistant.")
+        .build();
+
+    let stdin = io::stdin();
+    let mut count = 0u32;
+
+    loop {
+        count += 1;
+        print!("[{count}] &gt; ");
+        io::stdout().flush()?;
+
+        let mut line = String::new();
+        stdin.lock().read_line(&amp;mut line)?;
+        let input = line.trim();
+
+        if input.is_empty() {
+            continue;
+        }
+
+        let response = agent.prompt(input).await?;
+        println!("{response}\n");
+    }
+}</code></pre>
+<hr>
+<h2 id="exercises-22"><a class="header" href="#exercises-22">Exercises</a></h2>
+<blockquote>
+<p><strong>TODO 1</strong>: Change the system prompt to make the agent respond only in rhymes. Send a few messages and verify the behaviour changes.</p>
+<p><strong>TODO 2</strong>: The <code>count</code> variable already tracks messages sent. Change the display so it shows something like <code>[message 3 of this session]</code> instead of just <code>[3]</code>.</p>
+<p><strong>TODO 3</strong>: If the user types <code>quit</code> or <code>exit</code>, break the loop cleanly and print <code>"Goodbye."</code> before exiting. Use <code>break</code> rather than <code>std::process::exit</code>.</p>
+</blockquote>
+<hr>
+<h2 id="key-apis-34"><a class="header" href="#key-apis-34">Key APIs</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>API</th><th>What it does</th></tr>
+</thead>
+<tbody>
+<tr><td><code>openai::Client::from_env()</code></td><td>Creates a client using <code>OPENAI_API_KEY</code> from the environment</td></tr>
+<tr><td><code>client.agent(model)</code></td><td>Starts an agent builder for the given model</td></tr>
+<tr><td><code>.preamble(text)</code></td><td>Sets the system prompt — sent before every user message</td></tr>
+<tr><td><code>.build()</code></td><td>Finalises the agent</td></tr>
+<tr><td><code>agent.prompt(text).await</code></td><td>Sends a user message and returns the assistant’s reply as a <code>String</code></td></tr>
+<tr><td><code>openai::GPT_4O_MINI</code></td><td>Constant for the <code>"gpt-4o-mini"</code> model identifier</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="lesson-2--defining-a-tool"><a class="header" href="#lesson-2--defining-a-tool">Lesson 2 — Defining a Tool</a></h1>
+<blockquote>
+<p><strong>Goal</strong>: Define a Rust struct as a tool the LLM can call.</p>
+<p><strong>Concepts</strong>: <code>Tool</code> trait, <code>ToolDefinition</code>, JSON schema for parameters, <code>serde::Deserialize</code> for args.</p>
+</blockquote>
+<hr>
+<h2 id="step-1--the-problem-with-text-only-agents"><a class="header" href="#step-1--the-problem-with-text-only-agents">Step 1 — The problem with text-only agents</a></h2>
+<p>The REPL from lesson 1 can answer questions but it cannot <em>do</em> anything. Ask it “what is 47 times 83?” and it will produce the right answer — but only because the model has seen arithmetic in its training data. It is pattern-matching, not computing.</p>
+<p>Ask it something it cannot pattern-match — “what is <code>sha256('hello world')</code>?” — and it will guess wrong with confidence. The model has no access to runtime functions. It only knows what is in its weights.</p>
+<p>Tool calling is the fix. You define a function in Rust. You describe it in a format the LLM can read. The LLM decides when to call it and what arguments to pass. Rig executes the function and feeds the result back to the model, which then writes its final reply.</p>
+<hr>
+<h2 id="step-2--define-the-tool-struct"><a class="header" href="#step-2--define-the-tool-struct">Step 2 — Define the tool struct</a></h2>
+<p>Add <code>serde</code> to <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+rig-core = "0.6"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+</code></pre>
+<p>A tool is a struct that implements the <code>Tool</code> trait. Start with the args type — the data the LLM will send when it calls the tool:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct CalculatorArgs {
+    a: f64,
+    b: f64,
+    operation: String,
+}
+<span class="boring">}</span></code></pre>
+<p><code>#[derive(Deserialize)]</code> tells serde how to convert the JSON the LLM produces into this struct. The field names must match what you declare in the JSON schema (next step).</p>
+<p>Then the tool struct itself:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Calculator;
+<span class="boring">}</span></code></pre>
+<p>No fields — this tool is stateless. It just does arithmetic.</p>
+<hr>
+<h2 id="step-3--implement-the-tool-trait"><a class="header" href="#step-3--implement-the-tool-trait">Step 3 — Implement the Tool trait</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rig::{completion::ToolDefinition, tool::Tool};
+use serde_json::json;
+
+impl Tool for Calculator {
+    const NAME: &amp;'static str = "calculator";
+
+    type Error = String;
+    type Args = CalculatorArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Performs arithmetic. Use this for any calculation.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "a": {
+                        "type": "number",
+                        "description": "The first operand"
+                    },
+                    "b": {
+                        "type": "number",
+                        "description": "The second operand"
+                    },
+                    "operation": {
+                        "type": "string",
+                        "description": "One of: add, subtract, multiply, divide"
+                    }
+                },
+                "required": ["a", "b", "operation"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let result = match args.operation.as_str() {
+            "add"      =&gt; args.a + args.b,
+            "subtract" =&gt; args.a - args.b,
+            "multiply" =&gt; args.a * args.b,
+            "divide" =&gt; {
+                if args.b == 0.0 {
+                    return Err("division by zero".to_string());
+                }
+                args.a / args.b
+            }
+            op =&gt; return Err(format!("unknown operation: {op}")),
+        };
+        Ok(result.to_string())
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>The four associated types tell rig what flows through this tool:</p>
+<ul>
+<li><code>Error</code> — returned when <code>call</code> fails</li>
+<li><code>Args</code> — the struct that <code>Deserialize</code> populates from the LLM’s JSON</li>
+<li><code>Output</code> — what <code>call</code> returns on success</li>
+</ul>
+<p><code>definition</code> is called once when the agent is built. Rig sends the <code>ToolDefinition</code> to the model as part of every request so the LLM knows the tool exists.</p>
+<p><code>call</code> is called by rig whenever the LLM decides to invoke the tool.</p>
+<hr>
+<h2 id="step-4--the-json-schema"><a class="header" href="#step-4--the-json-schema">Step 4 — The JSON schema</a></h2>
+<p>The <code>parameters</code> field in <code>ToolDefinition</code> is a JSON Schema object. The LLM reads it to know what arguments it must supply. Get it wrong and the LLM either does not call the tool or passes bad arguments.</p>
+<p>The schema follows the <a href="https://json-schema.org/">JSON Schema specification</a>. For most tools you only need a small subset:</p>
+<pre><code class="language-json">{
+  "type": "object",
+  "properties": {
+    "field_name": {
+      "type": "string | number | boolean | array | object",
+      "description": "What the LLM should put here"
+    }
+  },
+  "required": ["field_name"]
+}
+</code></pre>
+<p>The <code>description</code> on each property is what the LLM actually reads to understand how to fill it. Make it precise. “The first operand” is fine. “A number” is not — the LLM already knows it is a number from <code>type</code>.</p>
+<hr>
+<h2 id="step-5--add-the-tool-to-the-agent"><a class="header" href="#step-5--add-the-tool-to-the-agent">Step 5 — Add the tool to the agent</a></h2>
+<pre class="playground"><code class="language-rust">use rig::providers::openai;
+
+#[tokio::main]
+async fn main() -&gt; anyhow::Result&lt;()&gt; {
+    let client = openai::Client::from_env();
+
+    let agent = client
+        .agent(openai::GPT_4O_MINI)
+        .preamble("You are a calculator assistant. Use the calculator tool for all arithmetic.")
+        .tool(Calculator)
+        .build();
+
+    let response = agent.prompt("What is 47 times 83?").await?;
+    println!("{response}");
+
+    Ok(())
+}</code></pre>
+<p><code>.tool(Calculator)</code> registers the tool. You can chain multiple <code>.tool()</code> calls (lesson 3 does this).</p>
+<p>The prompt call works identically to lesson 1 — one <code>await</code>, one <code>String</code>. The tool loop happens inside rig, invisibly.</p>
+<hr>
+<h2 id="step-6--what-happens-under-the-hood"><a class="header" href="#step-6--what-happens-under-the-hood">Step 6 — What happens under the hood</a></h2>
+<p>When you call <code>agent.prompt("What is 47 times 83?")</code>:</p>
+<ol>
+<li>Rig sends the user message to the API along with the tool definition.</li>
+<li>The LLM recognises this requires arithmetic and outputs a tool call instead of plain text:
+<pre><code class="language-json">{ "name": "calculator", "arguments": { "a": 47, "b": 83, "operation": "multiply" } }
+</code></pre>
+</li>
+<li>Rig receives the tool call, deserialises the arguments into <code>CalculatorArgs</code>, and calls <code>Calculator::call()</code>.</li>
+<li><code>call()</code> returns <code>"3901"</code>.</li>
+<li>Rig sends the tool result back to the API as a new message.</li>
+<li>The LLM reads the result and writes its final reply: <code>"47 times 83 is 3901."</code></li>
+<li>Rig returns that string from <code>.prompt()</code>.</li>
+</ol>
+<p>This is what the agent loop chapter described. Steps 2–5 can repeat multiple times in a single <code>.prompt()</code> call if the LLM needs to chain several tool calls.</p>
+<hr>
+<h2 id="full-code-7"><a class="header" href="#full-code-7">Full code</a></h2>
+<pre class="playground"><code class="language-rust">use rig::providers::openai;
+use rig::{completion::ToolDefinition, tool::Tool};
+use serde::Deserialize;
+use serde_json::json;
+
+#[derive(Deserialize)]
+struct CalculatorArgs {
+    a: f64,
+    b: f64,
+    operation: String,
+}
+
+struct Calculator;
+
+impl Tool for Calculator {
+    const NAME: &amp;'static str = "calculator";
+
+    type Error = String;
+    type Args = CalculatorArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Performs arithmetic. Use this for any calculation.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "a": {
+                        "type": "number",
+                        "description": "The first operand"
+                    },
+                    "b": {
+                        "type": "number",
+                        "description": "The second operand"
+                    },
+                    "operation": {
+                        "type": "string",
+                        "description": "One of: add, subtract, multiply, divide"
+                    }
+                },
+                "required": ["a", "b", "operation"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let result = match args.operation.as_str() {
+            "add"      =&gt; args.a + args.b,
+            "subtract" =&gt; args.a - args.b,
+            "multiply" =&gt; args.a * args.b,
+            "divide" =&gt; {
+                if args.b == 0.0 {
+                    return Err("division by zero".to_string());
+                }
+                args.a / args.b
+            }
+            op =&gt; return Err(format!("unknown operation: {op}")),
+        };
+        Ok(result.to_string())
+    }
+}
+
+#[tokio::main]
+async fn main() -&gt; anyhow::Result&lt;()&gt; {
+    let client = openai::Client::from_env();
+
+    let agent = client
+        .agent(openai::GPT_4O_MINI)
+        .preamble("You are a calculator assistant. Use the calculator tool for all arithmetic.")
+        .tool(Calculator)
+        .build();
+
+    let response = agent.prompt("What is 47 times 83?").await?;
+    println!("{response}");
+
+    Ok(())
+}</code></pre>
+<hr>
+<h2 id="exercises-23"><a class="header" href="#exercises-23">Exercises</a></h2>
+<blockquote>
+<p><strong>TODO 1</strong>: Add a <code>power</code> operation that computes <code>a^b</code>. Use <code>f64::powf</code>. Ask the agent “what is 2 to the power of 10?” — it should use the tool and return 1024.</p>
+<p><strong>TODO 2</strong>: Add a second tool <code>WordCounter</code> that takes a single <code>text: String</code> argument and returns the number of words in it as a string. Register both tools on the same agent. Ask “how many words are in ‘the quick brown fox’?” — verify the LLM calls the right tool.</p>
+<p><strong>TODO 3</strong>: Ask the agent something that requires no calculation — “what is the capital of France?”. Does the LLM answer directly, or does it try to call the calculator? Confirm that tool definitions do not force the LLM to use them.</p>
+</blockquote>
+<hr>
+<h2 id="key-apis-35"><a class="header" href="#key-apis-35">Key APIs</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>API</th><th>What it does</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Tool</code> trait</td><td>The interface a type must implement to be used as an LLM tool</td></tr>
+<tr><td><code>Tool::NAME</code></td><td>A <code>&amp;'static str</code> the model uses to identify and invoke the tool</td></tr>
+<tr><td><code>Tool::Args</code></td><td>The <code>Deserialize</code> type that receives the LLM’s argument JSON</td></tr>
+<tr><td><code>Tool::Output</code></td><td>The return type of a successful <code>call()</code></td></tr>
+<tr><td><code>ToolDefinition</code></td><td>Struct holding the tool’s name, description, and parameter schema</td></tr>
+<tr><td><code>json!({ ... })</code></td><td><code>serde_json</code> macro for building JSON values inline</td></tr>
+<tr><td><code>.tool(t)</code></td><td>Registers a tool on the agent builder</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="lesson-3--multiple-tools"><a class="header" href="#lesson-3--multiple-tools">Lesson 3 — Multiple Tools</a></h1>
+<blockquote>
+<p><strong>Goal</strong>: Give the agent several tools with shared state. Observe the LLM picking the right one.</p>
+<p><strong>Concepts</strong>: <code>Arc&lt;Mutex&lt;T&gt;&gt;</code> for shared state, multiple tools, complex args with <code>serde</code>, error handling from tools.</p>
+</blockquote>
+<hr>
+<h2 id="step-1--multiple-tools-one-agent"><a class="header" href="#step-1--multiple-tools-one-agent">Step 1 — Multiple tools, one agent</a></h2>
+<p>When the agent has several tools, the LLM sees all of their descriptions at once and picks whichever one fits the request. This lesson builds a note-taking agent with three tools: <code>add_note</code>, <code>list_notes</code>, and <code>delete_note</code>.</p>
+<p>The challenge: all three tools need to read and write the same list of notes. In lesson 2, <code>Calculator</code> was stateless — no fields, no shared data. Here every tool struct must hold a handle to the same storage.</p>
+<hr>
+<h2 id="step-2--the-shared-state"><a class="header" href="#step-2--the-shared-state">Step 2 — The shared state</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, Mutex};
+
+type Notes = Arc&lt;Mutex&lt;Vec&lt;String&gt;&gt;&gt;;
+<span class="boring">}</span></code></pre>
+<p>You used <code>Arc&lt;Mutex&lt;T&gt;&gt;</code> in the threading chapter for the same reason: multiple owners, one piece of mutable data. The pattern is identical here — the only difference is that the “threads” are tool calls arriving from the LLM rather than OS threads you spawned yourself.</p>
+<p><code>Arc</code> lets you clone the handle cheaply. Each tool struct holds one clone. They all point to the same allocation.</p>
+<p><code>Mutex</code> ensures only one tool can modify the notes at a time. Because rig calls tools one at a time in a single-threaded async context this will not block in practice, but the type system requires it — you cannot hand out <code>&amp;mut Vec&lt;String&gt;</code> to multiple owners without it.</p>
+<hr>
+<h2 id="step-3--define-all-three-tools"><a class="header" href="#step-3--define-all-three-tools">Step 3 — Define all three tools</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use serde::Deserialize;
+use rig::{completion::ToolDefinition, tool::Tool};
+use serde_json::json;
+
+// --- add_note ---
+
+#[derive(Deserialize)]
+struct AddNoteArgs {
+    text: String,
+}
+
+struct AddNote {
+    notes: Notes,
+}
+
+impl Tool for AddNote {
+    const NAME: &amp;'static str = "add_note";
+
+    type Error = String;
+    type Args = AddNoteArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Save a note. Call this when the user wants to remember something."
+                .to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "description": "The note text to save"
+                    }
+                },
+                "required": ["text"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut notes = self.notes.lock().unwrap();
+        notes.push(args.text);
+        let index = notes.len() - 1;
+        Ok(format!("Note saved at index {index}."))
+    }
+}
+
+// --- list_notes ---
+
+#[derive(Deserialize)]
+struct ListNotesArgs {}
+
+struct ListNotes {
+    notes: Notes,
+}
+
+impl Tool for ListNotes {
+    const NAME: &amp;'static str = "list_notes";
+
+    type Error = String;
+    type Args = ListNotesArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "List all saved notes with their index numbers.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {}
+            }),
+        }
+    }
+
+    async fn call(&amp;self, _args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let notes = self.notes.lock().unwrap();
+        if notes.is_empty() {
+            return Ok("No notes saved.".to_string());
+        }
+        let lines: Vec&lt;String&gt; = notes
+            .iter()
+            .enumerate()
+            .map(|(i, n)| format!("{i}: {n}"))
+            .collect();
+        Ok(lines.join("\n"))
+    }
+}
+
+// --- delete_note ---
+
+#[derive(Deserialize)]
+struct DeleteNoteArgs {
+    index: usize,
+}
+
+struct DeleteNote {
+    notes: Notes,
+}
+
+impl Tool for DeleteNote {
+    const NAME: &amp;'static str = "delete_note";
+
+    type Error = String;
+    type Args = DeleteNoteArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Delete a note by its index number.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "index": {
+                        "type": "integer",
+                        "description": "The index of the note to delete"
+                    }
+                },
+                "required": ["index"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut notes = self.notes.lock().unwrap();
+        if args.index &gt;= notes.len() {
+            return Err(format!(
+                "Index {} does not exist. There are {} notes (indices 0–{}).",
+                args.index,
+                notes.len(),
+                notes.len().saturating_sub(1)
+            ));
+        }
+        let removed = notes.remove(args.index);
+        Ok(format!("Deleted note {}: \"{removed}\"", args.index))
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>Each struct holds a clone of <code>Notes</code>. They all point to the same <code>Vec&lt;String&gt;</code>. <code>AddNote::call</code> pushes; <code>ListNotes::call</code> reads; <code>DeleteNote::call</code> removes by index.</p>
+<hr>
+<h2 id="step-4--wire-them-up"><a class="header" href="#step-4--wire-them-up">Step 4 — Wire them up</a></h2>
+<pre class="playground"><code class="language-rust">use rig::providers::openai;
+
+#[tokio::main]
+async fn main() -&gt; anyhow::Result&lt;()&gt; {
+    let client = openai::Client::from_env();
+    let notes: Notes = Arc::new(Mutex::new(Vec::new()));
+
+    let agent = client
+        .agent(openai::GPT_4O_MINI)
+        .preamble(
+            "You are a note-taking assistant. \
+             Use the provided tools to add, list, and delete notes. \
+             Always confirm what you did.",
+        )
+        .tool(AddNote { notes: Arc::clone(&amp;notes) })
+        .tool(ListNotes { notes: Arc::clone(&amp;notes) })
+        .tool(DeleteNote { notes: Arc::clone(&amp;notes) })
+        .build();</code></pre>
+<p><code>Arc::clone(&amp;notes)</code> is cheap — it increments a reference count, not the data. All three tool instances share one <code>Vec&lt;String&gt;</code>.</p>
+<hr>
+<h2 id="step-5--test-the-llms-tool-selection"><a class="header" href="#step-5--test-the-llms-tool-selection">Step 5 — Test the LLM’s tool selection</a></h2>
+<p>Add a REPL and try these prompts in order:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>    use std::io::{self, BufRead, Write};
+
+    let stdin = io::stdin();
+
+    loop {
+        print!("&gt; ");
+        io::stdout().flush()?;
+
+        let mut line = String::new();
+        stdin.lock().read_line(&amp;mut line)?;
+        let input = line.trim();
+
+        if input.is_empty() {
+            continue;
+        }
+
+        let response = agent.prompt(input).await?;
+        println!("{response}\n");
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>Try these prompts and watch which tools fire:</p>
+<pre><code>&gt; remember that the meeting is at 3pm
+</code></pre>
+<p>The LLM calls <code>add_note</code> with <code>"meeting is at 3pm"</code>.</p>
+<pre><code>&gt; what notes do I have?
+</code></pre>
+<p>The LLM calls <code>list_notes</code> and formats the result.</p>
+<pre><code>&gt; forget the meeting note
+</code></pre>
+<p>This is the interesting case. The LLM does not know the index. It calls <code>list_notes</code> first to find it, then calls <code>delete_note</code> with the correct index. Two tool calls, one user message. This is the agent loop running automatically — you wrote no control flow for it.</p>
+<hr>
+<h2 id="step-6--error-handling-from-tools"><a class="header" href="#step-6--error-handling-from-tools">Step 6 — Error handling from tools</a></h2>
+<p>Return <code>Err(String)</code> from <code>call()</code> when something is wrong. Rig feeds the error message back to the LLM as a tool result:</p>
+<pre><code>&gt; delete note 99
+</code></pre>
+<p><code>DeleteNote::call</code> returns:</p>
+<pre><code>Err("Index 99 does not exist. There are 2 notes (indices 0–1).")
+</code></pre>
+<p>Rig sends this to the API. The LLM reads the error and tells the user:</p>
+<pre><code>There is no note at index 99. You currently have notes at indices 0 and 1.
+</code></pre>
+<p>The user gets a sensible explanation. You wrote no error-presentation code — the error message you returned from <code>call</code> was enough for the LLM to construct the reply.</p>
+<p>The key: write error messages for the LLM to read, not for a human reading a stack trace. Complete sentences work better than codes.</p>
+<hr>
+<h2 id="full-code-8"><a class="header" href="#full-code-8">Full code</a></h2>
+<pre class="playground"><code class="language-rust">use rig::providers::openai;
+use rig::{completion::ToolDefinition, tool::Tool};
+use serde::Deserialize;
+use serde_json::json;
+use std::io::{self, BufRead, Write};
+use std::sync::{Arc, Mutex};
+
+type Notes = Arc&lt;Mutex&lt;Vec&lt;String&gt;&gt;&gt;;
+
+// --- add_note ---
+
+#[derive(Deserialize)]
+struct AddNoteArgs {
+    text: String,
+}
+
+struct AddNote {
+    notes: Notes,
+}
+
+impl Tool for AddNote {
+    const NAME: &amp;'static str = "add_note";
+
+    type Error = String;
+    type Args = AddNoteArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Save a note. Call this when the user wants to remember something."
+                .to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "description": "The note text to save"
+                    }
+                },
+                "required": ["text"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut notes = self.notes.lock().unwrap();
+        notes.push(args.text);
+        let index = notes.len() - 1;
+        Ok(format!("Note saved at index {index}."))
+    }
+}
+
+// --- list_notes ---
+
+#[derive(Deserialize)]
+struct ListNotesArgs {}
+
+struct ListNotes {
+    notes: Notes,
+}
+
+impl Tool for ListNotes {
+    const NAME: &amp;'static str = "list_notes";
+
+    type Error = String;
+    type Args = ListNotesArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "List all saved notes with their index numbers.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {}
+            }),
+        }
+    }
+
+    async fn call(&amp;self, _args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let notes = self.notes.lock().unwrap();
+        if notes.is_empty() {
+            return Ok("No notes saved.".to_string());
+        }
+        let lines: Vec&lt;String&gt; = notes
+            .iter()
+            .enumerate()
+            .map(|(i, n)| format!("{i}: {n}"))
+            .collect();
+        Ok(lines.join("\n"))
+    }
+}
+
+// --- delete_note ---
+
+#[derive(Deserialize)]
+struct DeleteNoteArgs {
+    index: usize,
+}
+
+struct DeleteNote {
+    notes: Notes,
+}
+
+impl Tool for DeleteNote {
+    const NAME: &amp;'static str = "delete_note";
+
+    type Error = String;
+    type Args = DeleteNoteArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Delete a note by its index number.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "index": {
+                        "type": "integer",
+                        "description": "The index of the note to delete"
+                    }
+                },
+                "required": ["index"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut notes = self.notes.lock().unwrap();
+        if args.index &gt;= notes.len() {
+            return Err(format!(
+                "Index {} does not exist. There are {} notes (indices 0–{}).",
+                args.index,
+                notes.len(),
+                notes.len().saturating_sub(1)
+            ));
+        }
+        let removed = notes.remove(args.index);
+        Ok(format!("Deleted note {}: \"{removed}\"", args.index))
+    }
+}
+
+// --- main ---
+
+#[tokio::main]
+async fn main() -&gt; anyhow::Result&lt;()&gt; {
+    let client = openai::Client::from_env();
+    let notes: Notes = Arc::new(Mutex::new(Vec::new()));
+
+    let agent = client
+        .agent(openai::GPT_4O_MINI)
+        .preamble(
+            "You are a note-taking assistant. \
+             Use the provided tools to add, list, and delete notes. \
+             Always confirm what you did.",
+        )
+        .tool(AddNote { notes: Arc::clone(&amp;notes) })
+        .tool(ListNotes { notes: Arc::clone(&amp;notes) })
+        .tool(DeleteNote { notes: Arc::clone(&amp;notes) })
+        .build();
+
+    let stdin = io::stdin();
+
+    loop {
+        print!("&gt; ");
+        io::stdout().flush()?;
+
+        let mut line = String::new();
+        stdin.lock().read_line(&amp;mut line)?;
+        let input = line.trim();
+
+        if input.is_empty() {
+            continue;
+        }
+
+        let response = agent.prompt(input).await?;
+        println!("{response}\n");
+    }
+}</code></pre>
+<hr>
+<h2 id="exercises-24"><a class="header" href="#exercises-24">Exercises</a></h2>
+<blockquote>
+<p><strong>TODO 1</strong>: Add a <code>clear_notes</code> tool that removes all notes at once. It takes no arguments. The LLM should call it when asked to “start fresh” or “delete everything.”</p>
+<p><strong>TODO 2</strong>: Add an <code>edit_note</code> tool that takes an <code>index: usize</code> and <code>text: String</code> and replaces that note. Test it with a natural language prompt like “change the meeting note to say 4pm instead.” The LLM will need to call <code>list_notes</code> first to find the right index.</p>
+<p><strong>TODO 3</strong>: <code>add_note</code> already returns the index in its output (<code>"Note saved at index {index}."</code>). Ask the agent to add a note and then ask “what index did you save that at?” — does the LLM remember and report it correctly?</p>
+</blockquote>
+<hr>
+<h2 id="key-apis-36"><a class="header" href="#key-apis-36">Key APIs</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>API</th><th>What it does</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Arc::new(Mutex::new(data))</code></td><td>Creates shared mutable state that can be cloned across owners</td></tr>
+<tr><td><code>Arc::clone(&amp;arc)</code></td><td>Clones the handle (increments refcount, does not copy data)</td></tr>
+<tr><td><code>mutex.lock().unwrap()</code></td><td>Acquires the lock; panics if the mutex is poisoned</td></tr>
+<tr><td><code>vec.remove(i)</code></td><td>Removes and returns the element at index <code>i</code>; panics if out of bounds</td></tr>
+<tr><td>Multiple <code>.tool(t)</code> calls</td><td>Registers multiple tools on one agent; the LLM sees all descriptions</td></tr>
+<tr><td><code>Err(String)</code> from <code>call()</code></td><td>Rig feeds the error string back to the LLM as a tool result</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="mini-project--ai-todo-list"><a class="header" href="#mini-project--ai-todo-list">Mini Project — AI Todo List</a></h1>
+<h2 id="what-youll-build-2"><a class="header" href="#what-youll-build-2">What you’ll build</a></h2>
+<p>A command-line todo list where you talk to an AI agent in plain English. The agent decides which tools to call — you never write parsing logic.</p>
+<pre><code>&gt; add buy milk, eggs, and bread
+Added 3 items: milk (id 1), eggs (id 2), bread (id 3).
+
+&gt; what's on my list?
+  1. [ ] buy milk
+  2. [ ] buy eggs
+  3. [ ] buy bread
+
+&gt; I got the milk and eggs
+Marked milk and eggs as complete.
+
+  1. [x] buy milk
+  2. [x] buy eggs
+  3. [ ] buy bread
+
+&gt; clean up finished items
+Removed 2 completed items. 1 item remaining.
+
+&gt; add dentist appointment and call mom
+Added: dentist appointment (id 4), call mom (id 5).
+
+&gt; quit
+</code></pre>
+<p>Notice “I got the milk and eggs” — the LLM called <code>list_todos()</code> first to find the ids, then called <code>complete_todo()</code> twice. One vague message, three tool calls. That’s the agent loop at work.</p>
+<hr>
+<h2 id="the-state"><a class="header" href="#the-state">The State</a></h2>
+<p>Start with the data structures:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Todo {
+    id: u32,
+    text: String,
+    done: bool,
+}
+
+struct TodoList {
+    items: Vec&lt;Todo&gt;,
+    next_id: u32,
+}
+<span class="boring">}</span></code></pre>
+<p>Add methods on <code>TodoList</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl TodoList {
+    fn new() -&gt; Self {
+        TodoList { items: Vec::new(), next_id: 1 }
+    }
+
+    fn add(&amp;mut self, text: String) -&gt; u32 {
+        let id = self.next_id;
+        self.items.push(Todo { id, text, done: false });
+        self.next_id += 1;
+        id
+    }
+
+    fn complete(&amp;mut self, id: u32) -&gt; Result&lt;(), String&gt; {
+        match self.items.iter_mut().find(|t| t.id == id) {
+            Some(todo) =&gt; { todo.done = true; Ok(()) }
+            None =&gt; Err(format!("No item with id {id}")),
+        }
+    }
+
+    fn uncomplete(&amp;mut self, id: u32) -&gt; Result&lt;(), String&gt; {
+        match self.items.iter_mut().find(|t| t.id == id) {
+            Some(todo) =&gt; { todo.done = false; Ok(()) }
+            None =&gt; Err(format!("No item with id {id}")),
+        }
+    }
+
+    fn clear_done(&amp;mut self) -&gt; usize {
+        let before = self.items.len();
+        self.items.retain(|t| !t.done);
+        before - self.items.len()
+    }
+
+    fn display(&amp;self) -&gt; String {
+        if self.items.is_empty() {
+            return "Your list is empty.".to_string();
+        }
+        self.items
+            .iter()
+            .map(|t| {
+                let mark = if t.done { "x" } else { " " };
+                format!("  {}. [{}] {}", t.id, mark, t.text)
+            })
+            .collect::&lt;Vec&lt;_&gt;&gt;()
+            .join("\n")
+    }
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="the-tools"><a class="header" href="#the-tools">The Tools</a></h2>
+<p>Six tools. Each one holds <code>Arc&lt;Mutex&lt;TodoList&gt;&gt;</code> so they share the same list.</p>
+<h3 id="add_todo"><a class="header" href="#add_todo"><code>add_todo</code></a></h3>
+<p>Adds a single item. Use this when the user mentions one thing.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, Mutex};
+use rig::{completion::ToolDefinition, tool::Tool};
+use serde::Deserialize;
+use serde_json::json;
+
+#[derive(Deserialize)]
+struct AddTodoArgs {
+    text: String,
+}
+
+struct AddTodo {
+    list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
+}
+
+impl Tool for AddTodo {
+    const NAME: &amp;'static str = "add_todo";
+    type Error = String;
+    type Args = AddTodoArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Add a single todo item.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "text": { "type": "string", "description": "The todo item text" }
+                },
+                "required": ["text"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut list = self.list.lock().unwrap();
+        let id = list.add(args.text.clone());
+        Ok(format!("Added: {} (id {})", args.text, id))
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="add_many"><a class="header" href="#add_many"><code>add_many</code></a></h3>
+<p>Batch-adds multiple items from one request. This is what handles “add milk, eggs, and bread” in a single tool call.</p>
+<p>The JSON schema uses an array type. serde deserializes it into <code>Vec&lt;String&gt;</code> automatically.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Deserialize)]
+struct AddManyArgs {
+    items: Vec&lt;String&gt;,
+}
+
+struct AddMany {
+    list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
+}
+
+impl Tool for AddMany {
+    const NAME: &amp;'static str = "add_many";
+    type Error = String;
+    type Args = AddManyArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Add multiple todo items at once.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": { "type": "string" },
+                        "description": "List of todo items to add"
+                    }
+                },
+                "required": ["items"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut list = self.list.lock().unwrap();
+        let mut results = Vec::new();
+        for text in args.items {
+            let id = list.add(text.clone());
+            results.push(format!("{} (id {})", text, id));
+        }
+        Ok(format!("Added {}: {}", results.len(), results.join(", ")))
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="complete_todo-and-uncomplete_todo"><a class="header" href="#complete_todo-and-uncomplete_todo"><code>complete_todo</code> and <code>uncomplete_todo</code></a></h3>
+<p>Mark items done or undone by id.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Deserialize)]
+struct TodoIdArgs {
+    id: u32,
+}
+
+struct CompleteTodo {
+    list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
+}
+
+impl Tool for CompleteTodo {
+    const NAME: &amp;'static str = "complete_todo";
+    type Error = String;
+    type Args = TodoIdArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Mark a todo item as complete by id.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "id": { "type": "integer", "description": "The todo item id" }
+                },
+                "required": ["id"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut list = self.list.lock().unwrap();
+        list.complete(args.id)?;
+        Ok(format!("Marked item {} as complete.", args.id))
+    }
+}
+
+struct UncompleteTodo {
+    list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
+}
+
+impl Tool for UncompleteTodo {
+    const NAME: &amp;'static str = "uncomplete_todo";
+    type Error = String;
+    type Args = TodoIdArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Mark a todo item as not complete by id.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "id": { "type": "integer", "description": "The todo item id" }
+                },
+                "required": ["id"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut list = self.list.lock().unwrap();
+        list.uncomplete(args.id)?;
+        Ok(format!("Marked item {} as incomplete.", args.id))
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="clear_done"><a class="header" href="#clear_done"><code>clear_done</code></a></h3>
+<p>Removes all completed items. Takes no arguments — the schema is an empty object.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Deserialize)]
+struct NoArgs {}
+
+struct ClearDone {
+    list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
+}
+
+impl Tool for ClearDone {
+    const NAME: &amp;'static str = "clear_done";
+    type Error = String;
+    type Args = NoArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Remove all completed todo items.".to_string(),
+            parameters: json!({ "type": "object", "properties": {} }),
+        }
+    }
+
+    async fn call(&amp;self, _args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut list = self.list.lock().unwrap();
+        let removed = list.clear_done();
+        Ok(format!("Removed {} completed item(s). {} remaining.", removed, list.items.len()))
+    }
+}
+<span class="boring">}</span></code></pre>
+<h3 id="list_todos"><a class="header" href="#list_todos"><code>list_todos</code></a></h3>
+<p>Returns the current list as a formatted string. This is a read-only query tool — the LLM calls it to see what’s there before deciding what to do.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct ListTodos {
+    list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
+}
+
+impl Tool for ListTodos {
+    const NAME: &amp;'static str = "list_todos";
+    type Error = String;
+    type Args = NoArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "List all current todo items with their ids and completion status.".to_string(),
+            parameters: json!({ "type": "object", "properties": {} }),
+        }
+    }
+
+    async fn call(&amp;self, _args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let list = self.list.lock().unwrap();
+        Ok(list.display())
+    }
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="wiring-the-agent"><a class="header" href="#wiring-the-agent">Wiring the Agent</a></h2>
+<p>Create one <code>Arc&lt;Mutex&lt;TodoList&gt;&gt;</code> and clone it into each tool:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rig::providers::openai;
+
+let client = openai::Client::from_env();
+let list = Arc::new(Mutex::new(TodoList::new()));
+
+let agent = client
+    .agent(openai::GPT_4O_MINI)
+    .preamble("You manage a todo list. Use the available tools to add, complete, and remove items. When the user mentions completing items by name, first call list_todos to find their ids.")
+    .tool(AddTodo { list: list.clone() })
+    .tool(AddMany { list: list.clone() })
+    .tool(CompleteTodo { list: list.clone() })
+    .tool(UncompleteTodo { list: list.clone() })
+    .tool(ClearDone { list: list.clone() })
+    .tool(ListTodos { list: list.clone() })
+    .build();
+<span class="boring">}</span></code></pre>
+<p>The preamble tells the LLM to call <code>list_todos</code> when it needs to resolve item names to ids. Without this instruction the model might hallucinate ids. This is prompt engineering — the right instruction makes the agent reliable without any extra code.</p>
+<hr>
+<h2 id="the-main-loop"><a class="header" href="#the-main-loop">The Main Loop</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::io::Write;
+
+loop {
+    print!("&gt; ");
+    std::io::stdout().flush()?;
+
+    let mut input = String::new();
+    std::io::stdin().read_line(&amp;mut input)?;
+    let input = input.trim();
+
+    if input == "quit" || input == "exit" { break; }
+    if input.is_empty() { continue; }
+
+    let response = agent.prompt(input).await?;
+    println!("{response}\n");
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="full-code-9"><a class="header" href="#full-code-9">Full code</a></h2>
+<pre class="playground"><code class="language-rust">use std::sync::{Arc, Mutex};
+use std::io::Write;
+
+use anyhow::Result;
+use rig::{completion::ToolDefinition, providers::openai, tool::Tool};
+use serde::Deserialize;
+use serde_json::json;
+
+struct Todo {
+    id: u32,
+    text: String,
+    done: bool,
+}
+
+struct TodoList {
+    items: Vec&lt;Todo&gt;,
+    next_id: u32,
+}
+
+impl TodoList {
+    fn new() -&gt; Self {
+        TodoList { items: Vec::new(), next_id: 1 }
+    }
+
+    fn add(&amp;mut self, text: String) -&gt; u32 {
+        let id = self.next_id;
+        self.items.push(Todo { id, text, done: false });
+        self.next_id += 1;
+        id
+    }
+
+    fn complete(&amp;mut self, id: u32) -&gt; Result&lt;(), String&gt; {
+        match self.items.iter_mut().find(|t| t.id == id) {
+            Some(todo) =&gt; { todo.done = true; Ok(()) }
+            None =&gt; Err(format!("No item with id {id}")),
+        }
+    }
+
+    fn uncomplete(&amp;mut self, id: u32) -&gt; Result&lt;(), String&gt; {
+        match self.items.iter_mut().find(|t| t.id == id) {
+            Some(todo) =&gt; { todo.done = false; Ok(()) }
+            None =&gt; Err(format!("No item with id {id}")),
+        }
+    }
+
+    fn clear_done(&amp;mut self) -&gt; usize {
+        let before = self.items.len();
+        self.items.retain(|t| !t.done);
+        before - self.items.len()
+    }
+
+    fn display(&amp;self) -&gt; String {
+        if self.items.is_empty() {
+            return "Your list is empty.".to_string();
+        }
+        self.items
+            .iter()
+            .map(|t| {
+                let mark = if t.done { "x" } else { " " };
+                format!("  {}. [{}] {}", t.id, mark, t.text)
+            })
+            .collect::&lt;Vec&lt;_&gt;&gt;()
+            .join("\n")
+    }
+}
+
+#[derive(Deserialize)]
+struct AddTodoArgs {
+    text: String,
+}
+
+struct AddTodo {
+    list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
+}
+
+impl Tool for AddTodo {
+    const NAME: &amp;'static str = "add_todo";
+    type Error = String;
+    type Args = AddTodoArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Add a single todo item.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "text": { "type": "string", "description": "The todo item text" }
+                },
+                "required": ["text"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut list = self.list.lock().unwrap();
+        let id = list.add(args.text.clone());
+        Ok(format!("Added: {} (id {})", args.text, id))
+    }
+}
+
+#[derive(Deserialize)]
+struct AddManyArgs {
+    items: Vec&lt;String&gt;,
+}
+
+struct AddMany {
+    list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
+}
+
+impl Tool for AddMany {
+    const NAME: &amp;'static str = "add_many";
+    type Error = String;
+    type Args = AddManyArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Add multiple todo items at once.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": { "type": "string" },
+                        "description": "List of todo items to add"
+                    }
+                },
+                "required": ["items"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut list = self.list.lock().unwrap();
+        let mut results = Vec::new();
+        for text in args.items {
+            let id = list.add(text.clone());
+            results.push(format!("{} (id {})", text, id));
+        }
+        Ok(format!("Added {}: {}", results.len(), results.join(", ")))
+    }
+}
+
+#[derive(Deserialize)]
+struct TodoIdArgs {
+    id: u32,
+}
+
+struct CompleteTodo {
+    list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
+}
+
+impl Tool for CompleteTodo {
+    const NAME: &amp;'static str = "complete_todo";
+    type Error = String;
+    type Args = TodoIdArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Mark a todo item as complete by id.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "id": { "type": "integer", "description": "The todo item id" }
+                },
+                "required": ["id"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut list = self.list.lock().unwrap();
+        list.complete(args.id)?;
+        Ok(format!("Marked item {} as complete.", args.id))
+    }
+}
+
+struct UncompleteTodo {
+    list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
+}
+
+impl Tool for UncompleteTodo {
+    const NAME: &amp;'static str = "uncomplete_todo";
+    type Error = String;
+    type Args = TodoIdArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Mark a todo item as not complete by id.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "id": { "type": "integer", "description": "The todo item id" }
+                },
+                "required": ["id"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut list = self.list.lock().unwrap();
+        list.uncomplete(args.id)?;
+        Ok(format!("Marked item {} as incomplete.", args.id))
+    }
+}
+
+#[derive(Deserialize)]
+struct NoArgs {}
+
+struct ClearDone {
+    list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
+}
+
+impl Tool for ClearDone {
+    const NAME: &amp;'static str = "clear_done";
+    type Error = String;
+    type Args = NoArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Remove all completed todo items.".to_string(),
+            parameters: json!({ "type": "object", "properties": {} }),
+        }
+    }
+
+    async fn call(&amp;self, _args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut list = self.list.lock().unwrap();
+        let removed = list.clear_done();
+        Ok(format!("Removed {} completed item(s). {} remaining.", removed, list.items.len()))
+    }
+}
+
+struct ListTodos {
+    list: Arc&lt;Mutex&lt;TodoList&gt;&gt;,
+}
+
+impl Tool for ListTodos {
+    const NAME: &amp;'static str = "list_todos";
+    type Error = String;
+    type Args = NoArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "List all current todo items with their ids and completion status.".to_string(),
+            parameters: json!({ "type": "object", "properties": {} }),
+        }
+    }
+
+    async fn call(&amp;self, _args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let list = self.list.lock().unwrap();
+        Ok(list.display())
+    }
+}
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;()&gt; {
+    let client = openai::Client::from_env();
+    let list = Arc::new(Mutex::new(TodoList::new()));
+
+    let agent = client
+        .agent(openai::GPT_4O_MINI)
+        .preamble("You manage a todo list. Use the available tools to add, complete, and remove items. When the user mentions completing items by name, first call list_todos to find their ids.")
+        .tool(AddTodo { list: list.clone() })
+        .tool(AddMany { list: list.clone() })
+        .tool(CompleteTodo { list: list.clone() })
+        .tool(UncompleteTodo { list: list.clone() })
+        .tool(ClearDone { list: list.clone() })
+        .tool(ListTodos { list: list.clone() })
+        .build();
+
+    println!("AI Todo List — type 'quit' to exit\n");
+
+    loop {
+        print!("&gt; ");
+        std::io::stdout().flush()?;
+
+        let mut input = String::new();
+        std::io::stdin().read_line(&amp;mut input)?;
+        let input = input.trim();
+
+        if input == "quit" || input == "exit" { break; }
+        if input.is_empty() { continue; }
+
+        let response = agent.prompt(input).await?;
+        println!("{response}\n");
+    }
+
+    Ok(())
+}</code></pre>
+<p>Your <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[package]
+name = "ai-todo"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rig-core = "0.6"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+</code></pre>
+<p>Set your API key and run:</p>
+<pre><code class="language-sh">export OPENAI_API_KEY=sk-...
+cargo run
+</code></pre>
+<hr>
+<h2 id="what-to-notice"><a class="header" href="#what-to-notice">What to notice</a></h2>
+<p>“I got the milk and eggs” produced three tool calls from one sentence: <code>list_todos()</code> to find the ids, then <code>complete_todo(1)</code> and <code>complete_todo(2)</code>. The agent loop ran inside rig, invisibly. The code you wrote didn’t parse the sentence or figure out the ids — the LLM did.</p>
+<p><code>list_todos</code> is a query tool. It has no side effects. The LLM uses it to read state before deciding what mutations to make. If you build anything where the agent needs to reference current state before acting — a physics sandbox, a calendar, a file system — you’ll reach for this same pattern.</p>
+<p><code>add_many</code> takes <code>Vec&lt;String&gt;</code>. The JSON schema declares <code>"type": "array"</code> and serde handles the rest. JSON arrays become Rust Vecs with no extra code on your side.</p>
+<p>The state lives in Rust — <code>Arc&lt;Mutex&lt;TodoList&gt;&gt;</code> — not in the LLM. The LLM has no memory of previous turns beyond what the tools return. If you restart the program, the list is empty. The LLM decides what mutations to make; Rust owns the data.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="reading-stdlib-docs-offline"><a class="header" href="#reading-stdlib-docs-offline">Reading stdlib docs offline</a></h1>
 <p>The course server has no internet connection — and you do not need one. The full Rust documentation is available locally.</p>

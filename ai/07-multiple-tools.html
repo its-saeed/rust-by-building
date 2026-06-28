@@ -1,0 +1,675 @@
+<!DOCTYPE HTML>
+<html lang="en" class="rust sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Lesson 3 — Multiple Tools - Rust by Building</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-0392ca55.css">
+        <link rel="stylesheet" href="../css/chrome-fc474251.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "rust";
+            const default_dark_theme = "ayu";
+            window.path_to_searchindex_js = "../searchindex-280f791f.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc-41e41280.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Rust by Building</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="lesson-3--multiple-tools"><a class="header" href="#lesson-3--multiple-tools">Lesson 3 — Multiple Tools</a></h1>
+<blockquote>
+<p><strong>Goal</strong>: Give the agent several tools with shared state. Observe the LLM picking the right one.</p>
+<p><strong>Concepts</strong>: <code>Arc&lt;Mutex&lt;T&gt;&gt;</code> for shared state, multiple tools, complex args with <code>serde</code>, error handling from tools.</p>
+</blockquote>
+<hr>
+<h2 id="step-1--multiple-tools-one-agent"><a class="header" href="#step-1--multiple-tools-one-agent">Step 1 — Multiple tools, one agent</a></h2>
+<p>When the agent has several tools, the LLM sees all of their descriptions at once and picks whichever one fits the request. This lesson builds a note-taking agent with three tools: <code>add_note</code>, <code>list_notes</code>, and <code>delete_note</code>.</p>
+<p>The challenge: all three tools need to read and write the same list of notes. In lesson 2, <code>Calculator</code> was stateless — no fields, no shared data. Here every tool struct must hold a handle to the same storage.</p>
+<hr>
+<h2 id="step-2--the-shared-state"><a class="header" href="#step-2--the-shared-state">Step 2 — The shared state</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::{Arc, Mutex};
+
+type Notes = Arc&lt;Mutex&lt;Vec&lt;String&gt;&gt;&gt;;
+<span class="boring">}</span></code></pre>
+<p>You used <code>Arc&lt;Mutex&lt;T&gt;&gt;</code> in the threading chapter for the same reason: multiple owners, one piece of mutable data. The pattern is identical here — the only difference is that the “threads” are tool calls arriving from the LLM rather than OS threads you spawned yourself.</p>
+<p><code>Arc</code> lets you clone the handle cheaply. Each tool struct holds one clone. They all point to the same allocation.</p>
+<p><code>Mutex</code> ensures only one tool can modify the notes at a time. Because rig calls tools one at a time in a single-threaded async context this will not block in practice, but the type system requires it — you cannot hand out <code>&amp;mut Vec&lt;String&gt;</code> to multiple owners without it.</p>
+<hr>
+<h2 id="step-3--define-all-three-tools"><a class="header" href="#step-3--define-all-three-tools">Step 3 — Define all three tools</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use serde::Deserialize;
+use rig::{completion::ToolDefinition, tool::Tool};
+use serde_json::json;
+
+// --- add_note ---
+
+#[derive(Deserialize)]
+struct AddNoteArgs {
+    text: String,
+}
+
+struct AddNote {
+    notes: Notes,
+}
+
+impl Tool for AddNote {
+    const NAME: &amp;'static str = "add_note";
+
+    type Error = String;
+    type Args = AddNoteArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Save a note. Call this when the user wants to remember something."
+                .to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "description": "The note text to save"
+                    }
+                },
+                "required": ["text"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut notes = self.notes.lock().unwrap();
+        notes.push(args.text);
+        let index = notes.len() - 1;
+        Ok(format!("Note saved at index {index}."))
+    }
+}
+
+// --- list_notes ---
+
+#[derive(Deserialize)]
+struct ListNotesArgs {}
+
+struct ListNotes {
+    notes: Notes,
+}
+
+impl Tool for ListNotes {
+    const NAME: &amp;'static str = "list_notes";
+
+    type Error = String;
+    type Args = ListNotesArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "List all saved notes with their index numbers.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {}
+            }),
+        }
+    }
+
+    async fn call(&amp;self, _args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let notes = self.notes.lock().unwrap();
+        if notes.is_empty() {
+            return Ok("No notes saved.".to_string());
+        }
+        let lines: Vec&lt;String&gt; = notes
+            .iter()
+            .enumerate()
+            .map(|(i, n)| format!("{i}: {n}"))
+            .collect();
+        Ok(lines.join("\n"))
+    }
+}
+
+// --- delete_note ---
+
+#[derive(Deserialize)]
+struct DeleteNoteArgs {
+    index: usize,
+}
+
+struct DeleteNote {
+    notes: Notes,
+}
+
+impl Tool for DeleteNote {
+    const NAME: &amp;'static str = "delete_note";
+
+    type Error = String;
+    type Args = DeleteNoteArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Delete a note by its index number.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "index": {
+                        "type": "integer",
+                        "description": "The index of the note to delete"
+                    }
+                },
+                "required": ["index"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut notes = self.notes.lock().unwrap();
+        if args.index &gt;= notes.len() {
+            return Err(format!(
+                "Index {} does not exist. There are {} notes (indices 0–{}).",
+                args.index,
+                notes.len(),
+                notes.len().saturating_sub(1)
+            ));
+        }
+        let removed = notes.remove(args.index);
+        Ok(format!("Deleted note {}: \"{removed}\"", args.index))
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>Each struct holds a clone of <code>Notes</code>. They all point to the same <code>Vec&lt;String&gt;</code>. <code>AddNote::call</code> pushes; <code>ListNotes::call</code> reads; <code>DeleteNote::call</code> removes by index.</p>
+<hr>
+<h2 id="step-4--wire-them-up"><a class="header" href="#step-4--wire-them-up">Step 4 — Wire them up</a></h2>
+<pre class="playground"><code class="language-rust">use rig::providers::openai;
+
+#[tokio::main]
+async fn main() -&gt; anyhow::Result&lt;()&gt; {
+    let client = openai::Client::from_env();
+    let notes: Notes = Arc::new(Mutex::new(Vec::new()));
+
+    let agent = client
+        .agent(openai::GPT_4O_MINI)
+        .preamble(
+            "You are a note-taking assistant. \
+             Use the provided tools to add, list, and delete notes. \
+             Always confirm what you did.",
+        )
+        .tool(AddNote { notes: Arc::clone(&amp;notes) })
+        .tool(ListNotes { notes: Arc::clone(&amp;notes) })
+        .tool(DeleteNote { notes: Arc::clone(&amp;notes) })
+        .build();</code></pre>
+<p><code>Arc::clone(&amp;notes)</code> is cheap — it increments a reference count, not the data. All three tool instances share one <code>Vec&lt;String&gt;</code>.</p>
+<hr>
+<h2 id="step-5--test-the-llms-tool-selection"><a class="header" href="#step-5--test-the-llms-tool-selection">Step 5 — Test the LLM’s tool selection</a></h2>
+<p>Add a REPL and try these prompts in order:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>    use std::io::{self, BufRead, Write};
+
+    let stdin = io::stdin();
+
+    loop {
+        print!("&gt; ");
+        io::stdout().flush()?;
+
+        let mut line = String::new();
+        stdin.lock().read_line(&amp;mut line)?;
+        let input = line.trim();
+
+        if input.is_empty() {
+            continue;
+        }
+
+        let response = agent.prompt(input).await?;
+        println!("{response}\n");
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>Try these prompts and watch which tools fire:</p>
+<pre><code>&gt; remember that the meeting is at 3pm
+</code></pre>
+<p>The LLM calls <code>add_note</code> with <code>"meeting is at 3pm"</code>.</p>
+<pre><code>&gt; what notes do I have?
+</code></pre>
+<p>The LLM calls <code>list_notes</code> and formats the result.</p>
+<pre><code>&gt; forget the meeting note
+</code></pre>
+<p>This is the interesting case. The LLM does not know the index. It calls <code>list_notes</code> first to find it, then calls <code>delete_note</code> with the correct index. Two tool calls, one user message. This is the agent loop running automatically — you wrote no control flow for it.</p>
+<hr>
+<h2 id="step-6--error-handling-from-tools"><a class="header" href="#step-6--error-handling-from-tools">Step 6 — Error handling from tools</a></h2>
+<p>Return <code>Err(String)</code> from <code>call()</code> when something is wrong. Rig feeds the error message back to the LLM as a tool result:</p>
+<pre><code>&gt; delete note 99
+</code></pre>
+<p><code>DeleteNote::call</code> returns:</p>
+<pre><code>Err("Index 99 does not exist. There are 2 notes (indices 0–1).")
+</code></pre>
+<p>Rig sends this to the API. The LLM reads the error and tells the user:</p>
+<pre><code>There is no note at index 99. You currently have notes at indices 0 and 1.
+</code></pre>
+<p>The user gets a sensible explanation. You wrote no error-presentation code — the error message you returned from <code>call</code> was enough for the LLM to construct the reply.</p>
+<p>The key: write error messages for the LLM to read, not for a human reading a stack trace. Complete sentences work better than codes.</p>
+<hr>
+<h2 id="full-code"><a class="header" href="#full-code">Full code</a></h2>
+<pre class="playground"><code class="language-rust">use rig::providers::openai;
+use rig::{completion::ToolDefinition, tool::Tool};
+use serde::Deserialize;
+use serde_json::json;
+use std::io::{self, BufRead, Write};
+use std::sync::{Arc, Mutex};
+
+type Notes = Arc&lt;Mutex&lt;Vec&lt;String&gt;&gt;&gt;;
+
+// --- add_note ---
+
+#[derive(Deserialize)]
+struct AddNoteArgs {
+    text: String,
+}
+
+struct AddNote {
+    notes: Notes,
+}
+
+impl Tool for AddNote {
+    const NAME: &amp;'static str = "add_note";
+
+    type Error = String;
+    type Args = AddNoteArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Save a note. Call this when the user wants to remember something."
+                .to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "description": "The note text to save"
+                    }
+                },
+                "required": ["text"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut notes = self.notes.lock().unwrap();
+        notes.push(args.text);
+        let index = notes.len() - 1;
+        Ok(format!("Note saved at index {index}."))
+    }
+}
+
+// --- list_notes ---
+
+#[derive(Deserialize)]
+struct ListNotesArgs {}
+
+struct ListNotes {
+    notes: Notes,
+}
+
+impl Tool for ListNotes {
+    const NAME: &amp;'static str = "list_notes";
+
+    type Error = String;
+    type Args = ListNotesArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "List all saved notes with their index numbers.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {}
+            }),
+        }
+    }
+
+    async fn call(&amp;self, _args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let notes = self.notes.lock().unwrap();
+        if notes.is_empty() {
+            return Ok("No notes saved.".to_string());
+        }
+        let lines: Vec&lt;String&gt; = notes
+            .iter()
+            .enumerate()
+            .map(|(i, n)| format!("{i}: {n}"))
+            .collect();
+        Ok(lines.join("\n"))
+    }
+}
+
+// --- delete_note ---
+
+#[derive(Deserialize)]
+struct DeleteNoteArgs {
+    index: usize,
+}
+
+struct DeleteNote {
+    notes: Notes,
+}
+
+impl Tool for DeleteNote {
+    const NAME: &amp;'static str = "delete_note";
+
+    type Error = String;
+    type Args = DeleteNoteArgs;
+    type Output = String;
+
+    async fn definition(&amp;self, _prompt: String) -&gt; ToolDefinition {
+        ToolDefinition {
+            name: Self::NAME.to_string(),
+            description: "Delete a note by its index number.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "index": {
+                        "type": "integer",
+                        "description": "The index of the note to delete"
+                    }
+                },
+                "required": ["index"]
+            }),
+        }
+    }
+
+    async fn call(&amp;self, args: Self::Args) -&gt; Result&lt;Self::Output, Self::Error&gt; {
+        let mut notes = self.notes.lock().unwrap();
+        if args.index &gt;= notes.len() {
+            return Err(format!(
+                "Index {} does not exist. There are {} notes (indices 0–{}).",
+                args.index,
+                notes.len(),
+                notes.len().saturating_sub(1)
+            ));
+        }
+        let removed = notes.remove(args.index);
+        Ok(format!("Deleted note {}: \"{removed}\"", args.index))
+    }
+}
+
+// --- main ---
+
+#[tokio::main]
+async fn main() -&gt; anyhow::Result&lt;()&gt; {
+    let client = openai::Client::from_env();
+    let notes: Notes = Arc::new(Mutex::new(Vec::new()));
+
+    let agent = client
+        .agent(openai::GPT_4O_MINI)
+        .preamble(
+            "You are a note-taking assistant. \
+             Use the provided tools to add, list, and delete notes. \
+             Always confirm what you did.",
+        )
+        .tool(AddNote { notes: Arc::clone(&amp;notes) })
+        .tool(ListNotes { notes: Arc::clone(&amp;notes) })
+        .tool(DeleteNote { notes: Arc::clone(&amp;notes) })
+        .build();
+
+    let stdin = io::stdin();
+
+    loop {
+        print!("&gt; ");
+        io::stdout().flush()?;
+
+        let mut line = String::new();
+        stdin.lock().read_line(&amp;mut line)?;
+        let input = line.trim();
+
+        if input.is_empty() {
+            continue;
+        }
+
+        let response = agent.prompt(input).await?;
+        println!("{response}\n");
+    }
+}</code></pre>
+<hr>
+<h2 id="exercises"><a class="header" href="#exercises">Exercises</a></h2>
+<blockquote>
+<p><strong>TODO 1</strong>: Add a <code>clear_notes</code> tool that removes all notes at once. It takes no arguments. The LLM should call it when asked to “start fresh” or “delete everything.”</p>
+<p><strong>TODO 2</strong>: Add an <code>edit_note</code> tool that takes an <code>index: usize</code> and <code>text: String</code> and replaces that note. Test it with a natural language prompt like “change the meeting note to say 4pm instead.” The LLM will need to call <code>list_notes</code> first to find the right index.</p>
+<p><strong>TODO 3</strong>: <code>add_note</code> already returns the index in its output (<code>"Note saved at index {index}."</code>). Ask the agent to add a note and then ask “what index did you save that at?” — does the LLM remember and report it correctly?</p>
+</blockquote>
+<hr>
+<h2 id="key-apis"><a class="header" href="#key-apis">Key APIs</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>API</th><th>What it does</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Arc::new(Mutex::new(data))</code></td><td>Creates shared mutable state that can be cloned across owners</td></tr>
+<tr><td><code>Arc::clone(&amp;arc)</code></td><td>Clones the handle (increments refcount, does not copy data)</td></tr>
+<tr><td><code>mutex.lock().unwrap()</code></td><td>Acquires the lock; panics if the mutex is poisoned</td></tr>
+<tr><td><code>vec.remove(i)</code></td><td>Removes and returns the element at index <code>i</code>; panics if out of bounds</td></tr>
+<tr><td>Multiple <code>.tool(t)</code> calls</td><td>Registers multiple tools on one agent; the LLM sees all descriptions</td></tr>
+<tr><td><code>Err(String)</code> from <code>call()</code></td><td>Rig feeds the error string back to the LLM as a tool result</td></tr>
+</tbody>
+</table>
+</div>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../ai/06-first-tool.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../ai/08-todo-list.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../ai/06-first-tool.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../ai/08-todo-list.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
+
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-c22b7243.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
