@@ -543,6 +543,7 @@ let shifted = (letter as u8 + 3) as char;
 <li><code>75 as char</code> → <code>'K'</code></li>
 </ol>
 <p>The parentheses around <code>letter as u8 + 3</code> matter — they make sure the addition happens before the final cast to <code>char</code>.</p>
+<p><img src="images/caesar/caesar-for-a.png" alt="Shifting ‘A’ by key 3: cast to u8 gives 65, add 3 gives 68, cast back to char gives ‘D’"></p>
 <hr>
 <h2 id="what-about-z--3"><a class="header" href="#what-about-z--3">What about <code>'Z' + 3</code>?</a></h2>
 <p>If we naively shift <code>'Z'</code> (90) by 3:</p>
