@@ -394,7 +394,7 @@ let agent = client
     .build();
 ```
 
-`.max_turns(10)` sets how many tool-call rounds the agent is allowed per prompt. Each round is: LLM decides to call a tool → tool runs → result goes back to LLM. Completing a todo by name requires two rounds — `list_todos` then `complete_todo` — so without this, rig hits the default limit of 0 and returns a `MaxTurnError` before it can act. Ten rounds is plenty for any realistic todo operation.
+`.default_max_turns(10)` sets how many tool-call rounds the agent is allowed per prompt. Each round is: LLM decides to call a tool → tool runs → result goes back to LLM. Completing a todo by name requires two rounds — `list_todos` then `complete_todo` — so without this, rig hits the default limit of 0 and returns a `MaxTurnError` before it can act. Ten rounds is plenty for any realistic todo operation.
 
 The preamble does two jobs. First, it prevents the most common mistake: "I got milk" is ambiguous — it could mean "add a milk item" or "I already bought milk". Without explicit rules the LLM defaults to adding, so you end up with duplicate items. The rules tell it to treat "I got X" as completion, not creation. Second, it enforces the query-before-act pattern: always call `list_todos` before completing or deleting by name, because the LLM has no memory of previous turns and cannot invent ids. This is prompt engineering — no code changes, just instructions, but the difference in behavior is large.
 
@@ -717,7 +717,7 @@ async fn main() -> Result<()> {
         .tool(UncompleteTodo { list: list.clone() })
         .tool(ClearDone { list: list.clone() })
         .tool(ListTodos { list: list.clone() })
-        .max_turns(10)
+        .default_max_turns(10)
         .build();
 
     println!("AI Todo List — type 'quit' to exit\n");
