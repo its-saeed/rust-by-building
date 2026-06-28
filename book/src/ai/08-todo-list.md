@@ -377,6 +377,7 @@ Create one `Arc<Mutex<TodoList>>` and clone it into each tool:
 
 ```rust
 use rig::client::{CompletionClient, ProviderClient};
+use rig::completion::Prompt;
 use rig::providers::openai::Client;
 
 let client = Client::from_env()?;
@@ -431,6 +432,7 @@ use std::io::Write;
 
 use anyhow::Result;
 use rig::client::{CompletionClient, ProviderClient};
+use rig::completion::Prompt;
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde::Deserialize;
