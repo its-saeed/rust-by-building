@@ -114,7 +114,7 @@ Adds a single item. Use this when the user mentions one thing.
 ```rust
 use std::sync::{Arc, Mutex};
 use rig::{completion::ToolDefinition, tool::Tool};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 #[derive(Deserialize)]
@@ -218,7 +218,13 @@ impl Tool for AddMany {
 
 ### `complete_todo` and `uncomplete_todo`
 
-Mark items done or undone by id.
+Mark items done or undone by id. The `call()` method uses `.map_err(ToolError)` to convert the `String` error from `TodoList::complete` into a `ToolError`:
+
+```rust
+list.complete(args.id).map_err(ToolError)?;
+```
+
+`TodoList::complete` returns `Result<(), String>`. The tool's `call` must return `Result<Self::Output, Self::Error>` — that is, `Result<String, ToolError>`. The two error types are different, so `?` alone cannot convert them. `.map_err(f)` applies `f` to the error variant before propagating: `map_err(ToolError)` wraps the `String` in `ToolError(...)`, making the types match.
 
 ```rust
 #[derive(Deserialize)]
@@ -257,7 +263,7 @@ impl Tool for CompleteTodo {
 
     async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
         let mut list = self.list.lock().unwrap();
-        list.complete(args.id)?;
+        list.complete(args.id).map_err(ToolError)?;
         Ok(format!("Marked item {} as complete.", args.id))
     }
 }
@@ -289,7 +295,7 @@ impl Tool for UncompleteTodo {
 
     async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
         let mut list = self.list.lock().unwrap();
-        list.uncomplete(args.id)?;
+        list.uncomplete(args.id).map_err(ToolError)?;
         Ok(format!("Marked item {} as incomplete.", args.id))
     }
 }
@@ -383,7 +389,7 @@ let client = Client::from_env()?;
 let list = Arc::new(Mutex::new(TodoList::new()));
 
 let agent = client
-    .agent(openai::GPT_4O_MINI)
+    .agent("gpt-4o-mini")
     .preamble("You manage a todo list. Use the available tools to add, complete, and remove items. When the user mentions completing items by name, first call list_todos to find their ids.")
     .tool(AddTodo { list: list.clone() })
     .tool(AddMany { list: list.clone() })
@@ -431,7 +437,7 @@ use anyhow::Result;
 use rig::client::ProviderClient;
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 struct Todo {
@@ -610,7 +616,7 @@ impl Tool for CompleteTodo {
 
     async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
         let mut list = self.list.lock().unwrap();
-        list.complete(args.id)?;
+        list.complete(args.id).map_err(ToolError)?;
         Ok(format!("Marked item {} as complete.", args.id))
     }
 }
@@ -642,7 +648,7 @@ impl Tool for UncompleteTodo {
 
     async fn call(&self, args: Self::Args) -> Result<Self::Output, Self::Error> {
         let mut list = self.list.lock().unwrap();
-        list.uncomplete(args.id)?;
+        list.uncomplete(args.id).map_err(ToolError)?;
         Ok(format!("Marked item {} as incomplete.", args.id))
     }
 }
@@ -707,7 +713,7 @@ async fn main() -> Result<()> {
     let list = Arc::new(Mutex::new(TodoList::new()));
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You manage a todo list. Use the available tools to add, complete, and remove items. When the user mentions completing items by name, first call list_todos to find their ids.")
         .tool(AddTodo { list: list.clone() })
         .tool(AddMany { list: list.clone() })

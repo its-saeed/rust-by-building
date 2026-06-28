@@ -39,7 +39,7 @@ You might wonder: if tools are never called concurrently, can we use `Rc<RefCell
 ## Step 3 — Define all three tools
 
 ```rust
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use rig::{completion::ToolDefinition, tool::Tool};
 use serde_json::json;
 
@@ -202,7 +202,7 @@ async fn main() -> anyhow::Result<()> {
     let notes: Notes = Arc::new(Mutex::new(Vec::new()));
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble(
             "You are a note-taking assistant. \
              Use the provided tools to add, list, and delete notes. \
@@ -296,7 +296,7 @@ The key: write error messages for the LLM to read, not for a human reading a sta
 use rig::client::ProviderClient;
 use rig::providers::openai::Client;
 use rig::{completion::ToolDefinition, tool::Tool};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::io::{self, BufRead, Write};
 use std::sync::{Arc, Mutex};
@@ -453,7 +453,7 @@ async fn main() -> anyhow::Result<()> {
     let notes: Notes = Arc::new(Mutex::new(Vec::new()));
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble(
             "You are a note-taking assistant. \
              Use the provided tools to add, list, and delete notes. \

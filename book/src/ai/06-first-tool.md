@@ -194,7 +194,7 @@ async fn main() -> anyhow::Result<()> {
     let client = Client::from_env()?;
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You are a calculator assistant. Use the calculator tool for all arithmetic.")
         .tool(Calculator)
         .build();
@@ -308,7 +308,7 @@ async fn main() -> anyhow::Result<()> {
     let client = Client::from_env()?;
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You are a calculator assistant. Use the calculator tool for all arithmetic.")
         .tool(Calculator)
         .build();

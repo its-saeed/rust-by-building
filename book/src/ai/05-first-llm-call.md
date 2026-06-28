@@ -46,7 +46,7 @@ async fn main() -> anyhow::Result<()> {
     let client = Client::from_env()?;
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You are a helpful assistant.")
         .build();
 
@@ -71,12 +71,12 @@ Compare these two agents:
 
 ```rust
 let generic = client
-    .agent(openai::GPT_4O_MINI)
+    .agent("gpt-4o-mini")
     .preamble("You are a helpful assistant.")
     .build();
 
 let specialist = client
-    .agent(openai::GPT_4O_MINI)
+    .agent("gpt-4o-mini")
     .preamble("You are a Rust expert. Answer every question with Rust code examples.")
     .build();
 
@@ -125,7 +125,7 @@ async fn main() -> anyhow::Result<()> {
     let client = Client::from_env()?;
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You are a helpful assistant.")
         .build();
 
@@ -169,7 +169,7 @@ async fn main() -> anyhow::Result<()> {
     let client = Client::from_env()?;
 
     let agent = client
-        .agent(openai::GPT_4O_MINI)
+        .agent("gpt-4o-mini")
         .preamble("You are a helpful assistant.")
         .build();
 
@@ -216,4 +216,4 @@ async fn main() -> anyhow::Result<()> {
 | `.preamble(text)` | Sets the system prompt — sent before every user message |
 | `.build()` | Finalises the agent |
 | `agent.prompt(text).await` | Sends a user message and returns the assistant's reply as a `String` |
-| `openai::GPT_4O_MINI` | Constant for the `"gpt-4o-mini"` model identifier |
+| `"gpt-4o-mini"` | Constant for the `"gpt-4o-mini"` model identifier |
