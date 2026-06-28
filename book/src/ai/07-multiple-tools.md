@@ -30,7 +30,9 @@ You used `Arc<Mutex<T>>` in the threading chapter for the same reason: multiple 
 
 `Arc` lets you clone the handle cheaply. Each tool struct holds one clone. They all point to the same allocation.
 
-`Mutex` ensures only one tool can modify the notes at a time. Because rig calls tools one at a time in a single-threaded async context this will not block in practice, but the type system requires it — you cannot hand out `&mut Vec<String>` to multiple owners without it.
+`Mutex` ensures only one tool can modify the notes at a time. Rig calls tools sequentially so you will never see two locks contested, but the type system still requires it — you cannot give `&mut Vec<String>` to multiple owners without synchronisation.
+
+You might wonder: if tools are never called concurrently, can we use `Rc<RefCell<T>>` instead of `Arc<Mutex<T>>`? No — and the reason is the `Send` bound, not concurrent access. The `Tool` trait requires `Send + Sync` on tool structs because the agent future must be `Send` to run on tokio's multi-threaded executor (`rt-multi-thread`). `Rc` does not implement `Send`, so the compiler rejects it regardless of whether two threads ever race. `Arc` is required to satisfy the trait bound, not because of concurrent tool calls.
 
 ---
 
