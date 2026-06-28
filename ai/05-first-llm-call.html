@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "../searchindex-280f791f.js";
+            window.path_to_searchindex_js = "../searchindex-cd0a7e5a.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-41e41280.js"></script>
@@ -177,14 +177,14 @@
                         <h1 id="lesson-1--first-llm-call"><a class="header" href="#lesson-1--first-llm-call">Lesson 1 — First LLM Call</a></h1>
 <blockquote>
 <p><strong>Goal</strong>: Send a prompt to an LLM and print the response.</p>
-<p><strong>Concepts</strong>: rig-core setup, <code>OPENAI_API_KEY</code>, <code>Client</code>, <code>Agent</code>, <code>.prompt().await</code>.</p>
+<p><strong>Concepts</strong>: rig setup, <code>OPENAI_API_KEY</code>, <code>Client</code>, <code>Agent</code>, <code>.prompt().await</code>.</p>
 </blockquote>
 <p>The theory chapters explained what LLMs are, how the API works over HTTP, and what tokens cost. Now you write the code that does it.</p>
 <hr>
 <h2 id="step-1--setup"><a class="header" href="#step-1--setup">Step 1 — Setup</a></h2>
 <p>Create a new binary project and add these dependencies to <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rig-core = "0.6"
+rig = "0.38.2"
 tokio = { version = "1", features = ["full"] }
 anyhow = "1"
 </code></pre>
