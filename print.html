@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-ae25a40f.js";
+            window.path_to_searchindex_js = "searchindex-5a592865.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-41e41280.js"></script>
@@ -18550,6 +18550,8 @@ async fn main() -&gt; anyhow::Result&lt;()&gt; {
 
 type Notes = Arc&lt;Mutex&lt;Vec&lt;String&gt;&gt;&gt;;
 <span class="boring">}</span></code></pre>
+<p><code>type Notes = ...</code> is a <strong>type alias</strong>. It gives a new name to an existing type — nothing more. After this line, writing <code>Notes</code> anywhere is exactly the same as writing <code>Arc&lt;Mutex&lt;Vec&lt;String&gt;&gt;&gt;</code>. The compiler treats them as identical; there is no wrapping or conversion.</p>
+<p>Type aliases exist purely for readability. <code>Arc&lt;Mutex&lt;Vec&lt;String&gt;&gt;&gt;</code> appears in three struct definitions, the function signature, and several <code>Arc::clone</code> calls. Writing <code>Notes</code> each time is shorter and makes the intent clear: this is the shared note storage, not some incidental use of Arc.</p>
 <p>You used <code>Arc&lt;Mutex&lt;T&gt;&gt;</code> in the threading chapter for the same reason: multiple owners, one piece of mutable data. The pattern is identical here — the only difference is that the “threads” are tool calls arriving from the LLM rather than OS threads you spawned yourself.</p>
 <p><code>Arc</code> lets you clone the handle cheaply. Each tool struct holds one clone. They all point to the same allocation.</p>
 <p><code>Mutex</code> ensures only one tool can modify the notes at a time. Because rig calls tools one at a time in a single-threaded async context this will not block in practice, but the type system requires it — you cannot hand out <code>&amp;mut Vec&lt;String&gt;</code> to multiple owners without it.</p>
