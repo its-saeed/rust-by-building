@@ -2,122 +2,73 @@
 
 **[Read the book →](https://its-saeed.github.io/rust-by-building/)**
 
-Learn Rust from scratch by writing small programs that get progressively more interesting. Designed to run on a single offline Linux server: an admin sets it up once, students SSH in and work.
-
-No crates.io access, no browser full of tabs — just a book, exercises, and projects, all local.
-
-There are two kinds of people here:
-
-| | You are… | Start with |
-|---|---|---|
-| 🧑‍🏫 | An **admin** standing up a course server | [`docs/admins.md`](./docs/admins.md) — TL;DR below |
-| 🧑‍💻 | A **student** with login credentials | [`docs/students.md`](./docs/students.md) — TL;DR below |
+Learn Rust by writing programs that actually do things. Each project introduces new concepts through a concrete problem — no toy snippets, no isolated exercises disconnected from a goal.
 
 ---
 
-## Admin TL;DR
+## What you'll build
 
-```sh
-# On a fresh Debian/Ubuntu server, as root:
-git clone <wherever-you-host-this> /opt/rust-by-building
-cd /opt/rust-by-building
-sudo bash server/setup.sh
-```
+### Command-line tools
 
-`setup.sh` is interactive. It asks which editor to install (Helix, Zed Remote, or both) and optionally runs bulk onboarding against a student list.
+| Project | What you build | Concepts |
+|---------|---------------|----------|
+| 1 — Caesar Cipher | Encrypt and decrypt messages | Variables, `char`, ASCII arithmetic, functions, loops, control flow |
+| 2 — Contact Book | Store and search contacts | Structs, `Vec`, `impl`, `Option`, user input |
+| 3 — Cipher Cracker | Break a Caesar cipher with frequency analysis | `HashMap`, traits, iterators, enums |
 
-Then provision students. Either one-off:
+### Graphics & physics
 
-```sh
-rbb-admin user add alice
-# Prints home / checkout / port range
-```
+| Project | What you build | Concepts |
+|---------|---------------|----------|
+| 4 — A Ball Moves | A ball bouncing around a window | macroquad, `Vec2`, operator overloading, physics integration |
+| 5 — Many Bodies | Many balls under gravity | Ownership, `World` struct, gravity, spawning |
+| 6 — Balls Collide | Elastic collisions between balls | Overlap detection, velocity response, mass |
+| 7 — Pong | A playable Pong game | Lifetimes, sprites, sound, game states |
+| 8 — Peggle Nights | A Peggle-style physics game | Rapier physics engine, modules, aiming, trajectory preview |
 
-…or in batch from a `students.txt` (one name per line):
+### Networking
 
-```sh
-rbb-admin user bulk students.txt --credentials creds.txt
-# wrote 12 credentials to creds.txt (mode 600)
-```
+> **How Networks Work** — HTTP, TCP, UDP, sockets, the layered model
 
-`creds.txt` is a mode-600 file with `username:password` pairs — hand each row to the corresponding student however you normally share credentials.
+| Project | What you build | Concepts |
+|---------|---------------|----------|
+| 9 — Tele-Sketch | A shared drawing canvas over the network | Protocol design, TCP server, async I/O, real-time sync |
+| Mini project | HTTP over raw TCP | Parsing HTTP by hand, `reqwest` |
 
-To publish new or updated lessons to students:
+### Concurrency & async
 
-```sh
-rbb-admin publish -m "add lesson 05: closures"
-```
+> **How Concurrency Works** — CPUs, scheduling, threads, races, deadlocks
+>
+> **How Async Works** — futures, event loops, `async`/`await`, the tokio runtime
 
-One command: validates, commits, pushes the admin repo, and exports filtered content (no tool source) to the student-facing repo. Students `git pull` to get it.
+| Project | What you build | Concepts |
+|---------|---------------|----------|
+| 10 — Mandelbrot | A parallel fractal renderer | Thread pools, work splitting, shared buffers |
+| 11 — Chat Server | A multi-user terminal chat | `Arc<Mutex<T>>`, broadcast channels, message passing |
+| 12 — Async Chat Server | Same chat server, async | tokio tasks, async channels, `select!` |
+| 13 — Download Manager | Concurrent file downloads with progress | `join!`, racing mirrors, progress bars |
 
-See **[`docs/admins.md`](./docs/admins.md)** for writing new lessons, adding crates, observing progress, and rotating the student list.
+### AI
 
-## Student TL;DR
-## Student TL;DR
-## Student TL;DR
+> **How AI Works** — LLMs, tokens, tool calling, the agent loop
 
-Your admin gave you a username, password, and a server address. Log in:
-
-```sh
-ssh <you>@<course-server>
-```
-
-…then use either editor:
-
-- **Helix** (preinstalled): `hx lessons/03-functions/project/src/lib.rs`
-- **[Zed](https://zed.dev)** (install locally on your laptop): open the project's "Connect via SSH", pick this server, open `~/rust-by-building/`. Zed does the rest.
-
-First thing to run, either way:
-
-```sh
-rbb status      # list lessons, see what you've done
-rbb open 01     # read lesson 01
-rbb watch 01    # feedback loop — edit, save, see tests rerun
-rbb next        # jump to the next unfinished lesson
-```
-
-For a full-screen dashboard instead of text:
-
-```sh
-rbb tui
-```
-
-See **[`docs/students.md`](./docs/students.md)** for the longer story.
+| Project | What you build | Concepts |
+|---------|---------------|----------|
+| Mini project — AI Todo List | A plain-English todo list backed by an LLM | rig.rs, tool traits, `Arc<Mutex<T>>`, prompt engineering |
 
 ---
 
-## What's in this repo
+## How the course works
 
-```
-book/          lesson chapters (rendered with mdbook, served locally)
-lessons/       per-lesson exercises + projects with boilerplate + tests
-tools/         rust workspace:
-                 rbb         student CLI
-                 rbb-admin   admin CLI
-                 rbb-core    shared types & helpers
-vendor/        checked-in cargo vendor tree (offline builds)
-server/        setup.sh — provisions a fresh server in one shot
-tests/e2e/     dockerized regression suite (12 scenarios)
-```
-
-## Development
-
-If you're the admin *building this*, not deploying it, regression tests live in Docker:
+The book lives alongside exercises and starter projects. A small CLI called `rbb` drives the workflow:
 
 ```sh
-bash tests/e2e/run.sh           # build image, run all scenarios
-bash tests/e2e/run.sh 03_test   # run just matching scenarios
+rbb watch caesar-02    # run tests for lesson 2 in watch mode
+rbb open caesar-02     # open the lesson in the book
+rbb next               # jump to the next unfinished lesson
 ```
 
-12 scenarios cover status / test / watch / check / open / next on the student side, and lesson scaffolding / user lifecycle / progress / offline builds on the admin side.
+The course is designed to run on a single offline Linux server — all crates are vendored, nothing requires internet access during class.
 
-## Why offline
-
-This course was built for environments where crates.io and the wider internet are unreliable or unavailable. Everything a student needs — the toolchain, docs, every crate the lessons depend on — lives on the server.
-
-Consequences:
-
-- `vendor/` is committed (~120 MB, 70+ crates). Adding a dependency means re-running `cargo vendor` and committing the result. See [`docs/admins.md`](./docs/admins.md).
-- `.cargo/config.toml` hard-redirects `crates-io` to the vendor tree.
-- `cargo build --frozen` is the norm; `cargo update` is never run on the server.
-- The docs/admins.md and docs/students.md assume the server is reachable but nothing beyond it is.
+- **Admins**: see [`docs/admins.md`](./docs/admins.md) for setup, student provisioning, and publishing lessons.
+- **Students**: see [`docs/students.md`](./docs/students.md) for logging in and getting started.
