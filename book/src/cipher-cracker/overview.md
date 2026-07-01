@@ -25,6 +25,8 @@ Top 3 guesses:
 
 This project reuses `decrypt` from project 1 — you'll feel the payoff of earlier work.
 
+![Frequency analysis algorithm: read ciphertext, count letters, find peak, assume it was e, compute key, decrypt](../images/cipher-cracker/algorithm.png)
+
 ---
 
 ## What you'll build, lesson by lesson
